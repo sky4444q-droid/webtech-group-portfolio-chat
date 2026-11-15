@@ -1,6 +1,6 @@
-# My AI Chatbot
+# Group Portfolio + Chat AI
 
-เว็บไซต์แชต AI ที่พัฒนาด้วย React และ Express โดยใช้ Gemini API สำหรับสร้างคำตอบ
+เว็บ Portfolio ของกลุ่ม พร้อมแชท AI ที่ตอบคำถามเกี่ยวกับกลุ่มและสมาชิกแต่ละคน (React + Express + PostgreSQL + Gemini API)
 
 ## Features
 

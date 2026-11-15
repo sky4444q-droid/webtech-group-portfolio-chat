@@ -1,0 +1,66 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (check)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BE
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: BE/package-lock.json
+      - run: npm ci
+      - run: npm run check
+
+  frontend:
+    name: Frontend (typecheck + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: FE
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: FE/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  deploy:
+    name: Deploy to Render
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger backend deploy
+        env:
+          HOOK: ${{ secrets.RENDER_BE_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS -X POST "$HOOK"
+          else
+            echo "RENDER_BE_DEPLOY_HOOK is not set - skipping backend deploy"
+          fi
+      - name: Trigger frontend deploy
+        env:
+          HOOK: ${{ secrets.RENDER_FE_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS -X POST "$HOOK"
+          else
+            echo "RENDER_FE_DEPLOY_HOOK is not set - skipping frontend deploy"
+          fi
