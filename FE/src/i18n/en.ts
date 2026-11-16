@@ -91,12 +91,10 @@ export const en: Record<keyof typeof th, string> = {
   soundAmbience: "Ambience and sound effects",
 
   // ---------- Viewpoints ----------
-  vpGateEntry: "Gate front",
-  vpGateAlley: "Look back down the alley",
-  vpNexusCenter: "Central plaza",
-  vpNexusProjects: "Gallery gate",
-  vpNexusTeam: "Headquarters gate",
-  vpNexusSanctuary: "Sanctuary gate",
+  vpGateEntry: "Down the lane",
+  vpGateAlley: "Toward the arch",
+  vpNexusCenter: "Crossroads",
+  vpNexusBridge: "On the footbridge",
   vpProjectsHall: "Hall entrance",
   vpProjectsPedestal: "At the showcase",
   vpTeamLobby: "Lobby",

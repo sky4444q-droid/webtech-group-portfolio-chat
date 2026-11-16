@@ -15,11 +15,11 @@ export interface Fragment {
 }
 
 export const FRAGMENTS: Fragment[] = [
-  { id: "frag-gate", district: "gate", viewpoint: 1, position: [2.6, 1.2, 24] },
-  { id: "frag-nexus", district: "nexus", viewpoint: 3, position: [13.5, 1.5, -3] },
+  { id: "frag-gate", district: "gate", viewpoint: 1, position: [-9, 1.2, 2.2] },
+  { id: "frag-nexus", district: "nexus", viewpoint: 1, position: [7.5, 1.5, -7.5] },
   { id: "frag-projects", district: "projects", viewpoint: 1, position: [-4.5, 1.1, -2] },
-  { id: "frag-team", district: "team", viewpoint: 2, position: [6.6, 1.2, -3.6] },
-  { id: "frag-sanctuary", district: "sanctuary", viewpoint: 1, position: [-4, 1.1, 1] },
+  { id: "frag-team", district: "team", viewpoint: 2, position: [6.6 + 8, 1.2, -3.6] },
+  { id: "frag-sanctuary", district: "sanctuary", viewpoint: 1, position: [-1.6, 1.1, 6] },
 ];
 
 const IDS = new Set(FRAGMENTS.map((f) => f.id));

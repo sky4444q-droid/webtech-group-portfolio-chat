@@ -5,6 +5,7 @@
 import type { DistrictId } from "../types";
 import type { DictKey } from "../i18n";
 import { DISTRICTS, type Vec3 } from "./districts";
+import { TEAM_LOBBY_OFFSET } from "../world/street/streets";
 
 export interface Viewpoint {
   id: string;
@@ -22,29 +23,31 @@ const WIDE = 0.08;
 const EYE = 0.43; // ประมาณ ±25°
 const EYE_Y = 1.7;
 
+// ทิศของแต่ละที่: Gate ถนนไปทาง +x (เข้าเมือง) · Projects ปลายถนนทาง −z · Team ล็อบบี้ในตึก · Sanctuary ลานลึกทาง +z
+const L = TEAM_LOBBY_OFFSET;
+const lobby = (p: Vec3): Vec3 => [p[0] + L[0], p[1] + L[1], p[2] + L[2]];
+
 export const VIEWPOINTS: Record<DistrictId, Viewpoint[]> = {
   gate: [
-    { id: "entry", label: "vpGateEntry", mode: "wide", position: [0, 5, 17], target: [0, 3, 0], lookRange: WIDE, marker: [0, 0.05, 10] },
-    { id: "alley", label: "vpGateAlley", mode: "wide", position: [0, 3, -2], target: [0, 2.5, 30], lookRange: WIDE, marker: [5, 0.05, 2] },
+    { id: "lane", label: "vpGateEntry", mode: "eye", position: [4, EYE_Y, 0], target: [-8, 1.6, 0], lookRange: EYE, marker: [1.5, 0.05, 0] },
+    { id: "toArch", label: "vpGateAlley", mode: "eye", position: [-3.5, EYE_Y, 0], target: [-14, 2.6, 0], lookRange: EYE, marker: [-2.5, 0.05, 0] },
   ],
   nexus: [
-    { id: "center", label: "vpNexusCenter", mode: "wide", position: [0, 5, 17], target: [0, 3, 0], lookRange: WIDE, marker: [0, 0.05, 9] },
-    { id: "toProjects", label: "vpNexusProjects", mode: "wide", position: [-5, 2.6, 2], target: [-5, 2, -5], lookRange: WIDE, marker: [-5, 0.05, -1.5] },
-    { id: "toTeam", label: "vpNexusTeam", mode: "wide", position: [5, 2.6, 2], target: [5, 2, -5], lookRange: WIDE, marker: [5, 0.05, -1.5] },
-    { id: "toSanctuary", label: "vpNexusSanctuary", mode: "wide", position: [10, 2.6, 6], target: [11, 2, -1], lookRange: WIDE, marker: [10.5, 0.05, 2.5] },
+    { id: "center", label: "vpNexusCenter", mode: "eye", position: [0, EYE_Y, 6], target: [0, 2.2, -8], lookRange: EYE, marker: [0, 0.05, 3] },
+    { id: "bridge", label: "vpNexusBridge", mode: "wide", position: [0, 6.4, 8], target: [0, 2.6, -14], lookRange: WIDE, marker: [3, 0.05, 7] },
   ],
   projects: [
-    { id: "hall", label: "vpProjectsHall", mode: "wide", position: [0, 5, 17], target: [0, 3, 0], lookRange: WIDE, marker: [0, 0.25, 10] },
+    { id: "hall", label: "vpProjectsHall", mode: "eye", position: [0, EYE_Y, 12], target: [0, 2.6, 0], lookRange: EYE, marker: [0, 0.05, 9] },
     { id: "pedestal", label: "vpProjectsPedestal", mode: "wide", position: [0, 3.2, 7], target: [0, 2.6, 0], lookRange: WIDE, marker: [0, 0.25, 3.6] },
   ],
   team: [
-    { id: "lobby", label: "vpTeamLobby", mode: "eye", position: [0, EYE_Y, 9], target: [0, 1.9, -2], lookRange: EYE, marker: [0, 0.05, 6] },
-    { id: "teamScreen", label: "vpTeamScreen", mode: "eye", position: [-3.6, EYE_Y, 3], target: [-3.6, 1.9, -2], lookRange: EYE, marker: [-3.6, 0.05, 0.6] },
-    { id: "contactScreen", label: "vpTeamContact", mode: "eye", position: [3.6, EYE_Y, 3], target: [3.6, 1.9, -2], lookRange: EYE, marker: [3.6, 0.05, 0.6] },
+    { id: "lobby", label: "vpTeamLobby", mode: "eye", position: lobby([0, EYE_Y, 9]), target: lobby([0, 1.9, -2]), lookRange: EYE, marker: lobby([0, 0.05, 6]) },
+    { id: "teamScreen", label: "vpTeamScreen", mode: "eye", position: lobby([-3.6, EYE_Y, 3]), target: lobby([-3.6, 1.9, -2]), lookRange: EYE, marker: lobby([-3.6, 0.05, 0.6]) },
+    { id: "contactScreen", label: "vpTeamContact", mode: "eye", position: lobby([3.6, EYE_Y, 3]), target: lobby([3.6, 1.9, -2]), lookRange: EYE, marker: lobby([3.6, 0.05, 0.6]) },
   ],
   sanctuary: [
-    { id: "edge", label: "vpSanctuaryEdge", mode: "eye", position: [0, 1.9, 15], target: [0, 4.5, -2], lookRange: EYE, marker: [0, 0.05, 12] },
-    { id: "presence", label: "vpSanctuaryFace", mode: "eye", position: [0, 2.4, 5.5], target: [0, 5.2, -2], lookRange: EYE, marker: [0, 0.05, 3] },
+    { id: "edge", label: "vpSanctuaryEdge", mode: "eye", position: [0, 1.9, -2], target: [0, 4.5, 10], lookRange: EYE, marker: [0, 0.05, 0.5] },
+    { id: "presence", label: "vpSanctuaryFace", mode: "eye", position: [0, 2.4, 1.5], target: [0, 5.2, 10], lookRange: EYE, marker: [0, 0.05, 3] },
   ],
 };
 

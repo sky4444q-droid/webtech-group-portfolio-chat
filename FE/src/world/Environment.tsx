@@ -11,7 +11,7 @@ import { useWorld } from "../store/useWorld";
 import { buildingWindowsTexture } from "./textures";
 import { fxEnabled } from "./fx/fxEnabled";
 import { GroundFog, LensFlare, RainSplashes, Traffic, VolumetricCone } from "./fx/Effects";
-import { AVENUE } from "./travel/paths";
+import { STREETS } from "./street/streets";
 import type { DistrictId } from "../types";
 
 export function Environment() {
@@ -26,7 +26,6 @@ export function Environment() {
       <hemisphereLight args={["#3a1d7a", "#05030c", 0.6]} />
       <directionalLight position={[-40, 60, 30]} intensity={0.4} color="#9b7bff" />
       <Stars radius={260} depth={60} count={high ? 4000 : 1500} factor={4} saturation={0.6} fade speed={0.5} />
-      <City />
       <Suspense fallback={<FloorPlain />}>
         <Floor high={fx.reflector} />
         {/* แสงสะท้อนจาก HDRI กลางคืน (CC0) — ไม่ใช้เป็นพื้นหลัง */}
@@ -99,84 +98,6 @@ function Floor({ high }: { high: boolean }) {
   );
 }
 
-// ---------- เมืองนีออน (ตึกแบบ instanced ให้เบาเครื่อง) ----------
-
-interface Building {
-  x: number;
-  z: number;
-  w: number;
-  d: number;
-  h: number;
-}
-
-function makeCity(): Building[] {
-  let seed = 42;
-  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const out: Building[] = [];
-  const clear = DISTRICT_ORDER.map((id) => ({
-    x: DISTRICTS[id].position[0],
-    z: DISTRICTS[id].position[2],
-    r: id === "sanctuary" ? 44 : 26,
-  }));
-  let tries = 0;
-  while (out.length < 420 && tries < 6000) {
-    tries++;
-    const x = (rand() - 0.5) * 380;
-    const z = (rand() - 0.5) * 380;
-    if (clear.some((c) => Math.hypot(x - c.x, z - c.z) < c.r)) continue;
-    // เว้นทางบินของกล้องระหว่าง Nexus กับพื้นที่อื่น (กล้องอยู่ที่ z+17 ของแต่ละพื้นที่) ไม่ให้บินทะลุตึก
-    if ((Math.abs(x) < 14 && Math.abs(z) < 115) || (z > -14 && z < 34 && Math.abs(x) < 115)) continue;
-    // เว้นซอย Arrival Alley หน้าประตูทางเข้า
-    if (Math.abs(x - DISTRICTS.gate.position[0]) < 13 && z > -5 && z < 72) continue;
-    const far = Math.hypot(x, z) / 190;
-    out.push({ x, z, w: 3 + rand() * 6, d: 3 + rand() * 6, h: 6 + rand() * rand() * 55 * (0.6 + far) });
-  }
-  return out;
-}
-
-function City() {
-  const buildings = useMemo(makeCity, []);
-  const body = useRef<THREE.InstancedMesh>(null);
-  const strips = useRef<THREE.InstancedMesh>(null);
-  const windows = useMemo(() => buildingWindowsTexture(), []);
-  const stripColors = [COLORS.pink, COLORS.cyan, COLORS.purple, COLORS.blue, COLORS.green];
-
-  useLayoutEffect(() => {
-    const m = new THREE.Object3D();
-    const c = new THREE.Color();
-    buildings.forEach((b, i) => {
-      m.position.set(b.x, b.h / 2, b.z);
-      m.scale.set(b.w, b.h, b.d);
-      m.rotation.set(0, 0, 0);
-      m.updateMatrix();
-      body.current!.setMatrixAt(i, m.matrix);
-      // แถบนีออนแนวตั้งที่มุมตึก
-      m.position.set(b.x + b.w / 2 + 0.05, b.h / 2, b.z + b.d / 2 + 0.05);
-      m.scale.set(0.12, b.h * 0.9, 0.12);
-      m.updateMatrix();
-      strips.current!.setMatrixAt(i, m.matrix);
-      c.set(stripColors[i % stripColors.length]).multiplyScalar(2.2);
-      strips.current!.setColorAt(i, c);
-    });
-    body.current!.instanceMatrix.needsUpdate = true;
-    strips.current!.instanceMatrix.needsUpdate = true;
-    if (strips.current!.instanceColor) strips.current!.instanceColor.needsUpdate = true;
-  }, [buildings]);
-
-  return (
-    <group>
-      <instancedMesh ref={body} args={[undefined, undefined, buildings.length]}>
-        <boxGeometry />
-        <meshStandardMaterial color="#0d0a1c" roughness={0.6} metalness={0.4} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={1.4} />
-      </instancedMesh>
-      <instancedMesh ref={strips} args={[undefined, undefined, buildings.length]}>
-        <boxGeometry />
-        <meshBasicMaterial toneMapped={false} />
-      </instancedMesh>
-    </group>
-  );
-}
-
 // ---------- ฝน (ตามกล้อง) ----------
 
 const DROPS = 1400;
@@ -243,10 +164,23 @@ const LIGHTS: { district: DistrictId; at: [number, number, number]; color: strin
 ];
 
 function StreetLights({ cones, flare }: { cones: boolean; flare: boolean }) {
-  const avenue = Array.from({ length: 5 }, (_, i) => ({
-    at: [AVENUE.x + (i % 2 ? 4.6 : -4.6), 0, AVENUE.zStart - 8 - i * 14] as [number, number, number],
-    color: i % 2 ? COLORS.pink : COLORS.cyan,
-  }));
+  // ไฟถนนสลับสองข้างตลอดถนนทุกสาย
+  const avenue = Object.values(STREETS).flatMap((st) => {
+    const [a] = st.points;
+    const b = st.points[st.points.length - 1];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const ux = (b[0] - a[0]) / len;
+    const uz = (b[1] - a[1]) / len;
+    return Array.from({ length: 3 }, (_, i) => {
+      const t = (i + 0.5) / 3;
+      const side = i % 2 ? 1 : -1;
+      const off = st.halfWidth - 0.6;
+      return {
+        at: [a[0] + (b[0] - a[0]) * t - uz * off * side, 0, a[1] + (b[1] - a[1]) * t + ux * off * side] as [number, number, number],
+        color: i % 2 ? COLORS.pink : COLORS.cyan,
+      };
+    });
+  });
   const all = [
     ...LIGHTS.map((l) => {
       const p = DISTRICTS[l.district].position;

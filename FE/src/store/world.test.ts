@@ -72,8 +72,8 @@ describe("useWorld", () => {
 
   describe("viewpoints", () => {
     it("goToViewpoint then backViewpoint returns to the previous one", () => {
-      useWorld.getState().goToViewpoint(2);
-      expect(useWorld.getState().viewpoint).toBe(2);
+      useWorld.getState().goToViewpoint(1);
+      expect(useWorld.getState().viewpoint).toBe(1);
       expect(useWorld.getState().backViewpoint()).toBe(true);
       expect(useWorld.getState().viewpoint).toBe(0);
     });

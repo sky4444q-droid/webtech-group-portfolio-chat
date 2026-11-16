@@ -12,7 +12,7 @@ import { useWorld } from "../store/useWorld";
 import { CameraRig } from "./CameraRig";
 import { fxEnabled } from "./fx/fxEnabled";
 import { ViewpointMarkers } from "./ViewpointMarkers";
-import { GalleryAvenue } from "./travel/GalleryAvenue";
+import { StreetBlockout } from "./street/StreetBlockout";
 import { ElevatorScene } from "./travel/ElevatorScene";
 import { Mascot } from "./ai/Mascot";
 import { DataFragments } from "./DataFragment";
@@ -53,6 +53,7 @@ export function World() {
       {high && <PerformanceMonitor onDecline={autoLowerQuality} />}
       <Suspense fallback={null}>
         <Environment />
+        <StreetBlockout />
         <ActiveDistricts />
         <ViewpointMarkers />
         <TravelScenes />
@@ -96,7 +97,6 @@ function TravelScenes() {
   const touches = (d: DistrictId) => district === d || travel?.from === d || travel?.to === d;
   return (
     <>
-      {(touches("nexus") || touches("projects")) && <GalleryAvenue />}
       {kind === "elevator" && <ElevatorScene />}
     </>
   );

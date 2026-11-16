@@ -49,11 +49,11 @@ function district(
 }
 
 export const DISTRICTS: Record<DistrictId, DistrictConfig> = {
-  gate: district("gate", { th: "Arrival Gate", en: "Arrival Gate" }, "ARRIVAL GATE", [-90, 0, 0], "orb", COLORS.pink, [14, 50]),
+  gate: district("gate", { th: "Arrival Gate", en: "Arrival Gate" }, "ARRIVAL GATE", [-46, 0, 0], "orb", COLORS.pink, [14, 50]),
   nexus: district("nexus", { th: "Central Nexus", en: "Central Nexus" }, "CENTRAL NEXUS", [0, 0, 0], "orb", COLORS.cyan, [50, 50]),
-  projects: district("projects", { th: "Project Dimension", en: "Project Dimension" }, "PROJECT DIMENSION", [0, 0, -90], "geometric", COLORS.purple, [50, 14]),
-  team: district("team", { th: "Team Headquarters", en: "Team Headquarters" }, "TEAM HQ", [90, 0, 0], "orb", COLORS.green, [86, 50]),
-  sanctuary: district("sanctuary", { th: "AI Sanctuary", en: "AI Sanctuary" }, "AI SANCTUARY", [0, 0, 90], "fluid", COLORS.blue, [50, 86]),
+  projects: district("projects", { th: "Project Dimension", en: "Project Dimension" }, "PROJECT DIMENSION", [0, 0, -48], "geometric", COLORS.purple, [50, 14]),
+  team: district("team", { th: "Team Headquarters", en: "Team Headquarters" }, "TEAM HQ", [46, 0, 0], "orb", COLORS.green, [86, 50]),
+  sanctuary: district("sanctuary", { th: "AI Sanctuary", en: "AI Sanctuary" }, "AI SANCTUARY", [0, 0, 44], "fluid", COLORS.blue, [50, 86]),
 };
 
 export const DISTRICT_ORDER: DistrictId[] = ["gate", "nexus", "projects", "team", "sanctuary"];

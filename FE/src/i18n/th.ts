@@ -90,12 +90,10 @@ export const th = {
   soundAmbience: "เสียงบรรยากาศและเสียงประกอบ",
 
   // ---------- จุดชม ----------
-  vpGateEntry: "หน้าประตู",
-  vpGateAlley: "มองย้อนเข้าซอย",
-  vpNexusCenter: "ลานกลาง",
-  vpNexusProjects: "ประตูหอผลงาน",
-  vpNexusTeam: "ประตูสำนักงานใหญ่",
-  vpNexusSanctuary: "ประตูที่สถิต AI",
+  vpGateEntry: "กลางซอย",
+  vpGateAlley: "มองไปซุ้มประตู",
+  vpNexusCenter: "กลางสี่แยก",
+  vpNexusBridge: "บนสะพานลอย",
   vpProjectsHall: "ทางเข้าหอ",
   vpProjectsPedestal: "หน้าแท่นผลงาน",
   vpTeamLobby: "ล็อบบี้",
