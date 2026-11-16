@@ -10,6 +10,7 @@ import { COLORS } from "../config/theme";
 import { DISTRICTS } from "../config/districts";
 import { useWorld } from "../store/useWorld";
 import { CameraRig } from "./CameraRig";
+import { ViewpointMarkers } from "./ViewpointMarkers";
 import { Environment } from "./Environment";
 import { GateDistrict } from "./districts/GateDistrict";
 import { NexusDistrict } from "./districts/NexusDistrict";
@@ -47,6 +48,7 @@ export function World() {
       <Suspense fallback={null}>
         <Environment />
         <ActiveDistricts />
+        <ViewpointMarkers />
       </Suspense>
       <CameraRig />
       {high && (

@@ -89,4 +89,20 @@ export const en: Record<keyof typeof th, string> = {
   soundOff: "Sound off",
   soundVoice: "AI voice",
   soundAmbience: "Ambience and sound effects",
+
+  // ---------- Viewpoints ----------
+  vpGateEntry: "Gate front",
+  vpGateAlley: "Look back down the alley",
+  vpNexusCenter: "Central plaza",
+  vpNexusProjects: "Gallery gate",
+  vpNexusTeam: "Headquarters gate",
+  vpNexusSanctuary: "Sanctuary gate",
+  vpProjectsHall: "Hall entrance",
+  vpProjectsPedestal: "At the showcase",
+  vpTeamLobby: "Lobby",
+  vpTeamScreen: "Team screen",
+  vpTeamContact: "Contact screen",
+  vpSanctuaryEdge: "Plaza edge",
+  vpSanctuaryFace: "Before the AI",
+  viewBack: "Back",
 };

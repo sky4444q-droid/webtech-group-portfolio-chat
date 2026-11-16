@@ -1,7 +1,7 @@
 // HUD: ส่วนควบคุมที่ลอยอยู่บนฉาก (แสดงเท่าที่จำเป็น)
 
 import { portfolio } from "../data/portfolio";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWorld } from "../store/useWorld";
 import { DISTRICTS } from "../config/districts";
 import { usePick, useT, type DictKey } from "../i18n";
@@ -47,6 +47,8 @@ export function Hud() {
       </header>
 
       <MiniMap />
+
+      <BackButton />
 
       <div className="hud-actions">
         <button type="button" className="btn btn-ghost" onClick={() => openPanel({ kind: "contact" })}>
@@ -154,5 +156,29 @@ function SoundSettings() {
         {tr("soundAmbience")}
       </label>
     </>
+  );
+}
+
+/** ย้อนกลับจุดชมก่อนหน้า (แสดงเมื่อไม่ได้อยู่จุดแรก) — คลิกขวาในฉากก็ย้อนกลับได้ */
+function BackButton() {
+  const tr = useT();
+  const canBack = useWorld((s) => s.viewpointStack.length > 0 && !s.travel);
+  const backViewpoint = useWorld((s) => s.backViewpoint);
+
+  useEffect(() => {
+    const onContext = (e: MouseEvent) => {
+      if (!(e.target instanceof HTMLCanvasElement)) return;
+      e.preventDefault();
+      useWorld.getState().backViewpoint();
+    };
+    window.addEventListener("contextmenu", onContext);
+    return () => window.removeEventListener("contextmenu", onContext);
+  }, []);
+
+  if (!canBack) return null;
+  return (
+    <button type="button" className="btn btn-ghost hud-back" onClick={backViewpoint}>
+      ← {tr("viewBack")}
+    </button>
   );
 }

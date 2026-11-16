@@ -88,4 +88,20 @@ export const th = {
   soundOff: "ปิดเสียง",
   soundVoice: "เสียงพูดของ AI",
   soundAmbience: "เสียงบรรยากาศและเสียงประกอบ",
+
+  // ---------- จุดชม ----------
+  vpGateEntry: "หน้าประตู",
+  vpGateAlley: "มองย้อนเข้าซอย",
+  vpNexusCenter: "ลานกลาง",
+  vpNexusProjects: "ประตูหอผลงาน",
+  vpNexusTeam: "ประตูสำนักงานใหญ่",
+  vpNexusSanctuary: "ประตูที่สถิต AI",
+  vpProjectsHall: "ทางเข้าหอ",
+  vpProjectsPedestal: "หน้าแท่นผลงาน",
+  vpTeamLobby: "ล็อบบี้",
+  vpTeamScreen: "จอข้อมูลทีม",
+  vpTeamContact: "จอช่องทางติดต่อ",
+  vpSanctuaryEdge: "ขอบลาน",
+  vpSanctuaryFace: "ต่อหน้า AI",
+  viewBack: "ย้อนกลับ",
 };

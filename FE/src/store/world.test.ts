@@ -69,4 +69,48 @@ describe("useWorld", () => {
     expect(useWorld.getState().lang).toBe("en");
     spy.mockRestore();
   });
+
+  describe("viewpoints", () => {
+    it("goToViewpoint then backViewpoint returns to the previous one", () => {
+      useWorld.getState().goToViewpoint(2);
+      expect(useWorld.getState().viewpoint).toBe(2);
+      expect(useWorld.getState().backViewpoint()).toBe(true);
+      expect(useWorld.getState().viewpoint).toBe(0);
+    });
+
+    it("backViewpoint at the first viewpoint returns false", () => {
+      expect(useWorld.getState().backViewpoint()).toBe(false);
+    });
+
+    it("ignores goToViewpoint while traveling or before the intro ends", () => {
+      useWorld.getState().travelTo("projects");
+      useWorld.getState().goToViewpoint(1);
+      expect(useWorld.getState().viewpoint).toBe(0);
+      reset({ introDone: false });
+      useWorld.getState().goToViewpoint(1);
+      expect(useWorld.getState().viewpoint).toBe(0);
+    });
+
+    it("ignores an out-of-range viewpoint", () => {
+      useWorld.getState().goToViewpoint(99);
+      expect(useWorld.getState().viewpoint).toBe(0);
+    });
+
+    it("arriving in a district resets the viewpoint", () => {
+      useWorld.getState().goToViewpoint(1);
+      useWorld.getState().travelTo("team");
+      useWorld.getState().finishTravel();
+      expect(useWorld.getState().viewpoint).toBe(0);
+      expect(useWorld.getState().viewpointStack).toEqual([]);
+    });
+
+    it("closeTopmost steps back a viewpoint when nothing else is open", () => {
+      useWorld.getState().goToViewpoint(1);
+      useWorld.getState().openPanel({ kind: "team" });
+      useWorld.getState().closeTopmost();
+      expect(useWorld.getState().viewpoint).toBe(1);
+      useWorld.getState().closeTopmost();
+      expect(useWorld.getState().viewpoint).toBe(0);
+    });
+  });
 });
