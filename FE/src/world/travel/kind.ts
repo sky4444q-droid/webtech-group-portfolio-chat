@@ -1,16 +1,17 @@
-// เลือกชนิดการเดินทางจากพื้นที่ปลายทาง (spec ข้อ 10)
+// เลือกชนิดการเดินทาง: ตัวจิ๋วเดินนำ (ปกติ) หรือจางภาพ (โหมดต่ำ / ลดการเคลื่อนไหว / ลิงก์ตรงหลัง Intro)
 
 import type { DistrictId } from "../../types";
 import type { Quality } from "../../store/useWorld";
 
-export type TravelKind = "fly" | "walk" | "elevator" | "portal" | "fade";
+export type TravelKind = "guide" | "fade";
 
-export function travelKind(from: DistrictId, to: DistrictId, opts: { reducedMotion: boolean; quality: Quality }): TravelKind {
-  if (opts.reducedMotion || opts.quality === "low") return "fade";
-  if (to === "projects" || (from === "projects" && to === "nexus")) return "walk";
-  if (to === "team") return "elevator";
-  if (to === "sanctuary") return "portal";
-  return "fly";
+export function travelKind(
+  _from: DistrictId,
+  _to: DistrictId,
+  opts: { reducedMotion: boolean; quality: Quality; deepLink?: boolean },
+): TravelKind {
+  if (opts.reducedMotion || opts.quality === "low" || opts.deepLink) return "fade";
+  return "guide";
 }
 
 export function prefersReducedMotion(): boolean {

@@ -48,10 +48,10 @@ describe("intro path", () => {
 });
 
 describe("mascot phase", () => {
-  it("starts walking and can move through turn, morph and gone", () => {
+  it("starts walking and can move to turn and guide", () => {
     useAi.setState(initialAiState());
     expect(useAi.getState().mascotPhase).toBe("walk");
-    useAi.getState().setMascotPhase("morph");
-    expect(useAi.getState().mascotPhase).toBe("morph");
+    useAi.getState().setMascotPhase("guide");
+    expect(useAi.getState().mascotPhase).toBe("guide");
   });
 });

@@ -8,7 +8,8 @@ import { useAudio } from "./useAudio";
 import * as voice from "../audio/voice";
 import * as sfx from "../audio/sfx";
 
-export type MascotPhase = "walk" | "turn" | "morph" | "gone";
+/** walk = เดินใน Intro · turn = หันมาทักทายตอนจบ Intro · guide = หลังเข้าโลก (นำทางทุกการเดินทาง) */
+export type MascotPhase = "walk" | "turn" | "guide";
 
 export type AiMood = "idle" | "curious" | "listening" | "thinking" | "speaking" | "happy" | "error";
 

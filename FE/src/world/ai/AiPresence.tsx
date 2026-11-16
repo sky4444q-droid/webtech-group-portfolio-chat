@@ -14,6 +14,7 @@ import * as sfx from "../../audio/sfx";
 import { EnergyOrb } from "./EnergyOrb";
 import { GeometricEntity } from "./GeometricEntity";
 import { FluidEntity } from "./FluidEntity";
+import { guideState } from "../travel/guideState";
 
 type Props = ThreeElements["group"] & { district: DistrictId; size?: number };
 
@@ -34,7 +35,10 @@ export function AiPresence({ district, size = 1, ...group }: Props) {
     float.current.position.y = Math.sin(t * 1.2) * 0.25 + bounce;
     float.current.position.x = st.shake * Math.sin(t * 60) * 0.06;
     const breathe = 1 + Math.sin(t * 1.6) * 0.03;
-    const target = size * (hovered ? 1.08 : 1) * breathe;
+    // ระหว่างตัวจิ๋วนำทาง: AI ต้นทางหดหาย, AI ปลายทางโผล่ตอนแปลงร่าง
+    const presence = district === guideState.from ? guideState.aiFrom : district === guideState.to ? guideState.aiTo : 1;
+    float.current.visible = presence > 0.02;
+    const target = size * (hovered ? 1.08 : 1) * breathe * presence;
     float.current.scale.setScalar(THREE.MathUtils.damp(float.current.scale.x, target, 6, dt));
     // หันหาเมาส์ (มากขึ้นตอนสนใจ)
     const lean = mood === "curious" || hovered ? 0.45 : 0.12;

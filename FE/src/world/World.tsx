@@ -16,7 +16,6 @@ import { StreetBlockout } from "./street/StreetBlockout";
 import { ElevatorScene } from "./travel/ElevatorScene";
 import { Mascot } from "./ai/Mascot";
 import { DataFragments } from "./DataFragment";
-import { useAi } from "../store/useAi";
 import { Environment } from "./Environment";
 import { GateDistrict } from "./districts/GateDistrict";
 import { NexusDistrict } from "./districts/NexusDistrict";
@@ -79,6 +78,8 @@ function ActiveDistricts() {
   if (travel) {
     ids.add(travel.from);
     ids.add(travel.to);
+    // ทุกการเดินทางผ่านสี่แยก
+    ids.add("nexus");
   }
   return (
     <>
@@ -89,20 +90,14 @@ function ActiveDistricts() {
   );
 }
 
-/** ฉากของการเดินทาง: ถนน Gallery Avenue (เห็นจาก Nexus/Projects หรือตอนเดิน) และตู้ลิฟต์ (เฉพาะตอนนั่งลิฟต์) */
+/** ฉากลิฟต์ (เฉพาะตอนไป/ออกจาก Team HQ) */
 function TravelScenes() {
-  const district = useWorld((s) => s.district);
   const travel = useWorld((s) => s.travel);
   const kind = useWorld((s) => s.travelKind);
-  const touches = (d: DistrictId) => district === d || travel?.from === d || travel?.to === d;
-  return (
-    <>
-      {kind === "elevator" && <ElevatorScene />}
-    </>
-  );
+  return kind === "guide" && (travel?.to === "team" || travel?.from === "team") ? <ElevatorScene /> : null;
 }
 
+/** ตัวจิ๋ว: เดินใน Intro แล้วนำทางทุกการเดินทาง (ซ่อนตัวเองเมื่อแปลงร่างเป็น AI แล้ว) */
 function IntroMascot() {
-  const phase = useAi((s) => s.mascotPhase);
-  return phase === "gone" ? null : <Mascot />;
+  return <Mascot />;
 }

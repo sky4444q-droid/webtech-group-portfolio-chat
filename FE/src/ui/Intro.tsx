@@ -17,18 +17,11 @@ function enterUniverse(finishIntro: () => void) {
   useAudio.getState().unlock();
   sfx.play("click");
   const ai = useAi.getState();
-  // ตัวจิ๋วหันมาทักทาย → แปลงร่าง → พาเข้าโลก
-  ai.setMascotPhase("turn");
+  // ตัวจิ๋วออกเดินต่อทิศเดิม พาเข้าเมือง (การเดินทางครั้งแรก)
+  ai.setMascotPhase("guide");
   ai.setMood("happy", 900);
-  setTimeout(() => {
-    useAi.getState().setMascotPhase("morph");
-    sfx.play("discover");
-  }, 600);
-  setTimeout(() => {
-    useAi.getState().setMascotPhase("gone");
-    finishIntro();
-    useAi.getState().say("voiceGreeting");
-  }, 1500);
+  finishIntro();
+  ai.say("voiceGreeting");
 }
 
 export function Intro() {

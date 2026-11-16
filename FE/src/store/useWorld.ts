@@ -41,7 +41,7 @@ export interface WorldState {
 
   setLang: (lang: Lang) => void;
   /** fromHistory = มาจากปุ่ม Back/Forward — ถ้ากำลังเดินทางอยู่จะจำไว้แล้วไปต่อเมื่อถึง */
-  travelTo: (id: DistrictId, opts?: { fromHistory?: boolean }) => void;
+  travelTo: (id: DistrictId, opts?: { fromHistory?: boolean; deepLink?: boolean }) => void;
   /** ปลายทางจากปุ่ม Back ที่กดระหว่างเดินทาง */
   queuedTarget: DistrictId | null;
   finishTravel: () => void;
@@ -108,7 +108,7 @@ export const useWorld = create<WorldState>((set, get) => ({
       return;
     }
     if (id === s.district) return;
-    const kind = travelKind(s.district, id, { reducedMotion: prefersReducedMotion(), quality: s.quality });
+    const kind = travelKind(s.district, id, { reducedMotion: prefersReducedMotion(), quality: s.quality, deepLink: opts?.deepLink });
     set({ travel: { from: s.district, to: id }, panel: null, travelKind: kind, skipRequested: false });
   },
 
@@ -123,7 +123,9 @@ export const useWorld = create<WorldState>((set, get) => ({
   finishIntro: () => {
     if (get().introDone) return;
     set({ introDone: true });
-    get().travelTo(get().pendingTarget);
+    const target = get().pendingTarget;
+    // ลิงก์ตรงไปที่อื่น: จางภาพครั้งเดียว ไม่เดินต่อกันหลายถนน
+    get().travelTo(target, { deepLink: target !== "nexus" });
   },
 
   setChatOpen: (chatOpen) => set({ chatOpen }),
@@ -169,7 +171,7 @@ export const useWorld = create<WorldState>((set, get) => ({
 
   skipWalk: () => {
     const s = get();
-    if (s.travel && s.travelKind === "walk") set({ skipRequested: true });
+    if (s.travel && s.travelKind === "guide") set({ skipRequested: true });
   },
 
   backViewpoint: () => {
