@@ -37,7 +37,7 @@ export const NEXORA_PROJECT: Project = {
     th: "หน้าเว็บ React (Vite) → Express API (/messages, /portfolio) → Gemini API, เก็บประวัติแชทใน PostgreSQL, CI/CD ด้วย GitHub Actions และ Deploy บน Render",
     en: "React (Vite) frontend → Express API (/messages, /portfolio) → Gemini API, chat history in PostgreSQL, CI/CD with GitHub Actions, deployed on Render",
   },
-  images: [],
+  images: ["/images/nexora-emblem.png"],
   demoUrl: null,
   githubUrl: "https://github.com/sky4444q-droid/webtech-group-portfolio-chat",
   memberIds: [],
