@@ -90,6 +90,8 @@ function makeCity(): Building[] {
     if (clear.some((c) => Math.hypot(x - c.x, z - c.z) < c.r)) continue;
     // เว้นทางบินของกล้องระหว่าง Nexus กับพื้นที่อื่น (กล้องอยู่ที่ z+17 ของแต่ละพื้นที่) ไม่ให้บินทะลุตึก
     if ((Math.abs(x) < 14 && Math.abs(z) < 115) || (z > -14 && z < 34 && Math.abs(x) < 115)) continue;
+    // เว้นซอย Arrival Alley หน้าประตูทางเข้า
+    if (Math.abs(x - DISTRICTS.gate.position[0]) < 13 && z > -5 && z < 72) continue;
     const far = Math.hypot(x, z) / 190;
     out.push({ x, z, w: 3 + rand() * 6, d: 3 + rand() * 6, h: 6 + rand() * rand() * 55 * (0.6 + far) });
   }

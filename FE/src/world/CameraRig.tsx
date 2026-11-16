@@ -14,6 +14,8 @@ import { elevatorCamera, elevatorDoors } from "./travel/ElevatorScene";
 import { tripDuration } from "./travel/tripDurations";
 import type { TravelKind } from "./travel/kind";
 import * as sfx from "../audio/sfx";
+import { introCamera } from "./intro/introPath";
+import { prefersReducedMotion } from "./travel/kind";
 
 const v = (p: Vec3) => new THREE.Vector3(...p);
 const UP = new THREE.Vector3(0, 1, 0);
@@ -22,15 +24,6 @@ const clamp01 = (k: number) => Math.min(1, Math.max(0, k));
 /** ช่วงย่อยของ progress: a..b → 0..1 */
 const span = (k: number, a: number, b: number) => clamp01((k - a) / (b - a));
 
-// เส้นทาง Intro: บินลงจากเหนือเมืองเข้าหาประตูทางเข้า
-const gate = DISTRICTS.gate;
-const INTRO_PATH = new THREE.CatmullRomCurve3([
-  v([gate.position[0] - 70, 55, gate.position[2] + 90]),
-  v([gate.position[0] - 30, 30, gate.position[2] + 55]),
-  v([gate.position[0] - 6, 12, gate.position[2] + 30]),
-  v(gate.camera.position),
-]);
-const INTRO_LOOK_FROM = v([gate.position[0] + 30, 0, gate.position[2]]);
 
 /** ประตูหน้าล็อบบี้ Team HQ — ออกจากล็อบบี้ต้องถอยออกทางนี้ก่อนบิน */
 const TEAM_DOOR = v([DISTRICTS.team.position[0], 1.9, DISTRICTS.team.position[2] + 14]);
@@ -47,7 +40,7 @@ interface Trip {
 }
 
 export function CameraRig() {
-  const lookAt = useRef(v(DISTRICTS.gate.camera.target));
+  const lookAt = useRef(v(introCamera(0).target));
   const introStart = useRef<number | null>(null);
   const trip = useRef<Trip | null>(null);
   const pos = useRef(new THREE.Vector3()).current;
@@ -62,10 +55,12 @@ export function CameraRig() {
     // 1) Intro
     if (!s.introDone) {
       if (introStart.current === null) introStart.current = now;
-      const k = Math.min(1, (now - introStart.current) / INTRO_MS);
-      const e = easeInOut(k);
-      INTRO_PATH.getPointAt(e, pos);
-      look.lerpVectors(INTRO_LOOK_FROM, v(gate.camera.target), e);
+      // ซอย Arrival Alley: กล้องเดินตามหลังตัวจิ๋ว (ลดการเคลื่อนไหว → ภาพนิ่งปลายทาง)
+      const k = prefersReducedMotion() ? 1 : Math.min(1, (now - introStart.current) / INTRO_MS);
+      const cam = introCamera(k);
+      pos.set(...cam.position);
+      pos.y += Math.sin(now / 260) * 0.03 * (1 - k);
+      look.set(...cam.target);
       camera.position.copy(pos);
       lookAt.current.copy(look);
       camera.lookAt(lookAt.current);

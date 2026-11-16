@@ -13,6 +13,8 @@ import { CameraRig } from "./CameraRig";
 import { ViewpointMarkers } from "./ViewpointMarkers";
 import { GalleryAvenue } from "./travel/GalleryAvenue";
 import { ElevatorScene } from "./travel/ElevatorScene";
+import { Mascot } from "./ai/Mascot";
+import { useAi } from "../store/useAi";
 import { Environment } from "./Environment";
 import { GateDistrict } from "./districts/GateDistrict";
 import { NexusDistrict } from "./districts/NexusDistrict";
@@ -52,6 +54,7 @@ export function World() {
         <ActiveDistricts />
         <ViewpointMarkers />
         <TravelScenes />
+        <IntroMascot />
       </Suspense>
       <CameraRig />
       {high && (
@@ -93,4 +96,9 @@ function TravelScenes() {
       {kind === "elevator" && <ElevatorScene />}
     </>
   );
+}
+
+function IntroMascot() {
+  const phase = useAi((s) => s.mascotPhase);
+  return phase === "gone" ? null : <Mascot />;
 }

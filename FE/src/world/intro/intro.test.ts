@@ -1,0 +1,51 @@
+import { describe, expect, it } from "vitest";
+import { introCamera, mascotAt, GATE_DOOR } from "./introPath";
+import { initialAiState, useAi } from "../../store/useAi";
+
+const dist = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+
+describe("intro path", () => {
+  it("keeps the camera 3–5 units behind the mascot along the walk", () => {
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      const cam = introCamera(t).position;
+      const m = mascotAt(t).position;
+      const flat = Math.hypot(cam[0] - m[0], cam[2] - m[2]);
+      expect(flat).toBeGreaterThanOrEqual(3);
+      expect(flat).toBeLessThanOrEqual(5);
+      expect(cam[2]).toBeGreaterThan(m[2]); // อยู่ด้านหลัง (ฝั่งซอย)
+    }
+  });
+
+  it("ends with the mascot at the gate door", () => {
+    expect(dist(mascotAt(1).position, GATE_DOOR)).toBeLessThanOrEqual(3);
+  });
+
+  it("never puts the mascot below the ground", () => {
+    for (let i = 0; i <= 20; i++) expect(mascotAt(i / 20).position[1]).toBeGreaterThanOrEqual(0);
+  });
+
+  it("takes at least six steps during the intro", () => {
+    let cycles = 0;
+    let prev = mascotAt(0).step;
+    for (let i = 1; i <= 400; i++) {
+      const s = mascotAt(i / 400).step;
+      if (s < prev) cycles++;
+      prev = s;
+    }
+    expect(cycles).toBeGreaterThanOrEqual(6);
+  });
+
+  it("the camera looks toward the gate", () => {
+    const { position, target } = introCamera(0.5);
+    expect(target[2]).toBeLessThan(position[2]);
+  });
+});
+
+describe("mascot phase", () => {
+  it("starts walking and can move through turn, morph and gone", () => {
+    useAi.setState(initialAiState());
+    expect(useAi.getState().mascotPhase).toBe("walk");
+    useAi.getState().setMascotPhase("morph");
+    expect(useAi.getState().mascotPhase).toBe("morph");
+  });
+});

@@ -12,11 +12,23 @@ import * as sfx from "../audio/sfx";
 
 /** ปุ่ม Enter = การคลิกแรกของผู้ชม → ปลดล็อกเสียง แล้ว AI ทักทาย */
 function enterUniverse(finishIntro: () => void) {
+  if (useAi.getState().mascotPhase !== "walk") return;
   sfx.unlock();
   useAudio.getState().unlock();
   sfx.play("click");
-  finishIntro();
-  useAi.getState().say("voiceGreeting");
+  const ai = useAi.getState();
+  // ตัวจิ๋วหันมาทักทาย → แปลงร่าง → พาเข้าโลก
+  ai.setMascotPhase("turn");
+  ai.setMood("happy", 900);
+  setTimeout(() => {
+    useAi.getState().setMascotPhase("morph");
+    sfx.play("discover");
+  }, 600);
+  setTimeout(() => {
+    useAi.getState().setMascotPhase("gone");
+    finishIntro();
+    useAi.getState().say("voiceGreeting");
+  }, 1500);
 }
 
 export function Intro() {

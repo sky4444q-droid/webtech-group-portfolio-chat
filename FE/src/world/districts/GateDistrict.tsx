@@ -6,12 +6,14 @@ import { NeonSign } from "../NeonSign";
 import { Portal } from "../Portal";
 import { AiPresence } from "../ai/AiPresence";
 import { NeonPillar, Platform } from "./common";
+import { ArrivalAlley } from "../ArrivalAlley";
 
 export function GateDistrict() {
   const cfg = DISTRICTS.gate;
   return (
     <group position={cfg.position}>
       <Platform radius={13} color={cfg.color} />
+      <ArrivalAlley />
       {/* ซุ้มประตูใหญ่ */}
       <NeonPillar height={14} color={cfg.color} position={[-6.5, 0, -3]} />
       <NeonPillar height={14} color={cfg.color} position={[6.5, 0, -3]} />

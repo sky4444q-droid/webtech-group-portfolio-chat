@@ -8,6 +8,8 @@ import { useAudio } from "./useAudio";
 import * as voice from "../audio/voice";
 import * as sfx from "../audio/sfx";
 
+export type MascotPhase = "walk" | "turn" | "morph" | "gone";
+
 export type AiMood = "idle" | "curious" | "listening" | "thinking" | "speaking" | "happy" | "error";
 
 /** ซับไตเติลค้างอยู่หลังพูดจบ */
@@ -24,6 +26,9 @@ export interface AiState {
   mood: AiMood;
   subtitle: string | null;
   arrived: DistrictId[];
+  /** ตัวจิ๋วใน Intro */
+  mascotPhase: MascotPhase;
+  setMascotPhase: (p: MascotPhase) => void;
   setMood: (mood: AiMood, holdMs?: number) => void;
   say: (key: DictKey) => void;
   /** ไปถึงพื้นที่ — แนะนำพื้นที่เฉพาะครั้งแรกของการเข้าชม */
@@ -34,10 +39,10 @@ export interface AiState {
   noticeTyping: () => void;
 }
 
-type AiData = Pick<AiState, "mood" | "subtitle" | "arrived">;
+type AiData = Pick<AiState, "mood" | "subtitle" | "arrived" | "mascotPhase">;
 
 export function initialAiState(): AiData {
-  return { mood: "idle", subtitle: null, arrived: [] };
+  return { mood: "idle", subtitle: null, arrived: [], mascotPhase: "walk" };
 }
 
 const ARRIVE_KEYS: Record<DistrictId, DictKey> = {
@@ -86,6 +91,8 @@ export const useAi = create<AiState>((set, get) => ({
       setTimeout(end, Math.max(2200, text.length * 70));
     }
   },
+
+  setMascotPhase: (mascotPhase) => set({ mascotPhase }),
 
   noticeHover: () => {
     const m = get().mood;
