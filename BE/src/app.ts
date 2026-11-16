@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import express from "express";
 import cors from "cors";
-import { getReply, type Language } from "./reply";
+import { getReply, loadPortfolio, type Language } from "./reply";
 import {
   addPair,
   clearMessages,
@@ -42,6 +42,11 @@ const sessionOf = (req: express.Request): string | undefined =>
 
 app.get("/", (req, res) => {
   res.send("Hello, World!");
+});
+
+// ข้อมูลทีมสำหรับหน้า Portfolio (แหล่งเดียวกับที่ AI ใช้ตอบ)
+app.get("/portfolio", (req, res) => {
+  res.json(loadPortfolio());
 });
 
 app.get(

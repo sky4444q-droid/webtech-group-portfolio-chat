@@ -46,6 +46,20 @@ export default function MessageBubble({ message, onUpdate, onDelete }: MessageBu
         ) : (
           <>
             {message.text}
+            {!isUser && !!message.sources?.length && (
+              <div className="bubble-sources">
+                แหล่งอ้างอิง:{' '}
+                {message.sources.map((src) =>
+                  src.url ? (
+                    <a key={src.title} href={src.url} target="_blank" rel="noreferrer">
+                      {src.title}
+                    </a>
+                  ) : (
+                    <span key={src.title}>{src.title}</span>
+                  ),
+                )}
+              </div>
+            )}
             <div className="bubble-actions">
               {isUser && <button onClick={startEdit}>แก้ไข</button>}
               <button onClick={() => onDelete(message.id)}>ลบ</button>
