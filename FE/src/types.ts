@@ -19,6 +19,32 @@ export interface ChatExchange {
 
 export type Language = 'th' | 'en';
 
+export interface Work {
+  title?: string | null;
+  type?: string | null;
+  status?: string | null;
+  detail?: string | null;
+  tools?: string | null;
+  link?: string | null;
+}
+
+export interface Member {
+  name?: string | null;
+  nickname?: string | null;
+  englishName?: string | null;
+  role?: string | null;
+  education?: string | null;
+  interestedPosition?: string | null;
+  intro?: string | null;
+  skills?: string[];
+  coreStrength?: string | null;
+  softSkills?: string[];
+  works?: (Work | string)[];
+  careerGoal?: string | null;
+  hobbies?: string[];
+  contact?: string | null;
+}
+
 export interface Portfolio {
   group?: {
     name?: string | null;
@@ -27,11 +53,5 @@ export interface Portfolio {
     sharedWorks?: string[];
     contact?: Record<string, string | null>;
   };
-  members?: {
-    name?: string | null;
-    role?: string | null;
-    skills?: string[];
-    works?: string[];
-    contact?: string | null;
-  }[];
+  members?: Member[];
 }

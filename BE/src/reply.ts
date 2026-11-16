@@ -13,48 +13,52 @@ export interface Reply {
 const TEAM_SOURCE: Source = { title: "ข้อมูลโปรไฟล์ทีม", url: null };
 
 // ข้อมูลทีมอยู่ใน data/portfolio.json (แก้ไฟล์นั้น ไม่ต้องแก้โค้ดนี้)
-interface Portfolio {
-  group?: {
-    name?: string | null;
-    concept?: string | null;
-    highlights?: string[];
-    sharedWorks?: string[];
-    contact?: Record<string, string | null>;
-  };
-  members?: {
-    name?: string | null;
-    role?: string | null;
-    skills?: string[];
-    works?: string[];
-    contact?: string | null;
-  }[];
-}
+// ช่องของสมาชิกเพิ่มได้อิสระ โค้ดจะแปลงทุกช่องที่มีค่าเป็นข้อความให้ AI เอง
+type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
+export type Portfolio = { group?: { [k: string]: Json }; members?: { [k: string]: Json }[] };
 
 export function loadPortfolio(): Portfolio {
   const file = path.join(__dirname, "..", "data", "portfolio.json");
   return JSON.parse(fs.readFileSync(file, "utf8")) as Portfolio;
 }
 
-// แปลง portfolio.json เป็นข้อความ โดยข้ามช่องที่ยังว่าง
-function portfolioToText(p: Portfolio): string {
-  const lines: string[] = [];
-  const g = p.group ?? {};
-  if (g.name) lines.push(`- ชื่อกลุ่ม: ${g.name}`);
-  if (g.concept) lines.push(`- แนวคิด: ${g.concept}`);
-  if (g.highlights?.length) lines.push(`- จุดเด่น: ${g.highlights.join("; ")}`);
-  if (g.sharedWorks?.length) lines.push(`- ผลงานร่วมกัน: ${g.sharedWorks.join("; ")}`);
-  const contact = Object.entries(g.contact ?? {}).filter(([, v]) => v);
-  if (contact.length) lines.push(`- ช่องทางติดต่อกลุ่ม: ${contact.map(([k, v]) => `${k}: ${v}`).join(", ")}`);
+const LABELS: Record<string, string> = {
+  name: "ชื่อ", nickname: "ชื่อเล่น", englishName: "ชื่อภาษาอังกฤษ", role: "บทบาทในกลุ่ม",
+  education: "การศึกษา", interestedPosition: "ตำแหน่งที่สนใจ", intro: "แนะนำตัว",
+  skills: "ทักษะ", coreStrength: "จุดแข็ง", softSkills: "Soft skills", works: "ผลงาน",
+  careerGoal: "เป้าหมายอาชีพ", hobbies: "งานอดิเรก", faq: "คำถาม-คำตอบที่เตรียมไว้",
+  answerNotes: "แนวทางการตอบเรื่องคนนี้", contact: "ช่องทางติดต่อ",
+  concept: "แนวคิด", highlights: "จุดเด่น", sharedWorks: "ผลงานร่วมกัน",
+  title: "ชื่อ", type: "ประเภท", status: "สถานะ", detail: "รายละเอียด", tools: "เครื่องมือ",
+  link: "ลิงก์", q: "ถาม", a: "ตอบ",
+};
 
+const isEmpty = (v: Json | undefined): boolean =>
+  v === null || v === undefined || v === "" ||
+  (Array.isArray(v) && v.every(isEmpty)) ||
+  (typeof v === "object" && !Array.isArray(v) && Object.values(v).every(isEmpty));
+
+function render(v: Json, indent: string): string {
+  if (Array.isArray(v)) {
+    return v.filter((x) => !isEmpty(x)).map((x) => `\n${indent}- ${render(x, indent + "  ").trimStart()}`).join("");
+  }
+  if (v && typeof v === "object") {
+    return Object.entries(v)
+      .filter(([k, x]) => !k.startsWith("_") && !isEmpty(x))
+      .map(([k, x]) => `\n${indent}${LABELS[k] ?? k}: ${render(x, indent + "  ").trimStart()}`)
+      .join("");
+  }
+  return String(v);
+}
+
+function portfolioToText(p: Portfolio): string {
+  const parts: string[] = [];
+  if (p.group && !isEmpty(p.group)) parts.push(`## กลุ่ม${render(p.group, "")}`);
   for (const m of p.members ?? []) {
     if (!m.name) continue;
-    lines.push(`\n## สมาชิก: ${m.name}`);
-    if (m.role) lines.push(`- บทบาท: ${m.role}`);
-    if (m.skills?.length) lines.push(`- ทักษะ: ${m.skills.join(", ")}`);
-    if (m.works?.length) lines.push(`- ผลงาน: ${m.works.join("; ")}`);
-    if (m.contact) lines.push(`- ติดต่อ: ${m.contact}`);
+    parts.push(`## สมาชิก: ${m.name}${render(m, "")}`);
   }
-  return lines.length ? lines.join("\n") : "(ยังไม่มีข้อมูลทีมในระบบ)";
+  return parts.length ? parts.join("\n\n") : "(ยังไม่มีข้อมูลทีมในระบบ)";
 }
 
 function buildSystemPrompt(language: Language, district?: string): string {
@@ -83,7 +87,9 @@ ${portfolioToText(loadPortfolio())}
 - ห้ามแต่งประวัติ ประสบการณ์ ทักษะ ผลงาน หรือช่องทางติดต่อที่ไม่มีใน "ข้อมูลทีม"
 - ห้ามกล่าวว่าโปรเจกต์ใดเสร็จแล้ว หากไม่มีข้อมูลยืนยัน และแยกงานที่เสร็จ กำลังทำ และวางแผนไว้ให้ชัดเจน
 - หากไม่ทราบข้อมูลของทีม ให้บอกตรง ๆ ว่าไม่มีข้อมูลยืนยันในส่วนนี้
-- ห้ามแต่งลิงก์หรือ URL ขึ้นมาเอง
+- ห้ามแต่งลิงก์หรือ URL ขึ้นมาเอง (ใช้ได้เฉพาะลิงก์ที่อยู่ใน "ข้อมูลทีม")
+- ถ้าสมาชิกมี "แนวทางการตอบเรื่องคนนี้" ให้ทำตามเมื่อตอบเรื่องคนนั้น
+- พูดถึงสมาชิกในบุรุษที่สาม (เช่น "สกายเป็น...") ไม่ใช่ "ผม"
 
 # Output format
 ขึ้นต้นคำตอบด้วยแท็กเดียวเสมอ ตามด้วยช่องว่างแล้วจึงตอบ

@@ -38,10 +38,37 @@ export default function Portfolio() {
       <div className="member-grid">
         {(data.members ?? []).filter((m) => m.name).map((m) => (
           <article className="member-card" key={m.name}>
-            <h4>{m.name}</h4>
+            <h4>
+              {m.name}
+              {m.nickname && <span className="member-nick"> · {m.nickname}</span>}
+            </h4>
             {m.role && <p className="member-role">{m.role}</p>}
-            {!!m.skills?.length && <p>ทักษะ: {m.skills.join(', ')}</p>}
-            {!!m.works?.length && <p>ผลงาน: {m.works.join('; ')}</p>}
+            {m.education && <p>{m.education}</p>}
+            {m.interestedPosition && <p>สนใจ: {m.interestedPosition}</p>}
+            {m.intro && <p className="member-intro">{m.intro}</p>}
+            {!!m.skills?.length && (
+              <p>ทักษะ: {m.skills.map((s) => s.split(':')[0]).join(', ')}</p>
+            )}
+            {!!m.works?.length && (
+              <div>
+                ผลงาน:
+                <ul>
+                  {m.works.map((w, i) => {
+                    const work = typeof w === 'string' ? { title: w } : w;
+                    return (
+                      <li key={i}>
+                        {work.link ? (
+                          <a href={work.link} target="_blank" rel="noreferrer">{work.title}</a>
+                        ) : (
+                          work.title
+                        )}
+                        {work.status && ` (${work.status})`}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
             {m.contact && <p>ติดต่อ: {m.contact}</p>}
           </article>
         ))}
