@@ -562,3 +562,8 @@ button {
 }
 
 .member-role { color: #b9a8ff; margin-bottom: 4px; }
+
+.member-nick { font-weight: 400; color: #a9a5d6; font-size: 14px; }
+.member-intro { color: #c9c6ea; margin: 6px 0; }
+.member-card ul { padding-left: 18px; }
+.member-card a { color: #b9a8ff; }
