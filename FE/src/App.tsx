@@ -3,6 +3,8 @@ import { World } from "./world/World";
 import { useHashSync } from "./world/useHashSync";
 import { useWorld } from "./store/useWorld";
 import { usePortfolio } from "./store/usePortfolio";
+import { useAudioDirector } from "./audio/useAudioDirector";
+import { Subtitle } from "./ui/Subtitle";
 import { Intro } from "./ui/Intro";
 import { Hud } from "./ui/Hud";
 import { ChatPanel } from "./ui/ChatPanel";
@@ -18,6 +20,7 @@ export default function App() {
   const traveling = useWorld((s) => s.travel !== null);
   const chatOpen = useWorld((s) => s.chatOpen);
   useHashSync();
+  useAudioDirector();
   useEscape();
 
   useEffect(() => {
@@ -30,6 +33,7 @@ export default function App() {
       {introDone && (
         <>
           <Hud />
+          <Subtitle />
           <Panels />
           <ChatPanel />
           <Guide />

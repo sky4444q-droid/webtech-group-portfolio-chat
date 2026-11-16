@@ -1,5 +1,7 @@
 // Project Dimension — หอจัดแสดงผลงานแบบ Virtual Museum + Hologram
 
+import { useAi } from "../../store/useAi";
+import * as sfx from "../../audio/sfx";
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useCursor } from "@react-three/drei";
@@ -71,6 +73,7 @@ function Pedestal({ id, index, position, color }: { id: string; index: number; p
   const open = () => {
     const s = useWorld.getState();
     if (!s.introDone || s.travel) return;
+    sfx.play("panelOpen");
     openPanel({ kind: "project", id });
   };
 
@@ -80,6 +83,8 @@ function Pedestal({ id, index, position, color }: { id: string; index: number; p
         onPointerOver={(e) => {
           e.stopPropagation();
           setHovered(true);
+          useAi.getState().noticeHover();
+          sfx.play("hover");
         }}
         onPointerOut={() => setHovered(false)}
         onClick={(e) => {

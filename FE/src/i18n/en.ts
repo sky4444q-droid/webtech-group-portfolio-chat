@@ -77,4 +77,16 @@ export const en: Record<keyof typeof th, string> = {
   guide3Body: "Press “Talk to AI” or click the AI entity in the scene to ask about the team, our work, or anything else.",
 
   smallScreen: "This site is designed for desktop. Open it on a larger screen for the best experience.",
+
+  // ---------- Voice / AI lines (about places and how to use them only — never team data) ----------
+  voiceGreeting: "Welcome to NEXORA. I'll guide you through this universe.",
+  voiceArriveGate: "This is the gate, where every journey begins.",
+  voiceArriveNexus: "This is the heart of the universe. Pick any gate you like.",
+  voiceArriveProjects: "The project gallery. Click a pedestal to see the details.",
+  voiceArriveTeam: "Team headquarters. The screens ahead hold our team info and contacts.",
+  voiceArriveSanctuary: "This is where I dwell. Ask me anything.",
+  soundOn: "Sound on",
+  soundOff: "Sound off",
+  soundVoice: "AI voice",
+  soundAmbience: "Ambience and sound effects",
 };

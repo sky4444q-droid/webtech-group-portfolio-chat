@@ -7,6 +7,7 @@ import { DISTRICTS } from "../config/districts";
 import { usePick, useT, type DictKey } from "../i18n";
 import type { DistrictId } from "../types";
 import { MiniMap } from "./MiniMap";
+import { useAudio } from "../store/useAudio";
 
 const HINTS: Record<DistrictId, DictKey> = {
   gate: "gateHint",
@@ -40,6 +41,7 @@ export function Hud() {
         </div>
         <div className="hud-controls">
           <LangSwitch />
+          <SoundButton />
           <SettingsMenu />
         </div>
       </header>
@@ -92,6 +94,7 @@ function SettingsMenu() {
       </button>
       {open && (
         <div className="settings-menu" role="menu">
+          <SoundSettings />
           <p className="settings-label">{tr("quality")}</p>
           {(["high", "low"] as const).map((q) => (
             <button
@@ -111,5 +114,45 @@ function SettingsMenu() {
         </div>
       )}
     </div>
+  );
+}
+
+function SoundButton() {
+  const tr = useT();
+  const master = useAudio((s) => s.master);
+  const toggleMaster = useAudio((s) => s.toggleMaster);
+  const label = tr(master ? "soundOff" : "soundOn");
+  return (
+    <button type="button" className={`icon-btn ${master ? "" : "is-muted"}`} aria-label={label} title={label} aria-pressed={!master} onClick={toggleMaster}>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z" />
+        {master ? (
+          <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" />
+        ) : (
+          <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="m16 9 5 6m0-6-5 6" />
+        )}
+      </svg>
+    </button>
+  );
+}
+
+function SoundSettings() {
+  const tr = useT();
+  const voice = useAudio((s) => s.voice);
+  const ambience = useAudio((s) => s.ambience);
+  const setVoice = useAudio((s) => s.setVoice);
+  const setAmbience = useAudio((s) => s.setAmbience);
+  return (
+    <>
+      <p className="settings-label">{tr("soundOn")}</p>
+      <label className="settings-check">
+        <input type="checkbox" checked={voice} onChange={(e) => setVoice(e.target.checked)} />
+        {tr("soundVoice")}
+      </label>
+      <label className="settings-check">
+        <input type="checkbox" checked={ambience} onChange={(e) => setAmbience(e.target.checked)} />
+        {tr("soundAmbience")}
+      </label>
+    </>
   );
 }

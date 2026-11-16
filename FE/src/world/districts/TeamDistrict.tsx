@@ -1,5 +1,7 @@
 // Team Headquarters — อาคารวิจัย/สำนักงานใหญ่ มีจอข้อมูลทีมและจอติดต่อ
 
+import { useAi } from "../../store/useAi";
+import * as sfx from "../../audio/sfx";
 import { useMemo, useRef, useState } from "react";
 import { useFrame, type ThreeElements } from "@react-three/fiber";
 import { useCursor } from "@react-three/drei";
@@ -75,12 +77,17 @@ function Screen({
         onPointerOver={(e) => {
           e.stopPropagation();
           setHovered(true);
+          useAi.getState().noticeHover();
+          sfx.play("hover");
         }}
         onPointerOut={() => setHovered(false)}
         onClick={(e) => {
           e.stopPropagation();
           const s = useWorld.getState();
-          if (s.introDone && !s.travel) openPanel(panel);
+          if (s.introDone && !s.travel) {
+            sfx.play("panelOpen");
+            openPanel(panel);
+          }
         }}
       >
         <mesh>

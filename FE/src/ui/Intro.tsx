@@ -6,6 +6,18 @@ import { useWorld } from "../store/useWorld";
 import { usePick, useT } from "../i18n";
 import { portfolio } from "../data/portfolio";
 import { INTRO_MS } from "../config/timing";
+import { useAudio } from "../store/useAudio";
+import { useAi } from "../store/useAi";
+import * as sfx from "../audio/sfx";
+
+/** ปุ่ม Enter = การคลิกแรกของผู้ชม → ปลดล็อกเสียง แล้ว AI ทักทาย */
+function enterUniverse(finishIntro: () => void) {
+  sfx.unlock();
+  useAudio.getState().unlock();
+  sfx.play("click");
+  finishIntro();
+  useAi.getState().say("voiceGreeting");
+}
 
 export function Intro() {
   const tr = useT();
@@ -52,7 +64,7 @@ export function Intro() {
           {tr("introLoading")} {Math.round(k * 100)}%
         </p>
         {ready ? (
-          <button type="button" className="btn btn-enter" onClick={finishIntro} autoFocus>
+          <button type="button" className="btn btn-enter" onClick={() => enterUniverse(finishIntro)} autoFocus>
             {tr("introEnter")}
           </button>
         ) : (

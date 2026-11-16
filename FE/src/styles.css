@@ -1034,3 +1034,47 @@ button {
 .intro-logo { width: min(220px, 40vw); margin: 0 auto 8px; display: block; filter: drop-shadow(0 0 24px rgba(177, 76, 255, 0.55)); animation: logo-float 4s ease-in-out infinite; }
 @keyframes logo-float { 50% { transform: translateY(-6px); } }
 .hud-logo { width: 46px; height: auto; margin-right: 12px; align-self: flex-start; }
+
+/* ---------- ซับไตเติลคำพูด AI ---------- */
+.ai-subtitle {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  max-width: min(640px, calc(100vw - 32px));
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(8, 6, 22, 0.72);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.18);
+  pointer-events: none;
+  animation: subtitle-in 0.35s ease-out;
+}
+.ai-subtitle p { margin: 0; line-height: 1.5; font-size: 15px; }
+.ai-subtitle-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--cyan, #00f0ff);
+  box-shadow: 0 0 10px var(--cyan, #00f0ff);
+  animation: subtitle-pulse 0.9s ease-in-out infinite;
+}
+@keyframes subtitle-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+@keyframes subtitle-pulse { 50% { transform: scale(0.6); opacity: 0.6; } }
+.chat-open .ai-subtitle { left: calc(50% - 200px); }
+
+.settings-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.icon-btn.is-muted { opacity: 0.6; }
