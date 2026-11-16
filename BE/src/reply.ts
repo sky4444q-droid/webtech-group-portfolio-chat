@@ -61,19 +61,19 @@ function portfolioToText(p: Portfolio): string {
   return parts.length ? parts.join("\n\n") : "(ยังไม่มีข้อมูลทีมในระบบ)";
 }
 
-function buildSystemPrompt(language: Language, district?: string): string {
+function buildSystemPrompt(portfolio: Portfolio, language: Language, district?: string): string {
   const langRule =
     language === "en"
       ? "Reply in English."
       : "ตอบเป็นภาษาไทย";
-  const place = district ? `\n- ผู้ใช้กำลังอยู่ที่พื้นที่: ${district} (ปรับน้ำเสียงให้เข้ากับฉากนี้ได้เล็กน้อย แต่ห้ามเปลี่ยนข้อเท็จจริง)` : "";
+  const place = district ? `\nผู้ใช้กำลังอยู่ที่พื้นที่: ${district} (ปรับน้ำเสียงให้เข้ากับฉากนี้ได้เล็กน้อย แต่ห้ามเปลี่ยนข้อเท็จจริง)` : "";
 
   return `# Persona
 คุณคือ AI Assistant ของเว็บไซต์ Portfolio ของกลุ่ม มีตัวตนของตัวเอง ไม่ได้พูดแทนสมาชิกคนใดคนหนึ่ง
 ฉลาด เป็นมิตร สุขุม และปรับน้ำเสียงตามสถานการณ์ของผู้ใช้
 
 # ข้อมูลทีม (แหล่งข้อมูลเดียวที่ใช้ตอบเรื่องทีม)
-${portfolioToText(loadPortfolio())}
+${portfolioToText(portfolio)}
 
 # Task
 - ถ้าผู้ใช้ถามเรื่องกลุ่มหรือสมาชิกคนไหน ให้ตอบเฉพาะข้อมูลของคนนั้นหรือกลุ่มนั้น จากหัวข้อ "ข้อมูลทีม" เท่านั้น
@@ -97,6 +97,43 @@ ${portfolioToText(loadPortfolio())}
 - [GENERAL] ถ้าเป็นคำตอบทั่วไปที่ไม่ได้ใช้ข้อมูลทีม`;
 }
 
+function extractRelevantSources(portfolio: Portfolio, replyText: string): Source[] {
+  const sources: Source[] = [TEAM_SOURCE];
+  const seenUrls = new Set<string>();
+
+  const addIfRelevant = (title: string, url: unknown, keywords: string[]) => {
+    if (typeof url !== "string" || !url.startsWith("http") || seenUrls.has(url)) return;
+    const isMatch = keywords.some((kw) => kw && replyText.toLowerCase().includes(kw.toLowerCase()));
+    if (isMatch) {
+      seenUrls.add(url);
+      sources.push({ title, url });
+    }
+  };
+
+  for (const m of portfolio.members ?? []) {
+    const memberName = String(m.name ?? "");
+    const nickname = String(m.nickname ?? "");
+    const engName = String(m.englishName ?? "");
+
+    if (m.contact && typeof m.contact === "object" && !Array.isArray(m.contact)) {
+      for (const [platform, val] of Object.entries(m.contact)) {
+        addIfRelevant(`${memberName || nickname} (${platform})`, val, [memberName, nickname, engName]);
+      }
+    }
+
+    if (Array.isArray(m.works)) {
+      for (const w of m.works) {
+        if (w && typeof w === "object" && !Array.isArray(w)) {
+          const workTitle = String(w.title ?? "ผลงาน");
+          addIfRelevant(workTitle, w.link, [workTitle, memberName, nickname]);
+        }
+      }
+    }
+  }
+
+  return sources;
+}
+
 const FALLBACK = "ขออภัยครับ ตอนนี้ระบบตอบคำถามยังไม่พร้อมใช้งาน";
 let warned = false;
 
@@ -114,15 +151,18 @@ export async function getReply(
     return { text: FALLBACK, sources: [] };
   }
 
-  const raw = await askLlm(buildSystemPrompt(language, district), [
+  const portfolio = loadPortfolio();
+  const raw = await askLlm(buildSystemPrompt(portfolio, language, district), [
     ...history,
     { role: "user", content: text },
   ]);
 
   const m = raw.match(/^\s*\[(TEAM|GENERAL)\]\s*/i);
   const isTeam = m?.[1].toUpperCase() === "TEAM";
+  const cleanText = m ? raw.slice(m[0].length) : raw;
+
   return {
-    text: m ? raw.slice(m[0].length) : raw,
-    sources: isTeam ? [TEAM_SOURCE] : [],
+    text: cleanText,
+    sources: isTeam ? extractRelevantSources(portfolio, cleanText) : [],
   };
 }
