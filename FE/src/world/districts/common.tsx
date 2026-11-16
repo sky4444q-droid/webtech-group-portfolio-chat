@@ -3,14 +3,17 @@
 import { useRef } from "react";
 import { useFrame, type ThreeElements } from "@react-three/fiber";
 import * as THREE from "three";
+import { useTexture } from "@react-three/drei";
 
 /** ลานวงกลมพร้อมขอบเรืองแสง */
 export function Platform({ radius, color, ...group }: ThreeElements["group"] & { radius: number; color: string }) {
+  // โลหะขัดลาย: normal + roughness จาก ambientCG (CC0)
+  const [normalMap, roughnessMap] = useTexture(["/assets/textures/metal032_normal.jpg", "/assets/textures/metal032_roughness.jpg"]);
   return (
     <group {...group}>
       <mesh position={[0, 0.15, 0]}>
         <cylinderGeometry args={[radius, radius + 0.4, 0.3, 64]} />
-        <meshStandardMaterial color="#0c0920" metalness={0.8} roughness={0.35} />
+        <meshStandardMaterial color="#0c0920" metalness={0.85} roughness={0.35} normalMap={normalMap} roughnessMap={roughnessMap} />
       </mesh>
       <mesh position={[0, 0.31, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[radius - 0.25, radius - 0.1, 96]} />

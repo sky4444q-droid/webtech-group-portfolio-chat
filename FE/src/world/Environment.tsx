@@ -2,16 +2,24 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { MeshReflectorMaterial, Sparkles, Stars } from "@react-three/drei";
+import { Environment as HdrEnvironment, MeshReflectorMaterial, Sparkles, Stars, useTexture } from "@react-three/drei";
+import { Suspense } from "react";
 import * as THREE from "three";
 import { COLORS } from "../config/theme";
 import { DISTRICT_ORDER, DISTRICTS } from "../config/districts";
 import { useWorld } from "../store/useWorld";
 import { buildingWindowsTexture } from "./textures";
+import { fxEnabled } from "./fx/fxEnabled";
+import { GroundFog, LensFlare, RainSplashes, Traffic, VolumetricCone } from "./fx/Effects";
+import { AVENUE } from "./travel/paths";
+import type { DistrictId } from "../types";
 
 export function Environment() {
   const quality = useWorld((s) => s.quality);
+  const district = useWorld((s) => s.district);
   const high = quality === "high";
+  const fx = fxEnabled(quality);
+  const center = DISTRICTS[district].position;
   return (
     <>
       <ambientLight intensity={0.35} color="#6b4cff" />
@@ -19,8 +27,16 @@ export function Environment() {
       <directionalLight position={[-40, 60, 30]} intensity={0.4} color="#9b7bff" />
       <Stars radius={260} depth={60} count={high ? 4000 : 1500} factor={4} saturation={0.6} fade speed={0.5} />
       <City />
-      <Floor high={high} />
-      {high && <Rain />}
+      <Suspense fallback={<FloorPlain />}>
+        <Floor high={fx.reflector} />
+        {/* แสงสะท้อนจาก HDRI กลางคืน (CC0) — ไม่ใช้เป็นพื้นหลัง */}
+        <HdrEnvironment files="/assets/hdri/dikhololo_night_1k.hdr" environmentIntensity={0.35} />
+      </Suspense>
+      {fx.rain && <Rain />}
+      {fx.rain && <RainSplashes />}
+      {fx.traffic && <Traffic />}
+      <GroundFog layers={fx.fogLayers} center={[center[0], 0, center[2]]} />
+      <StreetLights cones={fx.cones} flare={fx.flare} />
       {DISTRICT_ORDER.map((id) => (
         <Sparkles
           key={id}
@@ -38,12 +54,32 @@ export function Environment() {
 
 // ---------- พื้นเปียกสะท้อนแสง ----------
 
+function FloorPlain() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[420, 420]} />
+      <meshStandardMaterial color="#0a0714" metalness={0.7} roughness={0.45} />
+    </mesh>
+  );
+}
+
 function Floor({ high }: { high: boolean }) {
+  // พื้นยางมะตอยเปียก: normal + roughness จาก ambientCG (CC0) ทำให้แสงสะท้อนเป็นแอ่ง ๆ
+  const [normalMap, roughnessMap] = useTexture(["/assets/textures/asphalt015_normal.jpg", "/assets/textures/asphalt015_roughness.jpg"]);
+  useMemo(() => {
+    for (const t of [normalMap, roughnessMap]) {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(70, 70);
+    }
+  }, [normalMap, roughnessMap]);
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
       <planeGeometry args={[420, 420]} />
       {high ? (
         <MeshReflectorMaterial
+          normalMap={normalMap}
+          normalScale={new THREE.Vector2(0.6, 0.6)}
+          roughnessMap={roughnessMap}
           resolution={512}
           blur={[300, 80]}
           mixBlur={0.9}
@@ -57,7 +93,7 @@ function Floor({ high }: { high: boolean }) {
           mirror={0.5}
         />
       ) : (
-        <meshStandardMaterial color="#0a0714" metalness={0.7} roughness={0.45} />
+        <meshStandardMaterial color="#0a0714" metalness={0.7} roughness={0.45} normalMap={normalMap} roughnessMap={roughnessMap} />
       )}
     </mesh>
   );
@@ -188,5 +224,45 @@ function Rain() {
       </bufferGeometry>
       <lineBasicMaterial color="#9fb7ff" transparent opacity={0.28} depthWrite={false} />
     </lineSegments>
+  );
+}
+
+// ---------- ไฟถนน: กรวยลำแสง + แฟลร์ (พิกัดสัมพัทธ์กับพื้นที่) ----------
+
+const LIGHTS: { district: DistrictId; at: [number, number, number]; color: string }[] = [
+  { district: "nexus", at: [-13, 0, 7], color: COLORS.cyan },
+  { district: "nexus", at: [13, 0, 7], color: COLORS.pink },
+  { district: "projects", at: [-12.5, 0, 5], color: COLORS.purple },
+  { district: "projects", at: [12.5, 0, 5], color: COLORS.cyan },
+  { district: "sanctuary", at: [-11, 0, 9], color: COLORS.blue },
+  { district: "sanctuary", at: [11, 0, 9], color: COLORS.pink },
+  { district: "gate", at: [-2.6, 0, 20], color: COLORS.pink },
+  { district: "gate", at: [2.6, 0, 38], color: COLORS.cyan },
+  { district: "team", at: [-11, 0, 14], color: COLORS.green },
+  { district: "team", at: [11, 0, 14], color: COLORS.green },
+];
+
+function StreetLights({ cones, flare }: { cones: boolean; flare: boolean }) {
+  const avenue = Array.from({ length: 5 }, (_, i) => ({
+    at: [AVENUE.x + (i % 2 ? 4.6 : -4.6), 0, AVENUE.zStart - 8 - i * 14] as [number, number, number],
+    color: i % 2 ? COLORS.pink : COLORS.cyan,
+  }));
+  const all = [
+    ...LIGHTS.map((l) => {
+      const p = DISTRICTS[l.district].position;
+      return { at: [p[0] + l.at[0], 0, p[2] + l.at[2]] as [number, number, number], color: l.color };
+    }),
+    ...avenue,
+  ];
+  if (!cones && !flare) return null;
+  return (
+    <>
+      {all.map((l, i) => (
+        <group key={i} position={l.at}>
+          {cones && <VolumetricCone color={l.color} height={7} />}
+          {flare && <LensFlare color={l.color} size={3.2} position={[0, 7, 0]} />}
+        </group>
+      ))}
+    </>
   );
 }

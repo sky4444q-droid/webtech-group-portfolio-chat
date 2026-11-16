@@ -10,6 +10,7 @@ import { COLORS } from "../config/theme";
 import { DISTRICTS } from "../config/districts";
 import { useWorld } from "../store/useWorld";
 import { CameraRig } from "./CameraRig";
+import { fxEnabled } from "./fx/fxEnabled";
 import { ViewpointMarkers } from "./ViewpointMarkers";
 import { GalleryAvenue } from "./travel/GalleryAvenue";
 import { ElevatorScene } from "./travel/ElevatorScene";
@@ -57,7 +58,7 @@ export function World() {
         <IntroMascot />
       </Suspense>
       <CameraRig />
-      {high && (
+      {fxEnabled(quality).bloom && (
         <EffectComposer multisampling={4}>
           <Bloom mipmapBlur intensity={1.15} luminanceThreshold={0.35} luminanceSmoothing={0.25} />
           <Vignette eskil={false} offset={0.15} darkness={0.85} />
