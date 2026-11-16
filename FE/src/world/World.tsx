@@ -15,6 +15,7 @@ import { ViewpointMarkers } from "./ViewpointMarkers";
 import { GalleryAvenue } from "./travel/GalleryAvenue";
 import { ElevatorScene } from "./travel/ElevatorScene";
 import { Mascot } from "./ai/Mascot";
+import { DataFragments } from "./DataFragment";
 import { useAi } from "../store/useAi";
 import { Environment } from "./Environment";
 import { GateDistrict } from "./districts/GateDistrict";
@@ -56,6 +57,7 @@ export function World() {
         <ViewpointMarkers />
         <TravelScenes />
         <IntroMascot />
+        <DataFragments />
       </Suspense>
       <CameraRig />
       {fxEnabled(quality).bloom && (

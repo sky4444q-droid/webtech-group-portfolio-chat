@@ -6,6 +6,9 @@ import { NeonSign } from "../NeonSign";
 import { Portal } from "../Portal";
 import { AiPresence } from "../ai/AiPresence";
 import { Platform, SpinningRing } from "./common";
+import { useTexture } from "@react-three/drei";
+import * as THREE from "three";
+import { useDiscovery } from "../../store/useDiscovery";
 
 export function SanctuaryDistrict() {
   const cfg = DISTRICTS.sanctuary;
@@ -21,10 +24,27 @@ export function SanctuaryDistrict() {
       ].map((ring) => (
         <SpinningRing key={ring.r} radius={ring.r} color={ring.c} speed={ring.s} position={[0, 5.5, -2]} rotation={ring.rot} opacity={0.55} />
       ))}
+      <DiscoveryReward />
       <NeonSign text={cfg.sign} color={cfg.color} height={0.9} position={[0, 12, -10]} />
       <NeonSign text="静寂" color={COLORS.purple} height={3} vertical position={[-13, 8, -6]} />
       <Portal target="nexus" radius={1.6} position={[10.5, 0.3, 3]} rotation={[0, -0.6, 0]} />
       <pointLight color={COLORS.pink} intensity={30} distance={30} position={[-8, 4, 4]} />
+    </group>
+  );
+}
+
+/** เก็บเศษข้อมูลครบ 5 ชิ้น: โลโก้ NEXORA ปรากฏกลางร่าง AI พร้อมวงแหวนทอง */
+function DiscoveryReward() {
+  const complete = useDiscovery((s) => s.complete);
+  const logo = useTexture("/images/nexora-emblem.png");
+  if (!complete) return null;
+  return (
+    <group position={[0, 5.5, -2]}>
+      <sprite scale={[3.4, 2.9, 1]}>
+        <spriteMaterial map={logo} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      </sprite>
+      <SpinningRing radius={4.2} color="#ffd36b" speed={0.5} rotation={[Math.PI / 2.1, 0, 0]} opacity={0.9} />
+      <SpinningRing radius={5.6} color="#ffd36b" speed={-0.3} rotation={[Math.PI / 1.6, 0.5, 0]} opacity={0.6} />
     </group>
   );
 }

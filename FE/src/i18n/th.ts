@@ -113,4 +113,9 @@ export const th = {
   archTitle: "Architecture",
   memberProfile: "โปรไฟล์สมาชิก",
   holoTeamHint: "คลิกการ์ดเพื่อดูโปรไฟล์",
+
+  // ---------- Discovery ----------
+  voiceDiscover: "เจอเศษข้อมูลแล้ว! ยังมีซ่อนอยู่อีกนะ",
+  voiceDiscoverAll: "ครบทุกชิ้นแล้ว ลองไปที่ที่สถิตของฉันดูสิ",
+  discoveryLabel: "เศษข้อมูลที่ค้นพบ",
 };

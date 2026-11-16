@@ -1275,3 +1275,16 @@ button {
   font-size: 18px;
 }
 .arch-index { font-family: var(--font-display); color: var(--pink); font-size: 12px; }
+
+.discovery-count {
+  align-self: center;
+  padding: 4px 10px;
+  border: 1px solid rgba(125, 255, 207, 0.5);
+  border-radius: 999px;
+  color: #7dffcf;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 8px rgba(125, 255, 207, 0.7);
+  animation: holo-in 0.4s ease both;
+}

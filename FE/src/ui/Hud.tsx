@@ -8,6 +8,7 @@ import { usePick, useT, type DictKey } from "../i18n";
 import type { DistrictId } from "../types";
 import { MiniMap } from "./MiniMap";
 import { useAudio } from "../store/useAudio";
+import { FRAGMENTS, useDiscovery } from "../store/useDiscovery";
 
 const HINTS: Record<DistrictId, DictKey> = {
   gate: "gateHint",
@@ -40,6 +41,7 @@ export function Hud() {
           {!travel && <p className="hud-hint">{tr(HINTS[district])}</p>}
         </div>
         <div className="hud-controls">
+          <DiscoveryCounter />
           <LangSwitch />
           <SoundButton />
           <SettingsMenu />
@@ -180,5 +182,17 @@ function BackButton() {
     <button type="button" className="btn btn-ghost hud-back" onClick={backViewpoint}>
       ← {tr("viewBack")}
     </button>
+  );
+}
+
+/** ตัวนับเศษข้อมูล — ซ่อนจนกว่าจะเจอชิ้นแรก */
+function DiscoveryCounter() {
+  const tr = useT();
+  const found = useDiscovery((s) => s.found.length);
+  if (!found) return null;
+  return (
+    <span className="discovery-count" title={tr("discoveryLabel")}>
+      ◆ {found}/{FRAGMENTS.length}
+    </span>
   );
 }

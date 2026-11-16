@@ -114,4 +114,9 @@ export const en: Record<keyof typeof th, string> = {
   archTitle: "Architecture",
   memberProfile: "Member profile",
   holoTeamHint: "Click a card to see the profile",
+
+  // ---------- Discovery ----------
+  voiceDiscover: "You found a data fragment! There are more hidden around.",
+  voiceDiscoverAll: "You found them all. Come visit me in the Sanctuary.",
+  discoveryLabel: "Data fragments found",
 };
