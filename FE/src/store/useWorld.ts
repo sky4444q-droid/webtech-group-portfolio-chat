@@ -38,7 +38,10 @@ export interface WorldState {
   skipRequested: boolean;
 
   setLang: (lang: Lang) => void;
-  travelTo: (id: DistrictId) => void;
+  /** fromHistory = มาจากปุ่ม Back/Forward — ถ้ากำลังเดินทางอยู่จะจำไว้แล้วไปต่อเมื่อถึง */
+  travelTo: (id: DistrictId, opts?: { fromHistory?: boolean }) => void;
+  /** ปลายทางจากปุ่ม Back ที่กดระหว่างเดินทาง */
+  queuedTarget: DistrictId | null;
   finishTravel: () => void;
   finishIntro: () => void;
   setChatOpen: (open: boolean) => void;
@@ -59,7 +62,7 @@ export interface WorldState {
 
 type WorldData = Pick<
   WorldState,
-  "lang" | "district" | "travel" | "introDone" | "pendingTarget" | "chatOpen" | "panel" | "quality" | "guideSeen" | "viewpoint" | "viewpointStack" | "travelKind" | "skipRequested"
+  "lang" | "district" | "travel" | "introDone" | "pendingTarget" | "chatOpen" | "panel" | "quality" | "guideSeen" | "viewpoint" | "viewpointStack" | "travelKind" | "skipRequested" | "queuedTarget"
 >;
 
 export function initialWorldState(): WorldData {
@@ -77,6 +80,7 @@ export function initialWorldState(): WorldData {
     viewpointStack: [],
     travelKind: null,
     skipRequested: false,
+    queuedTarget: null,
   };
 }
 
@@ -88,13 +92,17 @@ export const useWorld = create<WorldState>((set, get) => ({
     save("lang", lang);
   },
 
-  travelTo: (id) => {
+  travelTo: (id, opts) => {
     const s = get();
     if (!s.introDone) {
       set({ pendingTarget: id });
       return;
     }
-    if (s.travel || id === s.district) return;
+    if (s.travel) {
+      if (opts?.fromHistory) set({ queuedTarget: id });
+      return;
+    }
+    if (id === s.district) return;
     const kind = travelKind(s.district, id, { reducedMotion: prefersReducedMotion(), quality: s.quality });
     set({ travel: { from: s.district, to: id }, panel: null, travelKind: kind, skipRequested: false });
   },
@@ -102,7 +110,9 @@ export const useWorld = create<WorldState>((set, get) => ({
   finishTravel: () => {
     const { travel } = get();
     if (!travel) return;
-    set({ district: travel.to, travel: null, panel: null, viewpoint: 0, viewpointStack: [], travelKind: null, skipRequested: false });
+    const queued = get().queuedTarget;
+    set({ district: travel.to, travel: null, panel: null, viewpoint: 0, viewpointStack: [], travelKind: null, skipRequested: false, queuedTarget: null });
+    if (queued && queued !== travel.to) get().travelTo(queued);
   },
 
   finishIntro: () => {

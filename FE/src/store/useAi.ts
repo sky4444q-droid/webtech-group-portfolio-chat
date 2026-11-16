@@ -17,7 +17,8 @@ export const SUBTITLE_HOLD_MS = 1800;
 
 /** แยกไว้เพื่อให้ test แทนที่เสียงจริงได้ */
 export const aiDeps = {
-  speak: voice.speak as (text: string, lang: "th" | "en", onEnd: () => void) => void,
+  /** คืน false ถ้าไม่ได้พูดจริง (ไม่มีเสียงภาษานั้น / เบราว์เซอร์ไม่รองรับ) */
+  speak: voice.speak as (text: string, lang: "th" | "en", onEnd: () => void) => boolean,
   cancel: () => voice.cancel(),
   duck: (on: boolean) => sfx.duck(on),
 };
@@ -74,21 +75,34 @@ export const useAi = create<AiState>((set, get) => ({
     get().setMood("speaking");
     set({ subtitle: text });
 
+    // ไม่มีเสียง: ให้ซับไตเติลอยู่นานพอให้อ่านทัน
+    const readMs = Math.max(2200, text.length * 70);
+    let spoken = false;
     const end = () => {
       if (id !== speechId) return; // มีคำพูดใหม่มาแทนแล้ว
       aiDeps.duck(false);
       if (get().mood === "speaking") get().setMood("idle");
+      clearTimeout(subtitleTimer);
       subtitleTimer = setTimeout(() => {
         if (id === speechId) set({ subtitle: null });
       }, SUBTITLE_HOLD_MS);
     };
+    const endSilently = () => {
+      clearTimeout(subtitleTimer);
+      subtitleTimer = setTimeout(end, readMs);
+    };
 
     if (useAudio.getState().voiceOn()) {
       aiDeps.duck(true);
-      aiDeps.speak(text, lang, end);
+      spoken = aiDeps.speak(text, lang, () => {
+        if (spoken) end();
+      });
+      if (!spoken) {
+        aiDeps.duck(false);
+        endSilently();
+      }
     } else {
-      // ไม่มีเสียง: ให้ซับไตเติลอยู่นานพอให้อ่านทัน
-      setTimeout(end, Math.max(2200, text.length * 70));
+      endSilently();
     }
   },
 

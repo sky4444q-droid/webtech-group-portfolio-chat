@@ -132,4 +132,21 @@ describe("useWorld", () => {
       expect(useWorld.getState().panel).toBeNull();
     });
   });
+
+  describe("history during travel", () => {
+    it("a Back press during a trip is queued and taken after arriving", () => {
+      useWorld.getState().travelTo("projects");
+      useWorld.getState().travelTo("nexus", { fromHistory: true });
+      useWorld.getState().finishTravel();
+      expect(useWorld.getState().district).toBe("projects");
+      expect(useWorld.getState().travel?.to).toBe("nexus");
+    });
+
+    it("a Mini Map click during a trip is still ignored", () => {
+      useWorld.getState().travelTo("projects");
+      useWorld.getState().travelTo("team");
+      useWorld.getState().finishTravel();
+      expect(useWorld.getState().travel).toBeNull();
+    });
+  });
 });

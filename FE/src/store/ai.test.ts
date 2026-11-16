@@ -16,6 +16,7 @@ describe("useAi", () => {
     onEnd = null;
     vi.spyOn(aiDeps, "speak").mockImplementation((_text, _lang, end) => {
       onEnd = end;
+      return true;
     });
     vi.spyOn(aiDeps, "duck").mockImplementation(() => {});
   });
@@ -91,5 +92,17 @@ describe("useAi", () => {
     useAi.getState().setMood("thinking");
     useAi.getState().noticeTyping();
     expect(useAi.getState().mood).toBe("thinking");
+  });
+
+  it("keeps the subtitle long enough to read when the machine has no voice", () => {
+    vi.mocked(aiDeps.speak).mockImplementation((_t, _l, end) => {
+      end();
+      return false;
+    });
+    useAi.getState().say("voiceGreeting");
+    vi.advanceTimersByTime(SUBTITLE_HOLD_MS + 10);
+    expect(useAi.getState().subtitle).not.toBeNull();
+    vi.advanceTimersByTime(20_000);
+    expect(useAi.getState().subtitle).toBeNull();
   });
 });

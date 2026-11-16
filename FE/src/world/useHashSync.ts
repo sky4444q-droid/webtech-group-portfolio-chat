@@ -11,14 +11,18 @@ export function useHashSync() {
 
     const onHashChange = () => {
       const id = districtFromHash(window.location.hash);
-      if (id) useWorld.getState().travelTo(id);
+      if (id) useWorld.getState().travelTo(id, { fromHistory: true });
     };
     window.addEventListener("hashchange", onHashChange);
 
     const unsubscribe = useWorld.subscribe((s, prev) => {
       if (s.introDone && s.district !== prev.district) {
         const h = hashFor(s.district);
-        if (window.location.hash !== h) window.history.pushState(null, "", h);
+        // มาถึงแล้วแต่ URL ไม่ตรง (เช่นกด Back ระหว่างเดินทาง แล้วไปต่อจากคิว) → แทนที่ ไม่เพิ่มประวัติซ้ำ
+        if (window.location.hash !== h) {
+          if (s.queuedTarget || prev.queuedTarget) window.history.replaceState(null, "", h);
+          else window.history.pushState(null, "", h);
+        }
       }
     });
 

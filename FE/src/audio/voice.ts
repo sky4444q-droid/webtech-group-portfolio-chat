@@ -21,11 +21,17 @@ export function speak(
   onEnd: () => void,
   synth: SynthLike | null = defaultSynth(),
   Utterance: typeof SpeechSynthesisUtterance | null = defaultUtterance(),
-): void {
-  if (!synth || !Utterance) return onEnd();
+): boolean {
+  if (!synth || !Utterance) {
+    onEnd();
+    return false;
+  }
   const prefix = lang === "th" ? "th" : "en";
   const voice = synth.getVoices().find((v) => v.lang.toLowerCase().startsWith(prefix));
-  if (!voice) return onEnd();
+  if (!voice) {
+    onEnd();
+    return false;
+  }
 
   synth.cancel();
   const u = new Utterance(text);
@@ -42,6 +48,7 @@ export function speak(
   u.onend = finish;
   u.onerror = finish;
   synth.speak(u);
+  return true;
 }
 
 export function cancel(synth: SynthLike | null = defaultSynth()): void {
