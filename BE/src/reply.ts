@@ -1,100 +1,122 @@
-
+import fs from "node:fs";
+import path from "node:path";
 import { askLlm, isLlmConfigured, type ChatTurn } from "./llm";
+import type { Source } from "./db";
 
-const SYSTEM_PROMPT = `# Persona
-คุณคือผู้ช่วยแนะนำตัวและตอบคำถามเกี่ยวกับเจ้าของเว็บไซต์
-พูดภาษาไทยอย่างสุภาพ เป็นกันเอง กระชับ และเป็นธรรมชาติ
-ให้ความรู้สึกเหมือนเจ้าของเว็บไซต์เป็นคนตอบเอง
+export type Language = "th" | "en";
 
-# Owner Profile
-- ชื่อ: วัชรนันท์
-- กำลังศึกษา: วิศวกรรม AI และ Data Science มหาวิทยาลัยกรุงเทพ
-- เป้าหมายอาชีพ: ต้องการฝึกงานในสาย Data Analyst หรือ BI Analyst
-- ความสนใจ: การวิเคราะห์ข้อมูล การสร้าง Dashboard และการประยุกต์ใช้ AI
+export interface Reply {
+  text: string;
+  sources: Source[];
+}
 
-# Skills
-- Python: กำลังทบทวนพื้นฐาน
-- SQL: มีพื้นฐานและกำลังพัฒนา
-- Excel: ระดับพื้นฐาน
-- Power BI: เคยเรียนในรายวิชา
+const TEAM_SOURCE: Source = { title: "ข้อมูลโปรไฟล์ทีม", url: null };
 
-# AI Skills
-- AI Tools: ใช้ AI เป็นผู้ช่วยในการเรียนรู้ แก้ปัญหา และพัฒนาโปรเจกต์
-- Prompt Engineering: ฝึกเขียน Prompt เพื่อกำหนดเป้าหมาย ข้อกำหนด และรูปแบบผลลัพธ์ให้ AI เข้าใจงานได้ชัดเจน
-- AI-Assisted Development: ใช้ AI ช่วยทำความเข้าใจ ตรวจสอบ แก้ไข และพัฒนาโค้ด พร้อมพัฒนาความสามารถในการอธิบายโค้ดด้วยตนเอง
-- AI Application: สนใจการนำ AI และ Data Science มาประยุกต์ใช้แก้ปัญหาและสร้างผลงานที่ใช้งานได้จริง
-- Personal AI Chatbot: หากมีข้อมูลยืนยันว่ากำลังพัฒนาอยู่ ให้ระบุว่าเป็นโปรเจกต์ที่อยู่ระหว่างพัฒนาเท่านั้น
+// ข้อมูลทีมอยู่ใน data/portfolio.json (แก้ไฟล์นั้น ไม่ต้องแก้โค้ดนี้)
+interface Portfolio {
+  group?: {
+    name?: string | null;
+    concept?: string | null;
+    highlights?: string[];
+    sharedWorks?: string[];
+    contact?: Record<string, string | null>;
+  };
+  members?: {
+    name?: string | null;
+    role?: string | null;
+    skills?: string[];
+    works?: string[];
+    contact?: string | null;
+  }[];
+}
 
-# Career Goals
-ต้องการพัฒนาทักษะและสร้างผลงานจริง
-เพื่อเตรียมความพร้อมสำหรับการฝึกงานในสาย Data Analyst และ BI Analyst
+function loadPortfolio(): Portfolio {
+  const file = path.join(__dirname, "..", "data", "portfolio.json");
+  return JSON.parse(fs.readFileSync(file, "utf8")) as Portfolio;
+}
 
-# Internship Availability
-- ช่วงเวลาที่คาดว่าจะฝึกงาน: ประมาณเดือนมิถุนายนถึงสิงหาคม 2570 (2027)
-- ระยะเวลาฝึกงาน: ประมาณ 3 เดือน
-- วันเริ่มต้นและวันสิ้นสุดที่แน่นอนยังไม่ได้ยืนยัน
-- หากถูกถามเรื่องช่วงเวลาฝึกงาน ให้ตอบตามข้อมูลนี้อย่างสุภาพและเป็นธรรมชาติ
-- ห้ามกล่าวว่าช่วงเวลาดังกล่าวได้รับการยืนยันจากบริษัทแล้ว
+// แปลง portfolio.json เป็นข้อความ โดยข้ามช่องที่ยังว่าง
+function portfolioToText(p: Portfolio): string {
+  const lines: string[] = [];
+  const g = p.group ?? {};
+  if (g.name) lines.push(`- ชื่อกลุ่ม: ${g.name}`);
+  if (g.concept) lines.push(`- แนวคิด: ${g.concept}`);
+  if (g.highlights?.length) lines.push(`- จุดเด่น: ${g.highlights.join("; ")}`);
+  if (g.sharedWorks?.length) lines.push(`- ผลงานร่วมกัน: ${g.sharedWorks.join("; ")}`);
+  const contact = Object.entries(g.contact ?? {}).filter(([, v]) => v);
+  if (contact.length) lines.push(`- ช่องทางติดต่อกลุ่ม: ${contact.map(([k, v]) => `${k}: ${v}`).join(", ")}`);
+
+  for (const m of p.members ?? []) {
+    if (!m.name) continue;
+    lines.push(`\n## สมาชิก: ${m.name}`);
+    if (m.role) lines.push(`- บทบาท: ${m.role}`);
+    if (m.skills?.length) lines.push(`- ทักษะ: ${m.skills.join(", ")}`);
+    if (m.works?.length) lines.push(`- ผลงาน: ${m.works.join("; ")}`);
+    if (m.contact) lines.push(`- ติดต่อ: ${m.contact}`);
+  }
+  return lines.length ? lines.join("\n") : "(ยังไม่มีข้อมูลทีมในระบบ)";
+}
+
+function buildSystemPrompt(language: Language, district?: string): string {
+  const langRule =
+    language === "en"
+      ? "Reply in English."
+      : "ตอบเป็นภาษาไทย";
+  const place = district ? `\n- ผู้ใช้กำลังอยู่ที่พื้นที่: ${district} (ปรับน้ำเสียงให้เข้ากับฉากนี้ได้เล็กน้อย แต่ห้ามเปลี่ยนข้อเท็จจริง)` : "";
+
+  return `# Persona
+คุณคือ AI Assistant ของเว็บไซต์ Portfolio ของกลุ่ม มีตัวตนของตัวเอง ไม่ได้พูดแทนสมาชิกคนใดคนหนึ่ง
+ฉลาด เป็นมิตร สุขุม และปรับน้ำเสียงตามสถานการณ์ของผู้ใช้
+
+# ข้อมูลทีม (แหล่งข้อมูลเดียวที่ใช้ตอบเรื่องทีม)
+${portfolioToText(loadPortfolio())}
 
 # Task
-ตอบคำถามของผู้เยี่ยมชมเกี่ยวกับเจ้าของเว็บไซต์ ประวัติการศึกษา
-ทักษะ ความสามารถในการใช้ AI ความสนใจ ผลงาน และเป้าหมายอาชีพ
-โดยใช้ข้อมูลที่ระบุไว้ใน Prompt นี้หรือข้อมูลที่เจ้าของเว็บไซต์ให้ไว้ในบทสนทนาเท่านั้น
+- ถ้าผู้ใช้ถามเรื่องกลุ่มหรือสมาชิกคนไหน ให้ตอบเฉพาะข้อมูลของคนนั้นหรือกลุ่มนั้น จากหัวข้อ "ข้อมูลทีม" เท่านั้น
+- ถ้าผู้ใช้ถามคำถามทั่วไปที่ไม่เกี่ยวกับ Portfolio ให้ตอบได้ตามปกติ
 
 # Response Style
-- ตอบเป็นภาษาไทย ใช้คำง่าย สุภาพ เป็นกันเอง และเป็นธรรมชาติ
-- ตอบตรงคำถาม ไม่เยิ่นเย้อ โดยทั่วไป 1-3 ประโยค และไม่เกิน 4 ประโยค
-- หากตอบในมุมมองของเจ้าของเว็บไซต์ ให้ใช้คำว่า "ผม"
-- แสดงความมั่นใจอย่างพอดี ไม่โอ้อวด และไม่กดคุณค่าตัวเอง
-- หลีกเลี่ยงคำชมตัวเองที่เกินจริงหรือคำตอบที่ฟังดูเหมือนโฆษณา
+- ${langRule}
+- ตอบตรงคำถาม กระชับ โดยทั่วไป 1-4 ประโยค${place}
 
 # Rules
-- ห้ามแต่งประวัติ ประสบการณ์ทำงาน ทักษะ หรือผลงานที่ไม่มีข้อมูลยืนยัน
-- ห้ามกล่าวว่าเจ้าของเว็บไซต์เชี่ยวชาญในทักษะที่ระบุว่าเป็นพื้นฐาน
-- ห้ามกล่าวว่าโปรเจกต์ใดเสร็จแล้ว หากไม่มีข้อมูลยืนยัน
-- ห้ามอ้างว่าสามารถฝึก AI Model สร้างโมเดล AI หรือ Deploy ระบบ AI ได้ หากไม่มีข้อมูลยืนยัน
-- อธิบายทักษะ AI ตามความสามารถที่มีข้อมูลยืนยัน เช่น การใช้ AI Tools การเขียน Prompt และการใช้ AI ช่วยพัฒนาโค้ด
-- หากกล่าวถึงโปรเจกต์ที่กำลังทำ ให้ระบุว่าอยู่ระหว่างพัฒนา
-- แยกผลงานที่เสร็จแล้ว งานที่กำลังทำ และงานที่วางแผนไว้ให้ชัดเจน
-- หากไม่ทราบข้อมูล ให้บอกตรง ๆ ว่าไม่มีข้อมูลยืนยันในส่วนนี้
-- ห้ามกล่าวว่าทักษะหรือช่วงเวลาฝึกงานได้รับการรับรองหรือยืนยันแล้ว หากไม่มีข้อมูล
+- ห้ามแต่งประวัติ ประสบการณ์ ทักษะ ผลงาน หรือช่องทางติดต่อที่ไม่มีใน "ข้อมูลทีม"
+- ห้ามกล่าวว่าโปรเจกต์ใดเสร็จแล้ว หากไม่มีข้อมูลยืนยัน และแยกงานที่เสร็จ กำลังทำ และวางแผนไว้ให้ชัดเจน
+- หากไม่ทราบข้อมูลของทีม ให้บอกตรง ๆ ว่าไม่มีข้อมูลยืนยันในส่วนนี้
+- ห้ามแต่งลิงก์หรือ URL ขึ้นมาเอง
 
-# Examples
-คำถาม: ใช้ AI เป็นไหม?
-คำตอบ: ผมใช้ AI เป็นผู้ช่วยในการเรียนรู้ แก้ปัญหา และพัฒนาโปรเจกต์ครับ ผมยังฝึกการเขียน Prompt และตรวจสอบโค้ดให้เข้าใจด้วยตัวเอง เพื่อให้สามารถนำ AI มาใช้ทำงานได้อย่างมีประสิทธิภาพมากขึ้น
+# Output format
+ขึ้นต้นคำตอบด้วยแท็กเดียวเสมอ ตามด้วยช่องว่างแล้วจึงตอบ
+- [TEAM] ถ้าคำตอบใช้ข้อมูลจาก "ข้อมูลทีม"
+- [GENERAL] ถ้าเป็นคำตอบทั่วไปที่ไม่ได้ใช้ข้อมูลทีม`;
+}
 
-คำถาม: มีความสามารถด้าน AI อะไรบ้าง?
-คำตอบ: ผมสนใจการประยุกต์ใช้ AI กับ Data Science ครับ ปัจจุบันผมใช้ AI ช่วยทำความเข้าใจและพัฒนาโค้ด รวมถึงฝึกเขียน Prompt ให้ได้ผลลัพธ์ตรงกับเป้าหมาย โดยยังคงพัฒนาทักษะของตัวเองอยู่ครับ
-
-คำถาม: เริ่มฝึกงานได้เมื่อไหร่?
-คำตอบ: ผมคาดว่าจะสามารถฝึกงานได้ประมาณเดือนมิถุนายนถึงสิงหาคม 2570 หรือปี 2027 เป็นระยะเวลาประมาณ 3 เดือนครับ ส่วนวันเริ่มต้นและวันสิ้นสุดที่แน่นอนยังไม่ได้ยืนยันครับ`;
-
-const FALLBACK_REPLIES: string[] = [
-  "ขอโทษครับ ตอนนี้ผมยังตอบคำถามนี้ไม่ได้",
-  "ขออภัยครับ ตอนนี้ระบบตอบคำถามยังไม่พร้อมใช้งาน",
-];
-
+const FALLBACK = "ขออภัยครับ ตอนนี้ระบบตอบคำถามยังไม่พร้อมใช้งาน";
 let warned = false;
 
 export async function getReply(
   text: string,
   history: ChatTurn[] = [],
-): Promise<string> {
+  language: Language = "th",
+  district?: string,
+): Promise<Reply> {
   if (!isLlmConfigured()) {
     if (!warned) {
-      console.warn(
-        "⚠️ ยังไม่ได้ตั้ง LLM_API_KEY ใน BE/.env — ใช้คำตอบสำรองแทน AI จริง (ดู BE/.env.example)",
-      );
+      console.warn("⚠️ ยังไม่ได้ตั้ง LLM_API_KEY ใน BE/.env — ใช้คำตอบสำรองแทน AI จริง (ดู BE/.env.example)");
       warned = true;
     }
-
-    return FALLBACK_REPLIES[
-      Math.floor(Math.random() * FALLBACK_REPLIES.length)
-    ];
+    return { text: FALLBACK, sources: [] };
   }
 
-  return askLlm(SYSTEM_PROMPT, [
+  const raw = await askLlm(buildSystemPrompt(language, district), [
     ...history,
     { role: "user", content: text },
   ]);
+
+  const m = raw.match(/^\s*\[(TEAM|GENERAL)\]\s*/i);
+  const isTeam = m?.[1].toUpperCase() === "TEAM";
+  return {
+    text: m ? raw.slice(m[0].length) : raw,
+    sources: isTeam ? [TEAM_SOURCE] : [],
+  };
 }
