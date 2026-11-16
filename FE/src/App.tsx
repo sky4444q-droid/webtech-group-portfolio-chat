@@ -9,7 +9,8 @@ import {
   updateMessage,
   deleteMessage,
 } from "./api";
-import type { Message } from "./types";
+import Portfolio from "./pages/Portfolio";
+import type { Language, Message } from "./types";
 
 const POLL_INTERVAL = 2000;
 
@@ -18,6 +19,8 @@ export default function App() {
   const [sending, setSending] = useState<boolean>(false);
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<"chat" | "portfolio">("chat");
+  const [language, setLanguage] = useState<Language>("th");
 
   useEffect(() => {
     let active = true;
@@ -57,7 +60,7 @@ export default function App() {
     setError(null);
 
     try {
-      const { userMessage, assistantMessage } = await sendMessage(text);
+      const { userMessage, assistantMessage } = await sendMessage(text, language);
 
       setMessages((prev) => [
         ...prev,
@@ -136,6 +139,23 @@ export default function App() {
 
         <button
           className="clear-btn"
+          onClick={() => setPage(page === "chat" ? "portfolio" : "chat")}
+          type="button"
+        >
+          {page === "chat" ? "Portfolio" : "แชต"}
+        </button>
+
+        <button
+          className="clear-btn"
+          onClick={() => setLanguage(language === "th" ? "en" : "th")}
+          type="button"
+          title="ภาษาที่ AI ตอบ"
+        >
+          {language === "th" ? "TH" : "EN"}
+        </button>
+
+        <button
+          className="clear-btn"
           onClick={handleClear}
           disabled={sending}
           type="button"
@@ -151,17 +171,23 @@ export default function App() {
         </div>
       )}
 
-      <ChatLog
-        messages={messages}
-        pendingText={pendingText}
-        onUpdate={handleUpdate}
-        onDelete={handleDelete}
-      />
+      {page === "portfolio" ? (
+        <Portfolio />
+      ) : (
+        <>
+          <ChatLog
+            messages={messages}
+            pendingText={pendingText}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+          />
 
-      <Composer
-        onSend={handleSend}
-        disabled={sending}
-      />
+          <Composer
+            onSend={handleSend}
+            disabled={sending}
+          />
+        </>
+      )}
     </main>
   );
 }

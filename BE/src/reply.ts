@@ -30,7 +30,7 @@ interface Portfolio {
   }[];
 }
 
-function loadPortfolio(): Portfolio {
+export function loadPortfolio(): Portfolio {
   const file = path.join(__dirname, "..", "data", "portfolio.json");
   return JSON.parse(fs.readFileSync(file, "utf8")) as Portfolio;
 }
