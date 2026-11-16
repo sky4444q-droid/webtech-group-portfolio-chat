@@ -15,6 +15,10 @@ import { Portal } from "../Portal";
 import { AiPresence } from "../ai/AiPresence";
 import { buildingWindowsTexture, screenTexture } from "../textures";
 import { Platform } from "./common";
+import { HoloCard } from "../HoloCard";
+import { usePortfolio } from "../../store/usePortfolio";
+import { usePick } from "../../i18n";
+import { Text } from "../../ui/Pending";
 
 export function TeamDistrict() {
   const cfg = DISTRICTS.team;
@@ -43,9 +47,10 @@ export function TeamDistrict() {
 
       <Lobby color={cfg.color} />
 
-      <Screen title={tr("teamScreen")} color={cfg.color} panel={{ kind: "team" }} position={[-3.6, 1.95, -2]} rotation={[0, 0.12, 0]} scale={0.75} />
+      <Screen title={tr("teamScreen")} color={cfg.color} panel={{ kind: "team", display: "holo" }} position={[-3.6, 1.95, -2]} rotation={[0, 0.12, 0]} scale={0.75} />
       <Screen title={tr("contactScreen")} color={COLORS.pink} panel={{ kind: "contact" }} position={[3.6, 1.95, -2]} rotation={[0, -0.12, 0]} scale={0.75} />
 
+      <TeamHolo />
       <AiPresence district="team" size={0.45} position={[-6.6, 2.3, -0.5]} />
       <Portal target="nexus" radius={1.3} position={[7, 0.3, 5]} rotation={[0, -0.9, 0]} />
       <pointLight color={cfg.color} intensity={30} distance={22} position={[0, 3.8, 3]} />
@@ -158,6 +163,55 @@ function Lobby({ color }: { color: string }) {
           <meshBasicMaterial color={x === 0 ? color : COLORS.cyan} toneMapped={false} />
         </mesh>
       ))}
+    </group>
+  );
+}
+
+/** การ์ดสมาชิกแบบ Hologram กางออกจากจอทีม — คลิกการ์ด = โปรไฟล์เต็มจอ */
+function TeamHolo() {
+  const tr = useT();
+  const p = usePick();
+  const open = useWorld((s) => s.panel?.kind === "team" && s.panel.display === "holo");
+  const members = usePortfolio((s) => s.data.members);
+  const expandPanel = useWorld((s) => s.expandPanel);
+  const openPanel = useWorld((s) => s.openPanel);
+  if (!open) return null;
+  const n = members.length;
+  return (
+    <group position={[-3.6, 2.1, -1.2]}>
+      {members.map((m, i) => (
+        <HoloCard key={m.id} position={[(i - (n - 1) / 2) * 1.55, 0.1 + Math.abs(i - (n - 1) / 2) * -0.12, 0.4]} color={COLORS.green}>
+          <button
+            type="button"
+            className="holo-member"
+            style={{ animationDelay: `${i * 0.08}s` }}
+            onClick={(e) => {
+              e.stopPropagation();
+              sfx.play("panelOpen");
+              openPanel({ kind: "member", id: m.id });
+            }}
+          >
+            <span className="member-silhouette" aria-hidden="true" />
+            <strong>{p(m.name)}</strong>
+            <small>
+              <Text value={m.role} placeholder={m.placeholder} />
+            </small>
+          </button>
+        </HoloCard>
+      ))}
+      <HoloCard position={[0, -1.35, 0.4]} color={COLORS.green}>
+        <p className="holo-hint">{tr("holoTeamHint")}</p>
+        <button
+          type="button"
+          className="btn btn-small holo-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            expandPanel();
+          }}
+        >
+          {tr("holoSeeAll")}
+        </button>
+      </HoloCard>
     </group>
   );
 }

@@ -28,7 +28,7 @@ describe("useWorld", () => {
   });
 
   it("finishTravel arrives and closes any open panel", () => {
-    useWorld.getState().openPanel({ kind: "team" });
+    useWorld.getState().openPanel({ kind: "team", display: "full" });
     useWorld.getState().travelTo("team");
     useWorld.getState().finishTravel();
     const s = useWorld.getState();
@@ -106,11 +106,30 @@ describe("useWorld", () => {
 
     it("closeTopmost steps back a viewpoint when nothing else is open", () => {
       useWorld.getState().goToViewpoint(1);
-      useWorld.getState().openPanel({ kind: "team" });
+      useWorld.getState().openPanel({ kind: "team", display: "full" });
       useWorld.getState().closeTopmost();
       expect(useWorld.getState().viewpoint).toBe(1);
       useWorld.getState().closeTopmost();
       expect(useWorld.getState().viewpoint).toBe(0);
+    });
+  });
+
+  describe("detail display", () => {
+    it("expandPanel turns a hologram into fullscreen", () => {
+      useWorld.getState().openPanel({ kind: "project", id: "project-1", display: "holo" });
+      useWorld.getState().expandPanel();
+      expect(useWorld.getState().panel).toEqual({ kind: "project", id: "project-1", display: "full" });
+    });
+
+    it("Esc from fullscreen closes everything", () => {
+      useWorld.getState().openPanel({ kind: "project", id: "project-1", display: "full" });
+      useWorld.getState().closeTopmost();
+      expect(useWorld.getState().panel).toBeNull();
+    });
+
+    it("expandPanel does nothing without a hologram open", () => {
+      useWorld.getState().expandPanel();
+      expect(useWorld.getState().panel).toBeNull();
     });
   });
 });

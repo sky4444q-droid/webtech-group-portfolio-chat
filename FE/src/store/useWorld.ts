@@ -6,7 +6,15 @@ import { create } from "zustand";
 import type { DistrictId, Lang } from "../types";
 import { load, save } from "../lib/storage";
 
-export type Panel = { kind: "project"; id: string } | { kind: "team" } | { kind: "contact" } | null;
+/** holo = Hologram ลอยในฉาก · full = เต็มจอ */
+export type Display = "holo" | "full";
+export type Panel =
+  | { kind: "project"; id: string; display: Display }
+  | { kind: "team"; display: Display }
+  | { kind: "member"; id: string }
+  | { kind: "contact" }
+  | { kind: "architecture"; projectId: string }
+  | null;
 export type Quality = "high" | "low";
 
 export interface WorldState {
@@ -45,6 +53,8 @@ export interface WorldState {
   /** ย้อนกลับจุดชมก่อนหน้า — คืน false ถ้าอยู่จุดแรกแล้ว */
   backViewpoint: () => boolean;
   skipWalk: () => void;
+  /** Hologram → เต็มจอ */
+  expandPanel: () => void;
 }
 
 type WorldData = Pick<
@@ -128,6 +138,11 @@ export const useWorld = create<WorldState>((set, get) => ({
     if (!s.introDone || s.travel || index === s.viewpoint) return;
     if (index < 0 || index >= VIEWPOINTS[s.district].length) return;
     set({ viewpoint: index, viewpointStack: [...s.viewpointStack, s.viewpoint], panel: null });
+  },
+
+  expandPanel: () => {
+    const p = get().panel;
+    if ((p?.kind === "project" || p?.kind === "team") && p.display === "holo") set({ panel: { ...p, display: "full" } });
   },
 
   skipWalk: () => {

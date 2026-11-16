@@ -106,4 +106,11 @@ export const th = {
   viewBack: "ย้อนกลับ",
 
   walkSkip: "คลิกเพื่อไปถึงเลย",
+
+  // ---------- Hologram / เต็มจอ ----------
+  holoSeeAll: "ดูทั้งหมด",
+  projectArchView: "ดูไดอะแกรม Architecture",
+  archTitle: "Architecture",
+  memberProfile: "โปรไฟล์สมาชิก",
+  holoTeamHint: "คลิกการ์ดเพื่อดูโปรไฟล์",
 };

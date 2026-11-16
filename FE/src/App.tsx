@@ -6,6 +6,7 @@ import { usePortfolio } from "./store/usePortfolio";
 import { useAudioDirector } from "./audio/useAudioDirector";
 import { Subtitle } from "./ui/Subtitle";
 import { TravelOverlay } from "./ui/TravelOverlay";
+import { Fullscreen } from "./ui/Fullscreen";
 import { Intro } from "./ui/Intro";
 import { Hud } from "./ui/Hud";
 import { ChatPanel } from "./ui/ChatPanel";
@@ -36,6 +37,7 @@ export default function App() {
           <Hud />
           <Subtitle />
           <TravelOverlay />
+          <Fullscreen />
           <Panels />
           <ChatPanel />
           <Guide />

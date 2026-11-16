@@ -107,4 +107,11 @@ export const en: Record<keyof typeof th, string> = {
   viewBack: "Back",
 
   walkSkip: "Click to arrive now",
+
+  // ---------- Hologram / fullscreen ----------
+  holoSeeAll: "See everything",
+  projectArchView: "View architecture diagram",
+  archTitle: "Architecture",
+  memberProfile: "Member profile",
+  holoTeamHint: "Click a card to see the profile",
 };

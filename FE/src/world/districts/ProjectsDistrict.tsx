@@ -15,6 +15,8 @@ import { Portal } from "../Portal";
 import { AiPresence } from "../ai/AiPresence";
 import { pedestalPositions } from "../layout";
 import { NeonPillar } from "./common";
+import { HoloCard } from "../HoloCard";
+import { usePick, useT } from "../../i18n";
 
 const HOLO_COLORS = [COLORS.cyan, COLORS.pink, COLORS.green];
 
@@ -53,6 +55,7 @@ export function ProjectsDistrict() {
 function Pedestal({ id, index, position, color }: { id: string; index: number; position: [number, number, number]; color: string }) {
   const openPanel = useWorld((s) => s.openPanel);
   const selected = useWorld((s) => s.panel?.kind === "project" && s.panel.id === id);
+  const showHolo = useWorld((s) => s.panel?.kind === "project" && s.panel.id === id && s.panel.display === "holo");
   const [hovered, setHovered] = useState(false);
   useCursor(hovered);
   const holo = useRef<THREE.Mesh>(null);
@@ -74,7 +77,7 @@ function Pedestal({ id, index, position, color }: { id: string; index: number; p
     const s = useWorld.getState();
     if (!s.introDone || s.travel) return;
     sfx.play("panelOpen");
-    openPanel({ kind: "project", id });
+    openPanel({ kind: "project", id, display: "holo" });
   };
 
   return (
@@ -117,6 +120,41 @@ function Pedestal({ id, index, position, color }: { id: string; index: number; p
         </mesh>
       </group>
       <NeonSign text={`PROJECT ${String(index + 1).padStart(2, "0")}`} color={color} height={0.42} position={[0, 4.6, 0]} />
+      {showHolo && <ProjectHolo id={id} color={color} />}
     </group>
+  );
+}
+
+/** สรุปผลงานแบบ Hologram ลอยข้างแท่น: ชื่อ สรุป Tech Stack + ปุ่มดูทั้งหมด (เต็มจอ) */
+function ProjectHolo({ id, color }: { id: string; color: string }) {
+  const tr = useT();
+  const p = usePick();
+  const project = usePortfolio((s) => s.data.projects.find((x) => x.id === id));
+  const expandPanel = useWorld((s) => s.expandPanel);
+  if (!project) return null;
+  return (
+    <HoloCard position={[2.9, 3.1, 0.6]} color={color} wide>
+      <span className="holo-kicker">PROJECT</span>
+      <h3 className="holo-title">{p(project.name)}</h3>
+      <p className="holo-text">{p(project.summary)}</p>
+      {project.techStack.length > 0 && (
+        <ul className="holo-chips">
+          {project.techStack.slice(0, 6).map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+      )}
+      <button
+        type="button"
+        className="btn btn-small holo-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          sfx.play("panelOpen");
+          expandPanel();
+        }}
+      >
+        {tr("holoSeeAll")}
+      </button>
+    </HoloCard>
   );
 }
