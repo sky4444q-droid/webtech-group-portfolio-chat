@@ -3,15 +3,10 @@
 // ช่องที่ไม่มีข้อมูล → "รอข้อมูล"
 
 import type { Contact, Localized, Member, Portfolio, Project } from "../types";
-import { PENDING, portfolio as fallback } from "./portfolio";
+import { NEXORA_PROJECT, PENDING, portfolio as fallback } from "./portfolio";
 
 interface ApiWork {
   title?: string | null;
-  type?: string | null;
-  status?: string | null;
-  detail?: string | null;
-  tools?: string | null;
-  link?: string | null;
 }
 
 interface ApiMember {
@@ -46,13 +41,6 @@ const shortSkill = (s: string) => s.split(":")[0].trim();
 
 const firstUrl = (s: string): string | null => s.match(/https?:\/\/[^\s|,]+/)?.[0] ?? null;
 
-const splitTools = (s: string | null | undefined): string[] =>
-  has(s)
-    ? s
-        .split(/,|\s+และ\s+|\s+and\s+/)
-        .map((x) => x.trim())
-        .filter(Boolean)
-    : [];
 
 const displayName = (m: ApiMember) => [m.nickname, m.name].filter(has).join(" — ");
 
@@ -69,30 +57,8 @@ export function portfolioFromApi(api: ApiPortfolio): Portfolio {
     photo: null,
   }));
 
-  const projects: Project[] = apiMembers
-    .flatMap((m, i) =>
-      (m.works ?? [])
-        .filter((w): w is ApiWork & { title: string } => typeof w === "object" && w !== null && has(w.title))
-        .map((w): Project => {
-          const link = has(w.link) ? w.link.trim() : null;
-          const isGithub = !!link && /github\.com/i.test(link);
-          return {
-            id: "",
-            placeholder: false,
-            name: same(w.title.trim()),
-            summary: text(w.detail),
-            problem: text([w.type, w.status].filter(has).join(" · ")),
-            features: [PENDING],
-            techStack: splitTools(w.tools),
-            architecture: PENDING,
-            images: [],
-            demoUrl: link && !isGithub ? link : null,
-            githubUrl: isGithub ? link : null,
-            memberIds: [`member-${i + 1}`],
-          };
-        }),
-    )
-    .map((p, i) => ({ ...p, id: `project-${i + 1}` }));
+  // แสดงผลงานชิ้นเดียว: เว็บนี้ ทุกคนในทีมเป็นผู้ร่วมทำ
+  const projects: Project[] = [{ ...NEXORA_PROJECT, memberIds: members.map((m) => m.id) }];
 
   const contacts: Contact[] = [];
   for (const [key, value] of Object.entries(api.group?.contact ?? {})) {
@@ -121,7 +87,7 @@ export function portfolioFromApi(api: ApiPortfolio): Portfolio {
       highlights: list(g.highlights),
     },
     members: members.length ? members : fallback.members,
-    projects: projects.length ? projects : fallback.projects,
+    projects,
     contacts: contacts.length ? contacts : fallback.contacts,
   };
 }

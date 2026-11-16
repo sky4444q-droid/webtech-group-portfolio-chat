@@ -34,10 +34,10 @@ describe("portfolioFromApi", () => {
     expect(p.members[1].role).toEqual(PENDING);
   });
 
-  it("turns titled works into projects", () => {
+  it("shows only the NEXORA project, credited to every member", () => {
     expect(p.projects).toHaveLength(1);
-    expect(p.projects[0]).toMatchObject({ id: "project-1", githubUrl: "https://github.com/x/a", demoUrl: null, memberIds: ["member-1"] });
-    expect(p.projects[0].techStack).toEqual(["React", "TypeScript", "Git"]);
+    expect(p.projects[0]).toMatchObject({ id: "project-1", memberIds: ["member-1", "member-2"] });
+    expect(p.projects[0].name.en).toBe("NEXORA Virtual Universe");
   });
 
   it("collects group and member contacts with links", () => {
@@ -47,6 +47,6 @@ describe("portfolioFromApi", () => {
   it("falls back to placeholders on empty data", () => {
     const e = portfolioFromApi({});
     expect(e.members).toBe(fallback.members);
-    expect(e.projects).toBe(fallback.projects);
+    expect(e.projects).toHaveLength(1);
   });
 });
