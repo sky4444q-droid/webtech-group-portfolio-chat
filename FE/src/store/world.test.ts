@@ -149,4 +149,18 @@ describe("useWorld", () => {
       expect(useWorld.getState().travel).toBeNull();
     });
   });
+
+  describe("quality", () => {
+    it("auto-downgrade does not override a quality the visitor picked", () => {
+      useWorld.getState().setQuality("high");
+      useWorld.getState().autoLowerQuality();
+      expect(useWorld.getState().quality).toBe("high");
+    });
+
+    it("auto-downgrade lowers quality when the visitor never chose", () => {
+      reset({ quality: "high", qualityChosen: false });
+      useWorld.getState().autoLowerQuality();
+      expect(useWorld.getState().quality).toBe("low");
+    });
+  });
 });

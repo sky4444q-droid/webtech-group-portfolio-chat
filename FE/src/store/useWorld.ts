@@ -27,6 +27,8 @@ export interface WorldState {
   chatOpen: boolean;
   panel: Panel;
   quality: Quality;
+  /** ผู้ชมเลือกคุณภาพเองแล้ว → ระบบจะไม่ลดให้อัตโนมัติ */
+  qualityChosen: boolean;
   guideSeen: boolean;
   /** จุดชมปัจจุบันในพื้นที่ (index ใน VIEWPOINTS) */
   viewpoint: number;
@@ -49,6 +51,8 @@ export interface WorldState {
   openPanel: (panel: Exclude<Panel, null>) => void;
   closePanel: () => void;
   setQuality: (q: Quality) => void;
+  /** เครื่องช้า: ลดเป็น low เฉพาะเมื่อผู้ชมยังไม่ได้เลือกเอง */
+  autoLowerQuality: () => void;
   dismissGuide: () => void;
   /** ปุ่ม Esc: ปิด panel ก่อน ถ้าไม่มีค่อยปิดแชท แล้วค่อยย้อนจุดชม */
   closeTopmost: () => void;
@@ -62,7 +66,7 @@ export interface WorldState {
 
 type WorldData = Pick<
   WorldState,
-  "lang" | "district" | "travel" | "introDone" | "pendingTarget" | "chatOpen" | "panel" | "quality" | "guideSeen" | "viewpoint" | "viewpointStack" | "travelKind" | "skipRequested" | "queuedTarget"
+  "lang" | "district" | "travel" | "introDone" | "pendingTarget" | "chatOpen" | "panel" | "quality" | "qualityChosen" | "guideSeen" | "viewpoint" | "viewpointStack" | "travelKind" | "skipRequested" | "queuedTarget"
 >;
 
 export function initialWorldState(): WorldData {
@@ -75,6 +79,7 @@ export function initialWorldState(): WorldData {
     chatOpen: false,
     panel: null,
     quality: load<Quality>("quality", "high"),
+    qualityChosen: load<boolean>("qualityChosen", false),
     guideSeen: load<boolean>("guideSeen", false),
     viewpoint: 0,
     viewpointStack: [],
@@ -127,8 +132,15 @@ export const useWorld = create<WorldState>((set, get) => ({
   closePanel: () => set({ panel: null }),
 
   setQuality: (quality) => {
-    set({ quality });
+    set({ quality, qualityChosen: true });
     save("quality", quality);
+    save("qualityChosen", true);
+  },
+
+  autoLowerQuality: () => {
+    if (get().qualityChosen || get().quality === "low") return;
+    set({ quality: "low" });
+    save("quality", "low");
   },
 
   dismissGuide: () => {

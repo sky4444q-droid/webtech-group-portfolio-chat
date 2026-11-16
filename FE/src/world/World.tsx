@@ -34,7 +34,7 @@ const SCENES: Record<DistrictId, () => ReactNode> = {
 
 export function World() {
   const quality = useWorld((s) => s.quality);
-  const setQuality = useWorld((s) => s.setQuality);
+  const autoLowerQuality = useWorld((s) => s.autoLowerQuality);
   const high = quality === "high";
 
   return (
@@ -50,7 +50,7 @@ export function World() {
     >
       <color attach="background" args={[COLORS.bg]} />
       <fog attach="fog" args={[COLORS.fog, 30, 170]} />
-      {high && <PerformanceMonitor onDecline={() => setQuality("low")} />}
+      {high && <PerformanceMonitor onDecline={autoLowerQuality} />}
       <Suspense fallback={null}>
         <Environment />
         <ActiveDistricts />
@@ -60,8 +60,9 @@ export function World() {
         <DataFragments />
       </Suspense>
       <CameraRig />
+      {/* multisampling ต้องเป็น 0: MSAA ใน composer ทำให้ภาพดำเป็นช่วง ๆ (กะพริบ) บนการ์ดจอบางรุ่น */}
       {fxEnabled(quality).bloom && (
-        <EffectComposer multisampling={4}>
+        <EffectComposer multisampling={0}>
           <Bloom mipmapBlur intensity={1.15} luminanceThreshold={0.35} luminanceSmoothing={0.25} />
           <Vignette eskil={false} offset={0.15} darkness={0.85} />
         </EffectComposer>
