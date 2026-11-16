@@ -1,0 +1,15 @@
+{
+  "_note": "ข้อมูลทีมทั้งหมดอยู่ที่ไฟล์นี้ไฟล์เดียว แก้ที่นี่แล้ว AI จะตอบตามข้อมูลใหม่ ช่องที่เป็น null หรือ [] คือยังไม่มีข้อมูล AI จะไม่พูดถึง ห้ามใส่ข้อมูลที่ไม่จริง",
+  "group": {
+    "name": null,
+    "concept": null,
+    "highlights": [],
+    "sharedWorks": [],
+    "contact": { "email": null, "github": null, "other": null }
+  },
+  "members": [
+    { "name": "วัชรนันท์ บัวทิพย์", "role": "Deploy / DevOps", "skills": [], "works": [], "contact": null },
+    { "name": null, "role": "Frontend", "skills": [], "works": [], "contact": null },
+    { "name": null, "role": "Backend", "skills": [], "works": [], "contact": null }
+  ]
+}
