@@ -1,3 +1,4 @@
+import "./env";
 import crypto from "node:crypto";
 import express from "express";
 import cors from "cors";
@@ -11,12 +12,6 @@ import {
   recentMessages,
   updateMessage,
 } from "./db";
-
-try {
-  process.loadEnvFile();
-} catch {
-  // ไม่มีไฟล์ .env ก็ไม่เป็นไร
-}
 
 const MAX_TEXT = 2000;
 const HISTORY_SIZE = 10;
