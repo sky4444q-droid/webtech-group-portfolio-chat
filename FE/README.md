@@ -1,67 +1,65 @@
-# FE — Mini Chat (React + TypeScript + Vite)
+# FE — Virtual Universe (React + TypeScript + Vite + React Three Fiber)
 
-Frontend ของ mini chat สัปดาห์ที่ 5 (อยู่ในโครง React Basics เดิม แต่เขียนด้วย React **TypeScript** ให้สอดคล้องกับ BE) ที่**เชื่อมกับ BE จริงแล้ว** ด้วย 2 กลไกหลัก:
+หน้าเว็บ Portfolio ของกลุ่มในรูปแบบโลกเสมือน 3D สไตล์ Cyberpunk มี AI Assistant ที่เรียกใช้ได้จากทุกพื้นที่
 
-1. **REST API** — ส่ง/อ่าน/ล้างข้อความผ่าน `fetch` ไปที่ Express Chat API
-2. **Polling** — `setInterval` ถาม `GET /messages` ทุก 2 วินาที เพื่อรับข้อความใหม่แบบเกือบ real-time (วิธีง่ายสุดก่อนจะไปเรียน WebSocket)
+> สถานะ: **รอบแรก** — โครงโลกครบ 5 พื้นที่ ใช้งานได้ ข้อมูลทีม/ผลงาน/ติดต่อยังเป็น "รอข้อมูล"
 
-## รัน (ต้องรัน BE ด้วย → ใช้ 2 terminal)
-
-```bash
-# Terminal 1 — BE (โฟลเดอร์ ../BE เทียบจาก FE)
-cd ../BE
-npm install
-npm run dev             # http://localhost:3000
-
-# Terminal 2 — FE (โฟลเดอร์ FE)
-npm install
-npm run dev             # เปิด http://localhost:5173
-```
-
-ทดสอบความ real-time: เปิด browser 2 หน้า แล้วส่งข้อความในหน้านึง — อีกหน้าจะได้ข้อความใหม่ภายใน ~2 วินาทีจาก polling
-
-## โครงสร้าง — โครงเดียวกับ React Basics
-
-```
-FE/
-├── vite.config.ts              ← proxy /messages → localhost:3000 (แก้ปัญหา CORS ตอน dev)
-├── tsconfig.json               ← React + TS (strict เหมือนฝั่ง BE)
-├── index.html
-└── src/
-    ├── main.tsx                ← จุดเริ่ม render (StrictMode)
-    ├── types.ts                ← interface Message — "สัญญา" ชุดเดียวกับฝั่ง BE
-    ├── App.tsx                 ← state messages + Effect (โหลด + polling) + handlers
-    ├── api.ts                  ← fetch ทั้งหมดไว้ที่เดียว (GET / POST / DELETE /messages)
-    ├── index.css
-    └── components/
-        ├── MessageBubble.tsx   ← props message { id, role, text } (Lab 1–2)
-        ├── ChatLog.tsx         ← map + key + empty state + auto-scroll Effect (Lab 4, 8, 9)
-        └── Composer.tsx        ← controlled input + preventDefault + disabled (Lab 5–7)
-```
+## รัน
 
 ```bash
-npm run typecheck   # เช็ค TypeScript ฝั่ง FE (แยกจากฝั่ง BE)
-npm run build       # build จริงด้วย Vite
+npm install
+cp .env.example .env   # ใส่ VITE_API_URL ถ้าจะต่อหลังบ้านจริง
+npm run dev            # เปิด http://localhost:5173
 ```
 
-| ใน React Basics (สัปดาห์ 5) | ใน FE นี้ (integration) |
+| คำสั่ง | ทำอะไร |
 | --- | --- |
-| mock reply สุ่มประโยคใน React | `POST /messages` → บอทตอบจาก `getReply` ฝั่ง BE |
-| `useState` messages เริ่มจาก array ว่าง/seed | Effect โหลดจาก `GET /messages` ตอน mount |
-| ข้อความใหม่มีแค่ในเครื่องเรา | **Polling** ทุก 2 วิ → เห็นข้อความจากทุกเครื่อง |
-| ปุ่ม Clear history เคลียร์ state | `DELETE /messages` แล้วค่อยเคลียร์ state |
-| shape `{ id, role, text }` | **ไม่เปลี่ยน** — BE ส่ง shape เดิมมาให้พอดี |
+| `npm run dev` | เปิดเว็บสำหรับพัฒนา |
+| `npm test` | รันทดสอบ (Vitest) |
+| `npm run typecheck` | เช็ค TypeScript |
+| `npm run build` | เช็ค TypeScript แล้ว build ไปที่ `dist/` |
 
-## จุดเรียนรู้ใหม่ของไฟล์นี้ (เทียบกับสัปดาห์ 5)
+## ต่อกับหลังบ้าน (BE)
 
-- **`api.ts`** — รวมทุก `fetch` ไว้ไฟล์เดียว ผูกกับ endpoint ของ BE ตรง ๆ (ถ้า BE เพิ่ม endpoint ใหม่ แก่นเดียวที่ต้องแตะคือไฟล์นี้) + `types.ts` ใช้ interface `Message` ชุดเดียวกับ BE — แก้ shape ที่ BE แล้ว TS ฝั่ง FE จะฟ้องทันที
-- **Polling Effect ใน `App.tsx`** — `refresh()` ตอน mount + `setInterval` + `clearInterval` ใน cleanup (เขียน cleanup ไม่ครบ = timer ค้างและโดน request ยัดถล่ม)
-- **Error state** — fetch พัง (เช่นลืมรัน BE) → แสดงแถบแดงแทนหน้าขาว
-- **Vite proxy** — FE ยิงไป `/messages` (relative path) แล้ว Vite ส่งต่อไป `localhost:3000` ให้ → คนละ port แต่ไม่ติด CORS (เรื่อง CORS ลึก ๆ เรียนในสัปดาห์บูรณาการ)
+ตั้งค่าใน `.env` (คัดลอกจาก `.env.example`):
 
-## ต่อยอด (ถ้าเสร็จเร็ว)
+- `VITE_PROXY_TARGET` → ตอน `npm run dev` ส่ง `/messages` และ `/portfolio` ต่อไปหลังบ้านตัวนี้ (ค่าเริ่มต้น `http://localhost:3000`)
+- `VITE_API_URL` → ตอน deploy ใส่ URL ของหลังบ้าน (ตอน dev ปล่อยว่าง)
+- `VITE_USE_MOCK=true` → โหมดจำลอง ไม่เรียกหลังบ้านเลย
 
-- เพิ่ม **loading state** (spinner ตอนโหลดครั้งแรก) และ **optimistic update** (แสดงข้อความเราทันที ก่อน API ตอบ)
-- ปุ่มเปิด/ปิด polling (เช่น checkbox "Live") — ลองสร้าง Effect ที่มี dependency เปลี่ยนได้
-- Polling แบบฉลาดขึ้น: ดู `id` ล่าสุดที่มี แล้วถามหาเฉพาะข้อความที่ใหม่กว่านั้น
-- เปลี่ยน `POLL_INTERVAL` เป็น 500ms แล้วเปิด DevTools → Network ดูว่าเกิดอะไรขึ้น
+ข้อมูลทีม สมาชิก ผลงาน และช่องทางติดต่อ โหลดจาก `GET /portfolio` (ไฟล์ `BE/data/portfolio.json`) ถ้าโหลดไม่ได้จะแสดง "รอข้อมูล"
+แชทส่ง `POST /messages` ด้วย `{ text, sessionId, language, district }` — โค้ดอยู่ที่ `src/services/chatApi.ts`
+
+## ใส่ข้อมูลจริง
+
+| อยากแก้ | ไฟล์ |
+| --- | --- |
+| แนวคิด จุดเด่น สมาชิก ผลงาน ช่องทางติดต่อ | `BE/data/portfolio.json` (แหล่งเดียวกับที่ AI ใช้ตอบ) |
+| ชื่อกลุ่ม/โลโก้ และข้อมูลสำรองตอนโหลดไม่ได้ | `src/data/portfolio.ts` |
+| รูปสมาชิก/ผลงาน | วางที่ `public/images/` แล้วใส่ path เช่น `/images/member-1.jpg` |
+| ข้อความปุ่ม/คำแนะนำ | `src/i18n/th.ts`, `src/i18n/en.ts` |
+| ชื่อพื้นที่ ร่าง AI ของแต่ละพื้นที่ ตำแหน่งบนแผนที่ | `src/config/districts.ts` |
+| สีหลัก | `src/config/theme.ts` และตัวแปรสีใน `src/styles.css` |
+| ระยะเวลา Intro / การเดินทาง | `src/config/timing.ts` |
+
+## โครงสร้าง
+
+```
+src/
+├─ App.tsx              ← ประกอบฉาก 3D + UI
+├─ types.ts             ← ชนิดข้อมูลกลาง
+├─ config/              ← พื้นที่, สี, เวลา
+├─ data/portfolio.ts    ← ข้อมูลทั้งหมดของเว็บ
+├─ i18n/                ← คำแปล TH/EN
+├─ store/               ← สถานะกลาง (zustand): useWorld (โลก), useChat (แชท)
+├─ services/chatApi.ts  ← คุยกับหลังบ้าน
+├─ lib/                 ← localStorage ปลอดภัย, URL hash
+├─ world/               ← ฉาก 3D: กล้อง, บรรยากาศ, ประตู, 5 พื้นที่, ร่าง AI 3 แบบ
+└─ ui/                  ← Intro, HUD, Mini Map, แชท, Panel ข้อมูล
+```
+
+## หมายเหตุ
+
+- ออกแบบสำหรับ Desktop เป็นหลัก
+- ปุ่มตั้งค่า (⚙) สลับคุณภาพกราฟิก สูง/ต่ำ — ถ้าเครื่องช้า เว็บจะลดเป็น "ต่ำ" ให้อัตโนมัติ
+- เปิดลิงก์ตรงเข้าพื้นที่ได้ เช่น `/#/projects`
