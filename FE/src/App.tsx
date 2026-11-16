@@ -124,14 +124,12 @@ export default function App() {
   return (
     <main className="chat-app">
       <header className="chat-header">
-        <img
-          className="brand-logo"
-          src="/sky-cv-logo.png"
-          alt="Sky CV"
-        />
+        <div className="brand-logo brand-badge" aria-hidden="true">
+          AI
+        </div>
 
         <div className="brand-text">
-          <h1>Chat CV Sky</h1>
+          <h1>Team Portfolio Chat</h1>
           <p className="chat-subtitle">
             AI Portfolio Assistant
           </p>
