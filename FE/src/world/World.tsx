@@ -12,7 +12,7 @@ import { useWorld } from "../store/useWorld";
 import { CameraRig } from "./CameraRig";
 import { fxEnabled } from "./fx/fxEnabled";
 import { ViewpointMarkers } from "./ViewpointMarkers";
-import { StreetBlockout } from "./street/StreetBlockout";
+import { StreetKit } from "./street/StreetKit";
 import { ElevatorScene } from "./travel/ElevatorScene";
 import { Mascot } from "./ai/Mascot";
 import { DataFragments } from "./DataFragment";
@@ -52,7 +52,7 @@ export function World() {
       {high && <PerformanceMonitor onDecline={autoLowerQuality} />}
       <Suspense fallback={null}>
         <Environment />
-        <StreetBlockout />
+        <StreetKit />
         <ActiveDistricts />
         <ViewpointMarkers />
         <TravelScenes />

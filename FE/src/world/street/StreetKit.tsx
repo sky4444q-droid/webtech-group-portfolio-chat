@@ -1,0 +1,88 @@
+// เมืองจากชุดตัวต่อ: วาดเฉพาะถนนที่อยู่ + ถนนที่กำลังเดินผ่าน + สี่แยก
+// ป้าย/จอ/แผงในงานนี้เป็นสีเรืองแสงก่อน (หน้าตาจริงมาในงานป้ายและจอ)
+
+import { useMemo } from "react";
+import { useTexture } from "@react-three/drei";
+import * as THREE from "three";
+import { useWorld } from "../../store/useWorld";
+import { cityLayout, type KitItem, type KitType } from "./kitLayout";
+import { streetOf, type StreetId } from "./streets";
+import { KitInstances, neonColor } from "./kitMeshes";
+import { buildingWindowsTexture } from "../textures";
+
+type Key = StreetId | "nexus";
+
+/** ถนนที่ต้องวาดตอนนี้ */
+function useVisibleStreets(): Key[] {
+  const district = useWorld((s) => s.district);
+  const travel = useWorld((s) => s.travel);
+  return useMemo(() => {
+    const ids = new Set<Key>(["nexus"]);
+    for (const d of travel ? [travel.from, travel.to, district] : [district]) {
+      const st = streetOf(d);
+      if (st) ids.add(st.id);
+    }
+    return [...ids];
+  }, [district, travel]);
+}
+
+const GLOW: KitType[] = ["signH", "signV", "lightbox", "screen", "panel", "bigScreen"];
+
+export function StreetKit() {
+  const keys = useVisibleStreets();
+  const city = cityLayout();
+  const byType = useMemo(() => {
+    const map = new Map<KitType, KitItem[]>();
+    for (const k of keys) for (const it of city[k]) map.set(it.type, [...(map.get(it.type) ?? []), it]);
+    return map;
+  }, [keys, city]);
+  const get = (t: KitType) => byType.get(t) ?? [];
+
+  const [concrete, concreteN, metalN, metalR] = useTexture([
+    "/assets/textures/concrete036_color.jpg",
+    "/assets/textures/concrete036_normal.jpg",
+    "/assets/textures/metalplates013_normal.jpg",
+    "/assets/textures/metalplates013_roughness.jpg",
+  ]);
+  const windows = useMemo(() => buildingWindowsTexture(), []);
+  useMemo(() => {
+    for (const t of [concrete, concreteN, metalN, metalR]) t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    concrete.colorSpace = THREE.SRGBColorSpace;
+  }, [concrete, concreteN, metalN, metalR]);
+
+  const glowColor = useMemo(() => (it: KitItem) => neonColor(it.variant, it.type === "bigScreen" ? 2.4 : it.type === "panel" ? 1.1 : 1.8), []);
+  const shopColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.55), []);
+  const lampColor = useMemo(() => (it: KitItem) => neonColor(it.variant % 2 ? 3 : 0, 2.2), []);
+  const facadeTint = useMemo(() => (it: KitItem) => new THREE.Color().setScalar(0.1 + (it.variant % 4) * 0.025), []);
+
+  return (
+    <group>
+      {/* ตึก: คอนกรีตเก่าสีเข้ม + หน้าต่างเปิดไฟสุ่ม */}
+      <KitInstances items={[...get("facade"), ...get("endCap")]} color={facadeTint}>
+        <meshStandardMaterial map={concrete} normalMap={concreteN} roughness={0.85} metalness={0.1} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.55} />
+      </KitInstances>
+      {/* หน้าร้าน: กระจกเปิดไฟ */}
+      <KitInstances items={get("shopfront")} color={shopColor}>
+        <meshBasicMaterial toneMapped={false} />
+      </KitInstances>
+      {GLOW.map((t) => (
+        <KitInstances key={t} items={get(t)} color={glowColor}>
+          <meshBasicMaterial toneMapped={false} />
+        </KitInstances>
+      ))}
+      {/* ของโลหะบนผนัง */}
+      <KitInstances items={[...get("ac"), ...get("vent"), ...get("balcony"), ...get("crate")]}>
+        <meshStandardMaterial color="#1a1b22" normalMap={metalN} roughnessMap={metalR} metalness={0.7} roughness={0.6} />
+      </KitInstances>
+      <KitInstances items={[...get("pipe"), ...get("cable")]}>
+        <meshStandardMaterial color="#0c0c10" metalness={0.6} roughness={0.5} />
+      </KitInstances>
+      <KitInstances items={get("vending")} color={glowColor}>
+        <meshBasicMaterial toneMapped={false} />
+      </KitInstances>
+      <KitInstances items={get("lamp")} color={lampColor} geometry={<sphereGeometry args={[0.5, 12, 10]} />}>
+        <meshBasicMaterial toneMapped={false} />
+      </KitInstances>
+    </group>
+  );
+}

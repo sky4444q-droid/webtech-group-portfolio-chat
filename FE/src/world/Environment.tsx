@@ -2,7 +2,8 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Environment as HdrEnvironment, MeshReflectorMaterial, Sparkles, Stars, useTexture } from "@react-three/drei";
+import { Environment as HdrEnvironment, MeshReflectorMaterial, useTexture } from "@react-three/drei";
+import { Sky } from "./street/Sky";
 import { Suspense } from "react";
 import * as THREE from "three";
 import { COLORS } from "../config/theme";
@@ -25,7 +26,7 @@ export function Environment() {
       <ambientLight intensity={0.35} color="#6b4cff" />
       <hemisphereLight args={["#3a1d7a", "#05030c", 0.6]} />
       <directionalLight position={[-40, 60, 30]} intensity={0.4} color="#9b7bff" />
-      <Stars radius={260} depth={60} count={high ? 4000 : 1500} factor={4} saturation={0.6} fade speed={0.5} />
+      <Sky />
       <Suspense fallback={<FloorPlain />}>
         <Floor high={fx.reflector} />
         {/* แสงสะท้อนจาก HDRI กลางคืน (CC0) — ไม่ใช้เป็นพื้นหลัง */}
@@ -36,17 +37,6 @@ export function Environment() {
       {fx.traffic && <Traffic />}
       <GroundFog layers={fx.fogLayers} center={[center[0], 0, center[2]]} />
       <StreetLights cones={fx.cones} flare={fx.flare} />
-      {DISTRICT_ORDER.map((id) => (
-        <Sparkles
-          key={id}
-          position={[DISTRICTS[id].position[0], 6, DISTRICTS[id].position[2]]}
-          count={high ? 70 : 25}
-          scale={[34, 12, 34]}
-          size={3}
-          speed={0.35}
-          color={DISTRICTS[id].color}
-        />
-      ))}
     </>
   );
 }
@@ -63,12 +53,12 @@ function FloorPlain() {
 }
 
 function Floor({ high }: { high: boolean }) {
-  // พื้นยางมะตอยเปียก: normal + roughness จาก ambientCG (CC0) ทำให้แสงสะท้อนเป็นแอ่ง ๆ
-  const [normalMap, roughnessMap] = useTexture(["/assets/textures/asphalt015_normal.jpg", "/assets/textures/asphalt015_roughness.jpg"]);
+  // พื้นกระเบื้องดำแผ่นใหญ่เงา (ตามรูปตัวอย่าง): normal + roughness จาก ambientCG Tiles052 (CC0) ให้เห็นรอยต่อกระเบื้อง
+  const [normalMap, roughnessMap] = useTexture(["/assets/textures/tiles052_normal.jpg", "/assets/textures/tiles052_roughness.jpg"]);
   useMemo(() => {
     for (const t of [normalMap, roughnessMap]) {
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      t.repeat.set(70, 70);
+      t.repeat.set(105, 105);
     }
   }, [normalMap, roughnessMap]);
   return (

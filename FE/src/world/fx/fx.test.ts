@@ -40,4 +40,9 @@ describe("CC0 assets", () => {
     const total = files.reduce((n, f) => n + statSync(f).size, 0);
     expect(total).toBeLessThanOrEqual(6.5 * 1024 * 1024);
   });
+
+  it("keeps public/assets at or under 8 MB", () => {
+    const total = files.reduce((n, f) => n + statSync(f).size, 0);
+    expect(total).toBeLessThanOrEqual(8 * 1024 * 1024);
+  });
 });

@@ -10,3 +10,9 @@
 | `textures/asphalt015_roughness.jpg` | Asphalt 015 — Roughness (1K) | [ambientCG](https://ambientcg.com/view?id=Asphalt015) | CC0 | บีบอัด JPEG คุณภาพ 80 |
 | `textures/metal032_normal.jpg` | Metal 032 — NormalGL (1K) | [ambientCG](https://ambientcg.com/view?id=Metal032) | CC0 | บีบอัด JPEG คุณภาพ 80 |
 | `textures/metal032_roughness.jpg` | Metal 032 — Roughness (1K) | [ambientCG](https://ambientcg.com/view?id=Metal032) | CC0 | บีบอัด JPEG คุณภาพ 80 |
+| `textures/tiles052_normal.jpg` | Tiles 052 — NormalGL (1K) | [ambientCG](https://ambientcg.com/view?id=Tiles052) | CC0 | บีบอัด JPEG คุณภาพ 80 |
+| `textures/tiles052_roughness.jpg` | Tiles 052 — Roughness (1K) | [ambientCG](https://ambientcg.com/view?id=Tiles052) | CC0 | บีบอัด JPEG คุณภาพ 80 |
+| `textures/concrete036_color.jpg` | Concrete 036 — Color (1K) | [ambientCG](https://ambientcg.com/view?id=Concrete036) | CC0 | บีบอัด JPEG คุณภาพ 80 |
+| `textures/concrete036_normal.jpg` | Concrete 036 — NormalGL (1K) | [ambientCG](https://ambientcg.com/view?id=Concrete036) | CC0 | บีบอัด JPEG คุณภาพ 80 |
+| `textures/metalplates013_normal.jpg` | Metal Plates 013 — NormalGL (1K) | [ambientCG](https://ambientcg.com/view?id=MetalPlates013) | CC0 | บีบอัด JPEG คุณภาพ 80 |
+| `textures/metalplates013_roughness.jpg` | Metal Plates 013 — Roughness (1K) | [ambientCG](https://ambientcg.com/view?id=MetalPlates013) | CC0 | บีบอัด JPEG คุณภาพ 80 |
