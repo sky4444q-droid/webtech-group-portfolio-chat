@@ -11,6 +11,8 @@ import { DISTRICTS } from "../config/districts";
 import { useWorld } from "../store/useWorld";
 import { CameraRig } from "./CameraRig";
 import { ViewpointMarkers } from "./ViewpointMarkers";
+import { GalleryAvenue } from "./travel/GalleryAvenue";
+import { ElevatorScene } from "./travel/ElevatorScene";
 import { Environment } from "./Environment";
 import { GateDistrict } from "./districts/GateDistrict";
 import { NexusDistrict } from "./districts/NexusDistrict";
@@ -49,6 +51,7 @@ export function World() {
         <Environment />
         <ActiveDistricts />
         <ViewpointMarkers />
+        <TravelScenes />
       </Suspense>
       <CameraRig />
       {high && (
@@ -74,6 +77,20 @@ function ActiveDistricts() {
       {[...ids].map((id) => (
         <group key={id}>{SCENES[id]()}</group>
       ))}
+    </>
+  );
+}
+
+/** ฉากของการเดินทาง: ถนน Gallery Avenue (เห็นจาก Nexus/Projects หรือตอนเดิน) และตู้ลิฟต์ (เฉพาะตอนนั่งลิฟต์) */
+function TravelScenes() {
+  const district = useWorld((s) => s.district);
+  const travel = useWorld((s) => s.travel);
+  const kind = useWorld((s) => s.travelKind);
+  const touches = (d: DistrictId) => district === d || travel?.from === d || travel?.to === d;
+  return (
+    <>
+      {(touches("nexus") || touches("projects")) && <GalleryAvenue />}
+      {kind === "elevator" && <ElevatorScene />}
     </>
   );
 }

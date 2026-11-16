@@ -1097,3 +1097,55 @@ button {
   bottom: 24px;
   pointer-events: auto;
 }
+
+/* ---------- ระหว่างเดินทาง ---------- */
+.travel-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  animation-duration: var(--trip-ms);
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+.travel-fade { background: #000; animation-name: veil-fade; }
+@keyframes veil-fade { 0% { opacity: 0; } 45%, 55% { opacity: 1; } 100% { opacity: 0; } }
+.travel-elevator { background: #000; animation-name: veil-elevator; }
+@keyframes veil-elevator {
+  0% { opacity: 0; } 13%, 17% { opacity: 1; } 24%, 80% { opacity: 0; } 84%, 87% { opacity: 1; } 100% { opacity: 0; }
+}
+.travel-portal {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95) 0 6%, transparent 22%),
+    repeating-conic-gradient(from 0deg, rgba(150, 60, 255, 0.9) 0 8deg, rgba(20, 0, 60, 0.95) 8deg 16deg),
+    #12002a;
+  animation-name: veil-portal;
+  filter: blur(2px);
+}
+@keyframes veil-portal {
+  0%, 30% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1.4) rotate(120deg); }
+  58% { opacity: 1; transform: scale(2.2) rotate(240deg); }
+  75%, 100% { opacity: 0; transform: scale(3) rotate(320deg); }
+}
+.travel-skip {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 150px;
+  color: rgba(232, 246, 255, 0.75);
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+.travel-skip span { padding: 6px 14px; border-radius: 999px; background: rgba(8, 6, 22, 0.55); animation: skip-blink 1.6s ease-in-out infinite; }
+@keyframes skip-blink { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .travel-portal { animation-name: veil-fade; }
+}

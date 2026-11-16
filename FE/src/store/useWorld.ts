@@ -1,5 +1,6 @@
 // สถานะกลางของโลก: อยู่พื้นที่ไหน กำลังเดินทางไหม เปิด panel อะไร ภาษา คุณภาพกราฟิก
 
+import { prefersReducedMotion, travelKind, type TravelKind } from "../world/travel/kind";
 import { VIEWPOINTS } from "../config/viewpoints";
 import { create } from "zustand";
 import type { DistrictId, Lang } from "../types";
@@ -23,6 +24,10 @@ export interface WorldState {
   viewpoint: number;
   /** จุดชมก่อนหน้า สำหรับปุ่มย้อนกลับ */
   viewpointStack: number[];
+  /** ชนิดการเดินทางที่กำลังเล่น */
+  travelKind: TravelKind | null;
+  /** ผู้ชมคลิกเพื่อข้ามการเดิน — กล้องจะพาไปถึงทันที */
+  skipRequested: boolean;
 
   setLang: (lang: Lang) => void;
   travelTo: (id: DistrictId) => void;
@@ -39,11 +44,12 @@ export interface WorldState {
   goToViewpoint: (index: number) => void;
   /** ย้อนกลับจุดชมก่อนหน้า — คืน false ถ้าอยู่จุดแรกแล้ว */
   backViewpoint: () => boolean;
+  skipWalk: () => void;
 }
 
 type WorldData = Pick<
   WorldState,
-  "lang" | "district" | "travel" | "introDone" | "pendingTarget" | "chatOpen" | "panel" | "quality" | "guideSeen" | "viewpoint" | "viewpointStack"
+  "lang" | "district" | "travel" | "introDone" | "pendingTarget" | "chatOpen" | "panel" | "quality" | "guideSeen" | "viewpoint" | "viewpointStack" | "travelKind" | "skipRequested"
 >;
 
 export function initialWorldState(): WorldData {
@@ -59,6 +65,8 @@ export function initialWorldState(): WorldData {
     guideSeen: load<boolean>("guideSeen", false),
     viewpoint: 0,
     viewpointStack: [],
+    travelKind: null,
+    skipRequested: false,
   };
 }
 
@@ -77,13 +85,14 @@ export const useWorld = create<WorldState>((set, get) => ({
       return;
     }
     if (s.travel || id === s.district) return;
-    set({ travel: { from: s.district, to: id }, panel: null });
+    const kind = travelKind(s.district, id, { reducedMotion: prefersReducedMotion(), quality: s.quality });
+    set({ travel: { from: s.district, to: id }, panel: null, travelKind: kind, skipRequested: false });
   },
 
   finishTravel: () => {
     const { travel } = get();
     if (!travel) return;
-    set({ district: travel.to, travel: null, panel: null, viewpoint: 0, viewpointStack: [] });
+    set({ district: travel.to, travel: null, panel: null, viewpoint: 0, viewpointStack: [], travelKind: null, skipRequested: false });
   },
 
   finishIntro: () => {
@@ -119,6 +128,11 @@ export const useWorld = create<WorldState>((set, get) => ({
     if (!s.introDone || s.travel || index === s.viewpoint) return;
     if (index < 0 || index >= VIEWPOINTS[s.district].length) return;
     set({ viewpoint: index, viewpointStack: [...s.viewpointStack, s.viewpoint], panel: null });
+  },
+
+  skipWalk: () => {
+    const s = get();
+    if (s.travel && s.travelKind === "walk") set({ skipRequested: true });
   },
 
   backViewpoint: () => {

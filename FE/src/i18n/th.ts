@@ -104,4 +104,6 @@ export const th = {
   vpSanctuaryEdge: "ขอบลาน",
   vpSanctuaryFace: "ต่อหน้า AI",
   viewBack: "ย้อนกลับ",
+
+  walkSkip: "คลิกเพื่อไปถึงเลย",
 };

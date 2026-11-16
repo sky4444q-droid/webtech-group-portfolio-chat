@@ -1,18 +1,26 @@
-// ควบคุมกล้องทั้งหมด: Intro แบบ Cinematic, บินระหว่างพื้นที่, ท่าประจำพื้นที่ + ขยับตามเมาส์, ซูมดูผลงาน
+// ควบคุมกล้องทั้งหมด: Intro, การเดินทาง 5 แบบ (บิน/เดิน/ลิฟต์/Portal/จาง), จุดชม + หันตามเมาส์, ซูมดูผลงาน
 
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { DISTRICTS, type Vec3 } from "../config/districts";
-import { INTRO_MS, TRAVEL_MS } from "../config/timing";
+import { INTRO_MS, WALK_PRE_MS } from "../config/timing";
 import { usePortfolio } from "../store/usePortfolio";
 import { useWorld } from "../store/useWorld";
 import { showcaseCamera } from "./layout";
 import { viewpointWorld } from "../config/viewpoints";
+import { walkPath, type WalkPlan } from "./travel/paths";
+import { elevatorCamera, elevatorDoors } from "./travel/ElevatorScene";
+import { tripDuration } from "./travel/tripDurations";
+import type { TravelKind } from "./travel/kind";
+import * as sfx from "../audio/sfx";
 
 const v = (p: Vec3) => new THREE.Vector3(...p);
 const UP = new THREE.Vector3(0, 1, 0);
 const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const clamp01 = (k: number) => Math.min(1, Math.max(0, k));
+/** ช่วงย่อยของ progress: a..b → 0..1 */
+const span = (k: number, a: number, b: number) => clamp01((k - a) / (b - a));
 
 // เส้นทาง Intro: บินลงจากเหนือเมืองเข้าหาประตูทางเข้า
 const gate = DISTRICTS.gate;
@@ -24,19 +32,32 @@ const INTRO_PATH = new THREE.CatmullRomCurve3([
 ]);
 const INTRO_LOOK_FROM = v([gate.position[0] + 30, 0, gate.position[2]]);
 
+/** ประตูหน้าล็อบบี้ Team HQ — ออกจากล็อบบี้ต้องถอยออกทางนี้ก่อนบิน */
+const TEAM_DOOR = v([DISTRICTS.team.position[0], 1.9, DISTRICTS.team.position[2] + 14]);
+
+interface Trip {
+  start: number;
+  kind: TravelKind;
+  duration: number;
+  fromPos: THREE.Vector3;
+  fromLook: THREE.Vector3;
+  walk: WalkPlan | null;
+  steps: number;
+  cues: Set<string>;
+}
+
 export function CameraRig() {
   const lookAt = useRef(v(DISTRICTS.gate.camera.target));
   const introStart = useRef<number | null>(null);
-  const flight = useRef<{ start: number; fromPos: THREE.Vector3; fromLook: THREE.Vector3 } | null>(null);
-  const tmpPos = useRef(new THREE.Vector3());
-  const tmpLook = useRef(new THREE.Vector3());
+  const trip = useRef<Trip | null>(null);
+  const pos = useRef(new THREE.Vector3()).current;
+  const look = useRef(new THREE.Vector3()).current;
   const dir = useRef(new THREE.Vector3()).current;
+  const tmp = useRef(new THREE.Vector3()).current;
 
   useFrame(({ camera, pointer }, delta) => {
     const s = useWorld.getState();
     const now = performance.now();
-    const pos = tmpPos.current;
-    const look = tmpLook.current;
 
     // 1) Intro
     if (!s.introDone) {
@@ -51,30 +72,137 @@ export function CameraRig() {
       return;
     }
 
-    // 2) บินระหว่างพื้นที่
+    // 2) เดินทาง
     if (s.travel) {
-      if (!flight.current) {
-        flight.current = { start: now, fromPos: camera.position.clone(), fromLook: lookAt.current.clone() };
+      if (!trip.current) {
+        const kind = s.travelKind ?? "fly";
+        const walk = kind === "walk" ? walkPath(s.travel.from, s.travel.to) : null;
+        trip.current = {
+          start: now,
+          kind,
+          duration: tripDuration(kind, !!walk?.pre),
+          fromPos: camera.position.clone(),
+          fromLook: lookAt.current.clone(),
+          walk,
+          steps: 0,
+          cues: new Set(),
+        };
       }
-      const f = flight.current;
-      const to = viewpointWorld(s.travel.to, 0);
-      const k = Math.min(1, (now - f.start) / TRAVEL_MS);
-      const e = easeInOut(k);
-      pos.lerpVectors(f.fromPos, v(to.position), e);
-      pos.y += Math.sin(k * Math.PI) * 22; // โค้งขึ้นเหนือเมือง
-      look.lerpVectors(f.fromLook, v(to.target), e);
+      const tr = trip.current;
+      const cue = (name: string, fn: () => void) => {
+        if (!tr.cues.has(name)) {
+          tr.cues.add(name);
+          fn();
+        }
+      };
+      let k = Math.min(1, (now - tr.start) / tr.duration);
+      if (s.skipRequested) k = 1;
+      const dest = viewpointWorld(s.travel.to, 0);
+
+      if (tr.kind === "walk" && tr.walk) {
+        const preK = tr.walk.pre ? WALK_PRE_MS / tr.duration : 0;
+        if (tr.walk.pre && k < preK) {
+          // บินไปต้นถนนก่อน
+          const e = easeInOut(k / preK);
+          pos.lerpVectors(tr.fromPos, tr.walk.pre, e);
+          pos.y += Math.sin((k / preK) * Math.PI) * 18;
+          look.lerpVectors(tr.fromLook, tr.walk.walk.getPointAt(0.05), e);
+          cue("whoosh", () => sfx.play("whoosh"));
+        } else {
+          const wk = span(k, preK, 1);
+          const e = THREE.MathUtils.smootherstep(wk, 0, 1);
+          tr.walk.walk.getPointAt(e, pos);
+          tr.walk.walk.getPointAt(Math.min(1, e + 0.05), look);
+          look.y = pos.y - 0.05;
+          // ก้าวเดิน: โยกขึ้นลงตามจังหวะก้าว
+          const stride = e * tr.walk.walk.getLength() / 1.4;
+          pos.y += Math.abs(Math.sin(stride * Math.PI)) * 0.07;
+          const step = Math.floor(stride);
+          if (step > tr.steps && wk < 0.98) {
+            tr.steps = step;
+            sfx.play("step");
+          }
+          if (wk < 0.08) {
+            // ช่วงแรก: หันจากมุมเดิมเข้าหาทางเดินนุ่ม ๆ
+            look.lerpVectors(tr.fromLook, look, wk / 0.08);
+          }
+        }
+      } else if (tr.kind === "elevator") {
+        // ดำ → อยู่ในลิฟต์ ประตูปิด → ลิฟต์ขึ้น → ดำ → ล็อบบี้
+        if (k < 0.15) {
+          pos.copy(camera.position);
+          look.copy(lookAt.current);
+          cue("door1", () => sfx.play("elevatorDoor"));
+        } else if (k < 0.85) {
+          elevatorDoors.current = k < 0.3 ? 1 - span(k, 0.18, 0.3) : k > 0.75 ? span(k, 0.75, 0.83) : 0;
+          elevatorCamera(easeInOut(span(k, 0.3, 0.78)), pos, look);
+          cue("run", () => sfx.play("elevatorRun"));
+          if (k > 0.75) cue("ding", () => sfx.play("ding"));
+        } else {
+          // ออกจากลิฟต์เข้าล็อบบี้
+          const e = easeInOut(span(k, 0.85, 1));
+          pos.set(...dest.position).add(tmp.set(0, 0, 2.5 * (1 - e)));
+          look.set(...dest.target);
+        }
+      } else if (tr.kind === "portal") {
+        // พุ่งเข้าประตู → อุโมงค์แสง → โผล่ออกที่ปลายทาง
+        if (k < 0.5) {
+          const e = easeInOut(span(k, 0, 0.45));
+          dir.subVectors(tr.fromLook, tr.fromPos).normalize();
+          pos.copy(tr.fromPos).addScaledVector(dir, e * 9);
+          look.copy(tr.fromLook);
+          cue("portal", () => sfx.play("portal"));
+        } else {
+          const e = easeInOut(span(k, 0.55, 1));
+          dir.subVectors(v(dest.target), v(dest.position)).normalize();
+          pos.set(...dest.position).addScaledVector(dir, -6 * (1 - e));
+          look.set(...dest.target);
+        }
+      } else if (tr.kind === "fade") {
+        if (k < 0.5) {
+          pos.copy(camera.position);
+          look.copy(lookAt.current);
+        } else {
+          pos.set(...dest.position);
+          look.set(...dest.target);
+        }
+      } else {
+        // บิน — ออกจากล็อบบี้ Team HQ ทางประตูก่อน
+        let from = tr.fromPos;
+        let fk = k;
+        if (s.travel.from === "team") {
+          if (k < 0.25) {
+            const e = easeInOut(k / 0.25);
+            pos.lerpVectors(tr.fromPos, TEAM_DOOR, e);
+            look.lerpVectors(tr.fromLook, tmp.copy(TEAM_DOOR).add(dir.set(0, 0, 10)), e);
+            camera.position.copy(pos);
+            lookAt.current.copy(look);
+            camera.lookAt(lookAt.current);
+            return;
+          }
+          from = TEAM_DOOR;
+          fk = (k - 0.25) / 0.75;
+        }
+        const e = easeInOut(fk);
+        cue("whoosh", () => sfx.play("whoosh"));
+        pos.lerpVectors(from, v(dest.position), e);
+        pos.y += Math.sin(fk * Math.PI) * 22; // โค้งขึ้นเหนือเมือง
+        look.lerpVectors(tr.fromLook, v(dest.target), e);
+      }
+
       camera.position.copy(pos);
       lookAt.current.copy(look);
       camera.lookAt(lookAt.current);
       if (k >= 1) {
-        flight.current = null;
+        trip.current = null;
+        elevatorDoors.current = 1;
         s.finishTravel();
       }
       return;
     }
-    flight.current = null;
+    trip.current = null;
 
-    // 3) อยู่กับที่: ท่าของพื้นที่ หรือท่าซูมดูผลงาน
+    // 3) อยู่กับที่: จุดชม หรือท่าซูมดูผลงาน
     const vp = viewpointWorld(s.district, s.viewpoint);
     let pose: { position: Vec3; target: Vec3 } = vp;
     let parallax = 1;

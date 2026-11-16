@@ -105,4 +105,6 @@ export const en: Record<keyof typeof th, string> = {
   vpSanctuaryEdge: "Plaza edge",
   vpSanctuaryFace: "Before the AI",
   viewBack: "Back",
+
+  walkSkip: "Click to arrive now",
 };
