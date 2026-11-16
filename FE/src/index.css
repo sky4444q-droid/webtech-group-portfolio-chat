@@ -567,3 +567,12 @@ button {
 .member-intro { color: #c9c6ea; margin: 6px 0; }
 .member-card ul { padding-left: 18px; }
 .member-card a { color: #b9a8ff; }
+
+.brand-badge {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #6d5bd0, #9b7bff);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+}
