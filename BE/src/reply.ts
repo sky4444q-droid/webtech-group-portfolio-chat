@@ -27,7 +27,7 @@ const LABELS: Record<string, string> = {
   education: "การศึกษา", interestedPosition: "ตำแหน่งที่สนใจ", intro: "แนะนำตัว",
   skills: "ทักษะ", coreStrength: "จุดแข็ง", softSkills: "Soft skills", works: "ผลงาน",
   careerGoal: "เป้าหมายอาชีพ", hobbies: "งานอดิเรก", faq: "คำถาม-คำตอบที่เตรียมไว้",
-  answerNotes: "แนวทางการตอบเรื่องคนนี้", contact: "ช่องทางติดต่อ",
+  answerNotes: "แนวทางการตอบเรื่องคนนี้", teamworkAndActivities: "การทำงานเป็นทีมและกิจกรรม", contact: "ช่องทางติดต่อ",
   concept: "แนวคิด", highlights: "จุดเด่น", sharedWorks: "ผลงานร่วมกัน",
   title: "ชื่อ", type: "ประเภท", status: "สถานะ", detail: "รายละเอียด", tools: "เครื่องมือ",
   link: "ลิงก์", q: "ถาม", a: "ตอบ",
