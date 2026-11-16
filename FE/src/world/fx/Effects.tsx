@@ -8,48 +8,29 @@ import { COLORS } from "../../config/theme";
 
 // ---------- กรวยลำแสง (Volumetric light แบบหลอก) ----------
 
-const coneVertex = /* glsl */ `
-  varying float vY;
-  varying vec3 vNormal;
-  varying vec3 vView;
-  void main() {
-    vY = uv.y;
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    vNormal = normalize(normalMatrix * normal);
-    vView = normalize(-mv.xyz);
-    gl_Position = projectionMatrix * mv;
-  }
-`;
-const coneFragment = /* glsl */ `
-  uniform vec3 uColor;
-  uniform float uOpacity;
-  varying float vY;
-  varying vec3 vNormal;
-  varying vec3 vView;
-  void main() {
-    // จางลงตามระยะจากโคม และจางที่ขอบกรวย
-    float edge = pow(abs(dot(vNormal, vView)), 1.5);
-    float a = pow(vY, 1.6) * edge * uOpacity;
-    gl_FragColor = vec4(uColor, a);
-  }
-`;
+let coneAlpha: THREE.Texture | null = null;
+/** ไล่ความทึบจากโคม (บน) ไปจางที่พื้น (ล่าง) */
+function getConeAlpha(): THREE.Texture {
+  if (coneAlpha) return coneAlpha;
+  const c = document.createElement("canvas");
+  c.width = 4;
+  c.height = 128;
+  const g = c.getContext("2d")!;
+  const grad = g.createLinearGradient(0, 0, 0, 128);
+  grad.addColorStop(0, "#ffffff");
+  grad.addColorStop(0.5, "#555555");
+  grad.addColorStop(1, "#000000");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 4, 128);
+  coneAlpha = new THREE.CanvasTexture(c);
+  return coneAlpha;
+}
 
 export function VolumetricCone({ color, height = 7, radius = 2.6, opacity = 0.35, ...group }: ThreeElements["group"] & { color: string; height?: number; radius?: number; opacity?: number }) {
-  const mat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        vertexShader: coneVertex,
-        fragmentShader: coneFragment,
-        uniforms: { uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity } },
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        side: THREE.DoubleSide,
-      }),
-    [color, opacity],
-  );
+  const mat = useRef<THREE.MeshBasicMaterial>(null);
+  const alpha = useMemo(() => getConeAlpha(), []);
   useFrame(({ clock }) => {
-    mat.uniforms.uOpacity.value = opacity * (0.85 + Math.sin(clock.elapsedTime * 1.7 + height) * 0.15);
+    if (mat.current) mat.current.opacity = opacity * (0.85 + Math.sin(clock.elapsedTime * 1.7 + height) * 0.15);
   });
   return (
     <group {...group}>
@@ -58,8 +39,19 @@ export function VolumetricCone({ color, height = 7, radius = 2.6, opacity = 0.35
         <cylinderGeometry args={[0.35, 0.5, 0.25, 12]} />
         <meshBasicMaterial color={color} toneMapped={false} />
       </mesh>
-      <mesh position={[0, height / 2, 0]} material={mat}>
+      {/* กรวยแสง: ใช้ material มาตรฐาน + alphaMap ไล่ระดับ (shader เขียนเองทำให้ Bloom เป็นจอดำ) */}
+      <mesh position={[0, height / 2, 0]}>
         <cylinderGeometry args={[0.3, radius, height, 24, 1, true]} />
+        <meshBasicMaterial
+          ref={mat}
+          color={color}
+          alphaMap={alpha}
+          transparent
+          opacity={opacity}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
       </mesh>
     </group>
   );
@@ -166,7 +158,8 @@ export function GroundFog({ layers, center }: { layers: number; center: [number,
   return (
     <group position={center}>
       {textures.map((t, i) => (
-        <mesh key={i} position={[0, 0.4 + i * 0.9, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        // ทุกชั้นต่ำกว่าระดับสายตา · ใช้ blending ปกติ (additive บนแผ่นใหญ่ทำให้ภาพดำทั้งจอเมื่อมี Bloom)
+        <mesh key={i} position={[0, 0.12 + i * 0.28, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
           <planeGeometry args={[160, 160]} />
           <meshBasicMaterial
             ref={(m) => {
@@ -175,9 +168,9 @@ export function GroundFog({ layers, center }: { layers: number; center: [number,
             map={t}
             color={colors[i % colors.length]}
             transparent
-            opacity={0.5 - i * 0.12}
+            opacity={0.14 - i * 0.03}
             depthWrite={false}
-            blending={THREE.AdditiveBlending}
+            fog={false}
           />
         </mesh>
       ))}
@@ -266,16 +259,16 @@ export function RainSplashes() {
       }
       dummy.position.set(d.x, 0.03, d.z);
       dummy.rotation.set(-Math.PI / 2, 0, 0);
-      dummy.scale.setScalar(0.05 + d.t * 0.35);
+      dummy.scale.setScalar(0.03 + d.t * 0.13);
       dummy.updateMatrix();
       mesh.current!.setMatrixAt(i, dummy.matrix);
     });
     mesh.current.instanceMatrix.needsUpdate = true;
-    (mesh.current.material as THREE.MeshBasicMaterial).opacity = 0.35;
+    (mesh.current.material as THREE.MeshBasicMaterial).opacity = 0.22 * (1 - data[0].t * 0.5);
   });
   return (
     <instancedMesh ref={mesh} args={[undefined, undefined, SPLASHES]} frustumCulled={false}>
-      <ringGeometry args={[0.7, 1, 16]} />
+      <ringGeometry args={[0.8, 1, 16]} />
       <meshBasicMaterial color="#b9c8ff" transparent opacity={0.35} depthWrite={false} />
     </instancedMesh>
   );
