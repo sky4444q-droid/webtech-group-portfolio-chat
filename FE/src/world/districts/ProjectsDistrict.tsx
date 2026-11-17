@@ -11,7 +11,6 @@ import { COLORS } from "../../config/theme";
 import { usePortfolio } from "../../store/usePortfolio";
 import { useWorld } from "../../store/useWorld";
 import { NeonSign } from "../NeonSign";
-import { Portal } from "../Portal";
 import { AiPresence } from "../ai/AiPresence";
 import { pedestalPositions } from "../layout";
 import { NeonPillar } from "./common";
@@ -26,27 +25,43 @@ export function ProjectsDistrict() {
   const spots = pedestalPositions(projects.length);
   return (
     <group position={cfg.position}>
-      {/* พื้นห้องจัดแสดงและผนังตาราง */}
-      <mesh position={[0, 0.1, -1]}>
-        <boxGeometry args={[30, 0.2, 16]} />
-        <meshStandardMaterial color="#0c0920" metalness={0.85} roughness={0.3} />
+      {/* หอจัดแสดงปิดปลายถนน: ผนังหลัง ผนังข้าง หลังคา และทางเข้ากว้างหันหาถนน */}
+      <mesh position={[0, 7, -9.2]}>
+        <boxGeometry args={[30, 14, 0.4]} />
+        <meshStandardMaterial color="#08080c" metalness={0.6} roughness={0.4} />
       </mesh>
-      <mesh position={[0, 7, -9]}>
+      <mesh position={[0, 7, -8.95]}>
         <planeGeometry args={[30, 14, 30, 14]} />
-        <meshBasicMaterial color={cfg.color} wireframe transparent opacity={0.12} toneMapped={false} />
+        <meshBasicMaterial color={cfg.color} wireframe transparent opacity={0.1} toneMapped={false} />
+      </mesh>
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * 15, 7, -3.5]}>
+          <boxGeometry args={[0.4, 14, 11.5]} />
+          <meshStandardMaterial color="#08080c" metalness={0.6} roughness={0.4} />
+        </mesh>
+      ))}
+      <mesh position={[0, 14.2, -3.5]}>
+        <boxGeometry args={[30.4, 0.4, 11.5]} />
+        <meshStandardMaterial color="#060609" metalness={0.5} roughness={0.5} />
+      </mesh>
+      {/* กรอบทางเข้าเรืองแสง */}
+      <mesh position={[0, 12.4, 2.2]}>
+        <boxGeometry args={[30, 3.2, 0.4]} />
+        <meshStandardMaterial color="#08080c" metalness={0.6} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, 10.75, 2.42]}>
+        <boxGeometry args={[29, 0.07, 0.04]} />
+        <meshBasicMaterial color={cfg.color} toneMapped={false} />
       </mesh>
       {[-14, -7, 7, 14].map((x) => (
-        <NeonPillar key={x} height={12} color={cfg.color} position={[x, 0, -8]} />
+        <NeonPillar key={x} height={10.8} color={cfg.color} position={[x, 0, 1.6]} />
       ))}
-      <NeonSign text={cfg.sign} color={cfg.color} height={0.9} position={[0, 11.5, -8.8]} />
-      <NeonSign text="展示" color={COLORS.pink} height={3} vertical position={[-15.5, 7, -7]} flicker />
 
       {projects.map((p, i) => (
         <Pedestal key={p.id} id={p.id} index={i} position={spots[i]} color={HOLO_COLORS[i % HOLO_COLORS.length]} />
       ))}
 
       <AiPresence district="projects" position={[0, 8, -5]} size={0.9} />
-      <Portal target="nexus" radius={1.6} position={[10.5, 0.2, 3]} rotation={[0, -0.6, 0]} />
       <pointLight color={cfg.color} intensity={60} distance={30} position={[0, 9, 3]} />
     </group>
   );

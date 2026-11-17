@@ -11,10 +11,9 @@ import { COLORS } from "../../config/theme";
 import { useWorld, type Panel } from "../../store/useWorld";
 import { useT } from "../../i18n";
 import { NeonSign } from "../NeonSign";
-import { Portal } from "../Portal";
 import { AiPresence } from "../ai/AiPresence";
 import { buildingWindowsTexture, screenTexture } from "../textures";
-import { Platform } from "./common";
+import { TEAM_LOBBY_OFFSET } from "../street/streets";
 import { HoloCard } from "../HoloCard";
 import { usePortfolio } from "../../store/usePortfolio";
 import { usePick } from "../../i18n";
@@ -32,19 +31,35 @@ export function TeamDistrict() {
 
   return (
     <group position={cfg.position}>
-      <Platform radius={13} color={cfg.color} />
-      {/* ตึกสำนักงานใหญ่ */}
-      <mesh position={[0, 20, -11]}>
-        <boxGeometry args={[18, 40, 6]} />
-        <meshStandardMaterial color="#0b0a18" metalness={0.6} roughness={0.4} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={1.2} />
+      {/* ตึกสำนักงานกระจกปิดปลายถนน (หน้าตึกหันไปทาง −x หาถนน) — ล็อบบี้อยู่ข้างใน ไปได้ทางลิฟต์ */}
+      <mesh position={[8.5, 21, 2.5]}>
+        <boxGeometry args={[20, 42, 22]} />
+        <meshStandardMaterial color="#0a0c14" metalness={0.85} roughness={0.15} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.9} />
       </mesh>
-      <mesh position={[0, 40.3, -11]}>
-        <boxGeometry args={[18.4, 0.3, 6.4]} />
+      <mesh position={[8.5, 42.2, 2.5]}>
+        <boxGeometry args={[20.4, 0.3, 22.4]} />
         <meshBasicMaterial color={cfg.color} toneMapped={false} />
       </mesh>
-      <NeonSign text={cfg.sign} color={cfg.color} height={1.3} position={[0, 12, -7.9]} />
-      <NeonSign text="研究所" color={COLORS.cyan} height={4} vertical position={[-10, 9, -7.9]} flicker />
+      {/* ประตูกระจกเรืองแสง */}
+      <group position={[-1.55, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+        <mesh position={[0, 1.7, 0]}>
+          <planeGeometry args={[3.2, 3.4]} />
+          <meshBasicMaterial color={cfg.color} transparent opacity={0.35} toneMapped={false} />
+        </mesh>
+        {[-1.65, 1.65].map((x) => (
+          <mesh key={x} position={[x, 1.75, 0.02]}>
+            <boxGeometry args={[0.08, 3.5, 0.04]} />
+            <meshBasicMaterial color={cfg.color} toneMapped={false} />
+          </mesh>
+        ))}
+        <mesh position={[0, 3.5, 0.02]}>
+          <boxGeometry args={[3.38, 0.08, 0.04]} />
+          <meshBasicMaterial color={cfg.color} toneMapped={false} />
+        </mesh>
+      </group>
+      <pointLight color={cfg.color} intensity={18} distance={12} position={[-3.5, 3, 0]} />
 
+      <group position={TEAM_LOBBY_OFFSET}>
       <Lobby color={cfg.color} />
 
       <Screen title={tr("teamScreen")} color={cfg.color} panel={{ kind: "team", display: "holo" }} position={[-3.6, 1.95, -2]} rotation={[0, 0.12, 0]} scale={0.75} />
@@ -52,9 +67,9 @@ export function TeamDistrict() {
 
       <TeamHolo />
       <AiPresence district="team" size={0.45} position={[-6.6, 2.3, -0.5]} />
-      <Portal target="nexus" radius={1.3} position={[7, 0.3, 5]} rotation={[0, -0.9, 0]} />
       <pointLight color={cfg.color} intensity={30} distance={22} position={[0, 3.8, 3]} />
       <pointLight color={COLORS.cyan} intensity={14} distance={14} position={[0, 3.6, -4]} />
+      </group>
     </group>
   );
 }

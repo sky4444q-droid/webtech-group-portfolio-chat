@@ -1,35 +1,35 @@
-// Arrival Gate — ประตูทางเข้าจักรวาล
+// Arrival Gate — ปลายซอยทางเข้า มีซุ้มประตูเมืองเรืองแสงที่น้องจิ๋วเดินผ่านเข้ามา
 
 import { DISTRICTS } from "../../config/districts";
-import { COLORS } from "../../config/theme";
-import { NeonSign } from "../NeonSign";
-import { Portal } from "../Portal";
+import { GATE_ARCH } from "../street/streets";
 import { AiPresence } from "../ai/AiPresence";
-import { NeonPillar, Platform } from "./common";
+import { NeonPillar } from "./common";
 
 export function GateDistrict() {
   const cfg = DISTRICTS.gate;
+  // ซุ้มอยู่ที่ GATE_ARCH (พิกัดโลก) แปลงเป็นพิกัดภายในพื้นที่
+  const ax = GATE_ARCH[0] - cfg.position[0];
+  const az = GATE_ARCH[2] - cfg.position[2];
   return (
     <group position={cfg.position}>
-      <Platform radius={13} color={cfg.color} />
-      {/* ซุ้มประตูใหญ่ */}
-      <NeonPillar height={14} color={cfg.color} position={[-6.5, 0, -3]} />
-      <NeonPillar height={14} color={cfg.color} position={[6.5, 0, -3]} />
-      <mesh position={[0, 14.2, -3]}>
-        <boxGeometry args={[14.6, 1, 1]} />
-        <meshStandardMaterial color="#0e0a20" metalness={0.8} roughness={0.3} />
-      </mesh>
-      <mesh position={[0, 13.6, -2.45]}>
-        <boxGeometry args={[13.4, 0.08, 0.04]} />
-        <meshBasicMaterial color={cfg.color} toneMapped={false} />
-      </mesh>
-      <NeonSign text={cfg.sign} color={cfg.color} height={1.1} position={[0, 15.6, -3]} flicker />
-      <NeonSign text="入口" color={COLORS.cyan} height={3.6} vertical position={[-7.6, 8, -2.5]} />
-      <NeonSign text="未来" color={COLORS.purple} height={3.6} vertical position={[7.6, 8, -2.5]} flicker />
-
-      <Portal target="nexus" radius={4} position={[0, 0.3, -3]} />
-      <AiPresence district="gate" size={0.6} position={[8.5, 3, 3]} />
-      <pointLight color={cfg.color} intensity={60} distance={30} position={[0, 8, 2]} />
+      <group position={[ax, 0, az]} rotation={[0, Math.PI / 2, 0]}>
+        <NeonPillar height={7} color={cfg.color} position={[-3.6, 0, 0]} />
+        <NeonPillar height={7} color={cfg.color} position={[3.6, 0, 0]} />
+        <mesh position={[0, 7.2, 0]}>
+          <boxGeometry args={[8.2, 0.7, 0.9]} />
+          <meshStandardMaterial color="#0b0b10" metalness={0.8} roughness={0.35} />
+        </mesh>
+        <mesh position={[0, 6.75, 0.46]}>
+          <boxGeometry args={[7.4, 0.07, 0.04]} />
+          <meshBasicMaterial color={cfg.color} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 6.75, -0.46]}>
+          <boxGeometry args={[7.4, 0.07, 0.04]} />
+          <meshBasicMaterial color={cfg.color} toneMapped={false} />
+        </mesh>
+        <pointLight color={cfg.color} intensity={25} distance={14} position={[0, 5.5, 0]} />
+      </group>
+      <AiPresence district="gate" size={0.6} position={[-1, 2.6, 1.8]} />
     </group>
   );
 }
