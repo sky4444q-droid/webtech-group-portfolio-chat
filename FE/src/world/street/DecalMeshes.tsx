@@ -67,12 +67,8 @@ export function FloorDecals() {
         return src.replace(anchor, to);
       };
       let v = shader.vertexShader;
-      v = patch(v, "void main() {", "attribute float aCell;
-void main() {");
-      v = patch(v, "#include <uv_vertex>", "#include <uv_vertex>
-#ifdef USE_MAP
-vMapUv.x = (vMapUv.x + aCell) / 3.0;
-#endif");
+      v = patch(v, "void main() {", "attribute float aCell;\nvoid main() {");
+      v = patch(v, "#include <uv_vertex>", "#include <uv_vertex>\n#ifdef USE_MAP\nvMapUv.x = (vMapUv.x + aCell) / 3.0;\n#endif");
       shader.vertexShader = v;
     };
     mat.customProgramCacheKey = () => "floorDecals";
