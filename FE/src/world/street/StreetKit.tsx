@@ -135,7 +135,7 @@ export function StreetKit() {
         <WaterScreen key={`${it.street}-${i}`} item={it} keyTarget={keyTargetOf(it, get("bigScreen"))} />
       ))}
       {/* จอยักษ์โค้งรอบมุมตึก (สูงกว่า/ไกลกว่าจอสำคัญ ไม่มีแสงย้อย) */}
-      {get("giantScreen").map((it, i) => (
+      {fx.giantScreens && get("giantScreen").map((it, i) => (
         <GiantScreen key={`${it.street}-g${i}`} item={it} />
       ))}
       {/* พื้นสะท้อนปลอม (โหมดต่ำ) ใต้จอใหญ่และป้ายตั้ง */}

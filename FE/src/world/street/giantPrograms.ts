@@ -71,7 +71,7 @@ vec3 koi(vec2 p, float t) {
 
 // ตัวอักษร NEXORA + คำจากสี่แยก เลื่อนขึ้นในแนวตั้ง (แถบ canvas ที่วาดไว้ครั้งเดียว)
 vec3 typeScroll(vec2 uv, float t) {
-  vec4 s = texture2D(uStrip, vec2(uv.x, fract(uv.y * 0.5 - t * 0.05)));
+  vec4 s = texture2D(uStrip, vec2(uv.x, uv.y * 0.5 - t * 0.05));
   return vec3(0.02, 0.0, 0.05) + s.rgb * s.a;
 }
 

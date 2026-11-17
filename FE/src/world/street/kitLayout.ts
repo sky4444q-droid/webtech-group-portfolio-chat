@@ -304,10 +304,14 @@ function giantForStreet(c: Ctx, s: Street, lots: { base: ReturnType<typeof sampl
   const height = pick(r, 12, 16);
   const radius = pick(r, 3, 4);
   // ตึกสูงพอ, ไม่ติดท้ายถนน (Team HQ), ชอบฝั่งตรงข้ามจอสำคัญ
-  const ok = lots.filter((l) => l.h >= GIANT_STREET_BOTTOM + height + 1 && l.d + l.w < rowLen - 12 && l.d > 4);
+  const safe = lots.filter((l) => l.d + l.w < rowLen - 12 && l.d > 4);
+  const ok = safe.filter((l) => l.h >= GIANT_STREET_BOTTOM + height + 1);
   const opp = ok.filter((l) => l.side !== key.side);
-  const pool = opp.length ? opp : ok.length ? ok : lots;
-  const l = pool[Math.floor(r() * pool.length)];
+  const pool = opp.length ? opp : ok;
+  // ไม่มีตึกสูงพอ: ใช้ตึกที่สูงที่สุด แล้วลดฐานจอลงได้ไม่ต่ำกว่า 14 (ไม่ให้จอโผล่พ้นหลังคา)
+  const l = pool.length ? pool[Math.floor(r() * pool.length)] : (safe.length ? safe : lots).reduce((a, b) => (b.h > a.h ? b : a));
+  const bottom = Math.max(14, Math.min(GIANT_STREET_BOTTOM, l.h - height));
+  if (bottom + height > l.h) return;
   const a = r() < 0.5 ? -1 : 1;
   const along = (a * l.w) / 2;
   const nx = -l.base.uz * l.side;
@@ -316,7 +320,7 @@ function giantForStreet(c: Ctx, s: Street, lots: { base: ReturnType<typeof sampl
   c.out.push({
     type: "giantScreen",
     street: s.id,
-    position: [l.base.x + l.base.ux * along + nx * off, GIANT_STREET_BOTTOM + height / 2, l.base.z + l.base.uz * along + nz * off],
+    position: [l.base.x + l.base.ux * along + nx * off, bottom + height / 2, l.base.z + l.base.uz * along + nz * off],
     rotationY: Math.atan2(-nx, -nz),
     size: [(radius * Math.PI) / 2, height, radius],
     variant: Math.floor(r() * VARIANTS),

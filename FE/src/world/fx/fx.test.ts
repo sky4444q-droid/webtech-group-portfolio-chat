@@ -19,7 +19,7 @@ describe("fxEnabled", () => {
   it("turns everything on in high quality", () => {
     expect(fxEnabled("high")).toEqual({
       traffic: true, rain: true, reflector: true, bloom: true,
-      grading: true, dof: true, steam: true, signFlicker: true, screensAnimated: true, fogLayers: 1, fish: true, dust: true, skylineDetail: true,
+      grading: true, dof: true, steam: true, signFlicker: true, screensAnimated: true, fogLayers: 1, fish: true, dust: true, skylineDetail: true, giantScreens: true,
     });
     expect(fxEnabled("high")).not.toHaveProperty("cones");
     expect(fxEnabled("high")).not.toHaveProperty("flare");
@@ -28,7 +28,7 @@ describe("fxEnabled", () => {
   it("turns every heavy effect off in low quality", () => {
     expect(fxEnabled("low")).toEqual({
       traffic: false, rain: false, reflector: false, bloom: false,
-      grading: false, dof: false, steam: false, signFlicker: false, screensAnimated: false, fogLayers: 1, fish: false, dust: false, skylineDetail: false,
+      grading: false, dof: false, steam: false, signFlicker: false, screensAnimated: false, fogLayers: 1, fish: false, dust: false, skylineDetail: false, giantScreens: false,
     });
   });
 });

@@ -212,3 +212,22 @@ describe("giant wrap-around screens", () => {
     }
   });
 });
+
+describe("giant screen support", () => {
+  it("never rises above the facade it hangs on", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const g = items.find((i) => i.type === "giantScreen")!;
+      const lx = [Math.cos(g.rotationY), -Math.sin(g.rotationY)];
+      // ตึกที่จอเกาะ: แตะมุมตึก และอยู่ด้านแกน x ท้องถิ่นฝั่ง -corner
+      const host = items.filter((f) => {
+        if (f.type !== "facade" || f.side !== g.side) return false;
+        const dx = f.position[0] - g.position[0];
+        const dz = f.position[2] - g.position[2];
+        return Math.hypot(dx, dz) <= Math.hypot(f.size[0] / 2, f.size[2] / 2) + 0.01 && Math.sign(dx * lx[0] + dz * lx[1]) === -g.corner!;
+      });
+      expect(host.length, s.id).toBe(1);
+      expect(g.position[1] + g.size[1] / 2, s.id).toBeLessThanOrEqual(host[0].size[1] + 1e-6);
+    }
+  });
+});

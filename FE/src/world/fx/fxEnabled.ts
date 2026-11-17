@@ -18,6 +18,8 @@ export interface FxFlags {
   fish: boolean;
   dust: boolean;
   skylineDetail: boolean;
+  /** จอยักษ์โค้งรอบมุมตึก */
+  giantScreens: boolean;
 }
 
 export function fxEnabled(quality: Quality): FxFlags {
@@ -37,5 +39,6 @@ export function fxEnabled(quality: Quality): FxFlags {
     fish: high,
     dust: high,
     skylineDetail: high,
+    giantScreens: high,
   };
 }
