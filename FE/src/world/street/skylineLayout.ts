@@ -57,7 +57,8 @@ export function skylineStrips(towers: SkyTower[], seed: number): SkyStrip[] {
   const out: SkyStrip[] = [];
   for (const i of chosen) {
     const t = towers[i];
-    const face = Math.floor(rnd() * 4) as 0 | 1 | 2 | 3;
+    // เลือกเฉพาะผนังที่หันเข้าเมือง (3 = −x ในพิกัดตึก ถ่วงน้ำหนักสองเท่า) หรือผนังข้างสองด้าน (0/1) — ไม่วางบนผนังหันออกนอกเมือง
+    const face = ([3, 3, 0, 1] as const)[Math.floor(rnd() * 4)];
     const variant = Math.floor(rnd() * 4);
     const faceW = face < 2 ? t.size[0] : t.size[2];
     const vertical = variant % 2 === 0;

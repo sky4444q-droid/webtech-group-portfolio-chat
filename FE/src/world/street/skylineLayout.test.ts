@@ -94,6 +94,18 @@ describe("skylineStrips", () => {
       expect(s.width).toBeLessThanOrEqual(faceW);
     }
   });
+  it("never puts a strip on a face pointing away from the city", () => {
+    const LOCAL = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // ทิศ normal (x, z) ของ face 0..3
+    for (const s of strips) {
+      const [px, , pz] = towers[s.tower].position;
+      const th = -Math.atan2(pz, px);
+      const [nx, nz] = LOCAL[s.face];
+      const wx = nx * Math.cos(th) + nz * Math.sin(th);
+      const wz = -nx * Math.sin(th) + nz * Math.cos(th);
+      const r = Math.hypot(px, pz);
+      expect(wx * (-px / r) + wz * (-pz / r)).toBeGreaterThanOrEqual(-0.1);
+    }
+  });
   it("is deterministic and leaves layoutSkyline unchanged", () => {
     expect(skylineStrips(towers, 7)).toEqual(strips);
     expect(layoutSkyline(7)).toEqual(towers);
