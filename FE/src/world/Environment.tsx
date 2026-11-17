@@ -17,6 +17,7 @@ import { HoloFish } from "./fx/HoloFish";
 import { SteamPlumes } from "./fx/SteamPlumes";
 import { cityLayout } from "./street/kitLayout";
 import { hazePatches, spillsFor } from "./street/lightSpill";
+import { FloorDecals } from "./street/DecalMeshes";
 import { mulberry32 } from "../lib/rng";
 
 export function Environment() {
@@ -39,6 +40,8 @@ export function Environment() {
         {/* แสงสะท้อนจาก HDRI กลางคืน (CC0) — ไม่ใช้เป็นพื้นหลัง */}
         <HdrEnvironment files="/assets/hdri/dikhololo_night_1k.hdr" environmentIntensity={0.35} />
       </Suspense>
+      {/* รอยบนพื้น (ฝาท่อ/เส้นเลน/หย่อมกระเบื้อง) ที่ y 0.01 แสดงทั้งสองโหมดคุณภาพ */}
+      <FloorDecals />
       {fx.rain && <Rain />}
       {fx.rain && <RainSplashes />}
       {fx.traffic && <Traffic />}
@@ -69,20 +72,20 @@ function getPuddleMap(): THREE.CanvasTexture {
   const c = document.createElement("canvas");
   c.width = c.height = N;
   const g = c.getContext("2d")!;
-  g.fillStyle = "#e6e6e6";
+  g.fillStyle = "#f2f2f2";
   g.fillRect(0, 0, N, N);
   const rnd = mulberry32(0x9ddc1e);
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < 11; i++) {
     const x = rnd() * N;
     const y = rnd() * N;
     const r = 18 + rnd() * 38;
-    const dark = 30 + Math.floor(rnd() * 60);
+    const dark = 6 + Math.floor(rnd() * 24);
     // วาดซ้ำที่ offset ±N เพื่อให้ขอบต่อกันพอดีเมื่อ repeat
     for (const ox of [-N, 0, N])
       for (const oy of [-N, 0, N]) {
         const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
         gr.addColorStop(0, `rgba(${dark},${dark},${dark},0.95)`);
-        gr.addColorStop(0.6, `rgba(${dark},${dark},${dark},0.5)`);
+        gr.addColorStop(0.8, `rgba(${dark},${dark},${dark},0.95)`);
         gr.addColorStop(1, "rgba(0,0,0,0)");
         g.fillStyle = gr;
         g.fillRect(x + ox - r, y + oy - r, r * 2, r * 2);
@@ -101,7 +104,7 @@ function LowFloorMaterial({ normalMap }: { normalMap: THREE.Texture }) {
     roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping;
     roughnessMap.repeat.set(105, 105);
   }, [roughnessMap]);
-  return <meshStandardMaterial color="#050507" metalness={0.7} roughness={0.45} normalMap={normalMap} roughnessMap={roughnessMap} />;
+  return <meshStandardMaterial color="#14151a" metalness={0.7} roughness={0.45} normalMap={normalMap} normalScale={new THREE.Vector2(0.7, 0.7)} roughnessMap={roughnessMap} />;
 }
 
 function Floor({ high }: { high: boolean }) {
@@ -119,19 +122,19 @@ function Floor({ high }: { high: boolean }) {
         <MeshReflectorMaterial
           normalMap={normalMap}
           // พื้นกระเบื้องดำเงาเกือบกระจก (แบบรูปตัวอย่าง): สะท้อนแรง เบลอน้อย ไม่จางตามระยะ — รอยต่อกระเบื้องมาจาก normal/roughness
-          normalScale={new THREE.Vector2(0.25, 0.25)}
+          normalScale={new THREE.Vector2(0.7, 0.7)}
           // เบลอแนวตั้งแรง (ขยายภาพสะท้อนเป็นริ้วยาว) + แผนที่แอ่งน้ำคูณความหยาบ: ใต้ป้ายเป็นริ้วยาว ที่อื่นเป็นหย่อม
           roughnessMap={puddles}
           resolution={1024}
-          blur={[6, 260]}
-          mixBlur={0.6}
-          mixStrength={3}
+          blur={[2, 120]}
+          mixBlur={0.35}
+          mixStrength={1.6}
           mixContrast={1.15}
           roughness={0.35}
           depthScale={0}
           // สีของวัสดุนี้ "คูณ" กับภาพสะท้อน (สูตรของ drei) — ถ้าดำ ภาพสะท้อนจะหายเกือบหมด
           // จึงใช้เทาอ่อน + mirror 1 + ไม่เป็นโลหะ: ความมืดของพื้นมาจากฉากที่สะท้อนเอง
-          color="#8a90a0"
+          color="#5a606e"
           metalness={0}
           envMapIntensity={0.15}
           mirror={1}
