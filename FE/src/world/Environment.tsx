@@ -6,14 +6,11 @@ import { Environment as HdrEnvironment, MeshReflectorMaterial, useTexture } from
 import { Sky } from "./street/Sky";
 import { Suspense } from "react";
 import * as THREE from "three";
-import { COLORS } from "../config/theme";
 import { DISTRICT_ORDER, DISTRICTS } from "../config/districts";
 import { useWorld } from "../store/useWorld";
 import { buildingWindowsTexture } from "./textures";
 import { fxEnabled } from "./fx/fxEnabled";
-import { GroundFog, LensFlare, RainSplashes, Traffic, VolumetricCone } from "./fx/Effects";
-import { STREETS } from "./street/streets";
-import type { DistrictId } from "../types";
+import { GroundFog, RainSplashes, Traffic } from "./fx/Effects";
 
 export function Environment() {
   const quality = useWorld((s) => s.quality);
@@ -35,7 +32,6 @@ export function Environment() {
       {fx.rain && <RainSplashes />}
       {fx.traffic && <Traffic />}
       <GroundFog layers={fx.fogLayers} center={[center[0], 0, center[2]]} />
-      <StreetLights cones={fx.cones} flare={fx.flare} />
     </>
   );
 }
@@ -137,58 +133,5 @@ function Rain() {
       </bufferGeometry>
       <lineBasicMaterial color="#9fb7ff" transparent opacity={0.28} depthWrite={false} />
     </lineSegments>
-  );
-}
-
-// ---------- ไฟถนน: กรวยลำแสง + แฟลร์ (พิกัดสัมพัทธ์กับพื้นที่) ----------
-
-const LIGHTS: { district: DistrictId; at: [number, number, number]; color: string }[] = [
-  { district: "nexus", at: [-13, 0, 7], color: COLORS.cyan },
-  { district: "nexus", at: [13, 0, 7], color: COLORS.pink },
-  { district: "projects", at: [-12.5, 0, 5], color: COLORS.purple },
-  { district: "projects", at: [12.5, 0, 5], color: COLORS.cyan },
-  { district: "sanctuary", at: [-11, 0, 9], color: COLORS.blue },
-  { district: "sanctuary", at: [11, 0, 9], color: COLORS.pink },
-  { district: "gate", at: [-2.6, 0, 20], color: COLORS.pink },
-  { district: "gate", at: [2.6, 0, 38], color: COLORS.cyan },
-  { district: "team", at: [-11, 0, 14], color: COLORS.green },
-  { district: "team", at: [11, 0, 14], color: COLORS.green },
-];
-
-function StreetLights({ cones, flare }: { cones: boolean; flare: boolean }) {
-  // ไฟถนนสลับสองข้างตลอดถนนทุกสาย
-  const avenue = Object.values(STREETS).flatMap((st) => {
-    const [a] = st.points;
-    const b = st.points[st.points.length - 1];
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    const ux = (b[0] - a[0]) / len;
-    const uz = (b[1] - a[1]) / len;
-    return Array.from({ length: 3 }, (_, i) => {
-      const t = (i + 0.5) / 3;
-      const side = i % 2 ? 1 : -1;
-      const off = st.halfWidth - 0.6;
-      return {
-        at: [a[0] + (b[0] - a[0]) * t - uz * off * side, 0, a[1] + (b[1] - a[1]) * t + ux * off * side] as [number, number, number],
-        color: i % 2 ? COLORS.pink : COLORS.cyan,
-      };
-    });
-  });
-  const all = [
-    ...LIGHTS.map((l) => {
-      const p = DISTRICTS[l.district].position;
-      return { at: [p[0] + l.at[0], 0, p[2] + l.at[2]] as [number, number, number], color: l.color };
-    }),
-    ...avenue,
-  ];
-  if (!cones && !flare) return null;
-  return (
-    <>
-      {all.map((l, i) => (
-        <group key={i} position={l.at}>
-          {cones && <VolumetricCone color={l.color} height={7} />}
-          {flare && <LensFlare color={l.color} size={3.2} position={[0, 7, 0]} />}
-        </group>
-      ))}
-    </>
   );
 }

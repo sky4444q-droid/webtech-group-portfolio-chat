@@ -3,8 +3,6 @@
 import type { Quality } from "../../store/useWorld";
 
 export interface FxFlags {
-  cones: boolean;
-  flare: boolean;
   traffic: boolean;
   rain: boolean;
   reflector: boolean;
@@ -17,13 +15,14 @@ export interface FxFlags {
   signFlicker: boolean;
   screensAnimated: boolean;
   fogLayers: number;
+  fish: boolean;
+  dust: boolean;
+  skylineDetail: boolean;
 }
 
 export function fxEnabled(quality: Quality): FxFlags {
   const high = quality === "high";
   return {
-    cones: high,
-    flare: high,
     traffic: high,
     rain: high,
     reflector: high,
@@ -35,5 +34,8 @@ export function fxEnabled(quality: Quality): FxFlags {
     screensAnimated: high,
     // หมอกเหลือชั้นบาง ๆ ใต้เข่าชั้นเดียวทุกโหมด (ไม่ให้ภาพหม่น)
     fogLayers: 1,
+    fish: high,
+    dust: high,
+    skylineDetail: high,
   };
 }

@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fxEnabled } from "./fxEnabled";
 import { COLORS } from "../../config/theme";
+import { BRAND } from "../../config/brand";
 
 const ROOT = join(import.meta.dirname, "../../..");
 const ASSETS = join(ROOT, "public/assets");
@@ -17,20 +18,26 @@ function walk(dir: string): string[] {
 describe("fxEnabled", () => {
   it("turns everything on in high quality", () => {
     expect(fxEnabled("high")).toEqual({
-      cones: true, flare: true, traffic: true, rain: true, reflector: true, bloom: true,
-      grading: true, dof: true, steam: true, signFlicker: true, screensAnimated: true, fogLayers: 1,
+      traffic: true, rain: true, reflector: true, bloom: true,
+      grading: true, dof: true, steam: true, signFlicker: true, screensAnimated: true, fogLayers: 1, fish: true, dust: true, skylineDetail: true,
     });
+    expect(fxEnabled("high")).not.toHaveProperty("cones");
+    expect(fxEnabled("high")).not.toHaveProperty("flare");
   });
 
   it("turns every heavy effect off in low quality", () => {
     expect(fxEnabled("low")).toEqual({
-      cones: false, flare: false, traffic: false, rain: false, reflector: false, bloom: false,
-      grading: false, dof: false, steam: false, signFlicker: false, screensAnimated: false, fogLayers: 1,
+      traffic: false, rain: false, reflector: false, bloom: false,
+      grading: false, dof: false, steam: false, signFlicker: false, screensAnimated: false, fogLayers: 1, fish: false, dust: false, skylineDetail: false,
     });
   });
 });
 
 describe("palette", () => {
+  it("exposes the brand palette", () => {
+    expect(BRAND).toEqual({ purple: "#8B5CF6", magenta: "#D946EF", silver: "#C0C4D0" });
+  });
+
   it("uses a near-black background with no purple cast", () => {
     const n = parseInt(COLORS.bg.slice(1), 16);
     const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];

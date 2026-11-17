@@ -2,8 +2,9 @@
 
 import { Suspense, useEffect, useRef, type ReactNode } from "react";
 import type { DepthOfFieldEffect } from "postprocessing";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { flickerProbeEnabled, installFlickerProbe } from "../debug/flickerProbe";
+import { perfProbeEnabled, installPerfProbe } from "../debug/perfProbe";
 import { PerformanceMonitor } from "@react-three/drei";
 import { Bloom, BrightnessContrast, DepthOfField, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { MascotFocus } from "./fx/MascotFocus";
@@ -66,6 +67,7 @@ export function World() {
       </Suspense>
       <CameraRig />
       {flickerProbeEnabled() && <FlickerProbe />}
+      {perfProbeEnabled() && <PerfProbe />}
       {/* multisampling ต้องเป็น 0: MSAA ใน composer ทำให้ภาพดำเป็นช่วง ๆ (กะพริบ) บนการ์ดจอบางรุ่น */}
       {fx.bloom && (
         <EffectComposer multisampling={0}>
@@ -117,5 +119,21 @@ function IntroMascot() {
 function FlickerProbe() {
   const get = useThree((s) => s.get);
   useEffect(() => installFlickerProbe(() => get()), [get]);
+  return null;
+}
+
+/** ?debug=perf (โหมดพัฒนาเท่านั้น): ผูก window.__perf() เฉลี่ย 60 เฟรม */
+function PerfProbe() {
+  const gl = useThree((s) => s.gl);
+  const probe = useRef<ReturnType<typeof installPerfProbe> | null>(null);
+  useEffect(() => {
+    probe.current = installPerfProbe(gl);
+    return () => {
+      probe.current?.dispose();
+      probe.current = null;
+    };
+  }, [gl]);
+  // priority 1 = รันท้ายเฟรม (หลังเรนเดอร์ของ composer) แล้วรีเซ็ต gl.info
+  useFrame((_, dt) => probe.current?.tick(dt), 1);
   return null;
 }
