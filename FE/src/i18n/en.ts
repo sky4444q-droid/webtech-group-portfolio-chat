@@ -122,4 +122,12 @@ export const en: Record<keyof typeof th, string> = {
   panelFollowGuide: "Pick a place at the top and follow the little guide.",
   panelTechStack: "TECH STACK",
   panelProject: "PROJECT",
+  // ---------- HUD ----------
+  hudTagline: "A group portfolio as a neon city",
+  hintClickKey: "Click",
+  hintClick: "select / walk to a viewpoint",
+  hintRightKey: "Right-click",
+  hintRight: "go back",
+  hintMoveKey: "Move",
+  hintMove: "look around",
 };

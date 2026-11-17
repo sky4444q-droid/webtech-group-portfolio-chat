@@ -6,7 +6,8 @@ import { useWorld } from "../store/useWorld";
 import { DISTRICTS } from "../config/districts";
 import { usePick, useT, type DictKey } from "../i18n";
 import type { DistrictId } from "../types";
-import { MiniMap } from "./MiniMap";
+import { NavPills } from "./NavPills";
+import { ControlHint } from "./ControlHint";
 import { useAudio } from "../store/useAudio";
 import { FRAGMENTS, useDiscovery } from "../store/useDiscovery";
 
@@ -32,14 +33,20 @@ export function Hud() {
   return (
     <div className="hud">
       <header className="hud-top">
-        {portfolio.group.logo && <img className="hud-logo" src="/images/nexora-symbol.png" alt="NEXORA" />}
-        <div className="hud-location" style={{ "--accent": cfg.color } as React.CSSProperties}>
-          <span className="hud-location-kicker">{travel ? tr("traveling") : "LOCATION"}</span>
-          <h1 key={shown} className="hud-location-name">
+        {/* มุมซ้ายบน: ชื่อแบรนด์แดงตัวหนา + บรรทัดเล็กสีแดง (ที่อยู่ตอนนี้ / ข้อความทั่วไป / วิธีใช้ที่นี่) */}
+        <div className="hud-brand">
+          <div className="hud-brand-row">
+            {portfolio.group.logo && <img className="hud-logo" src="/images/nexora-symbol.png" alt="" />}
+            <span className="hud-brand-name">NEXORA</span>
+          </div>
+          <h1 key={shown} className="hud-line hud-line-place">
+            {travel ? `${tr("traveling")} → ` : ""}
             {p(cfg.name)}
           </h1>
-          {!travel && <p className="hud-hint">{tr(HINTS[district])}</p>}
+          <p className="hud-line">{tr("hudTagline")}</p>
+          {!travel && <p className="hud-line hud-line-hint">{tr(HINTS[district])}</p>}
         </div>
+        <NavPills />
         <div className="hud-controls">
           <DiscoveryCounter />
           <LangSwitch />
@@ -48,7 +55,7 @@ export function Hud() {
         </div>
       </header>
 
-      <MiniMap />
+      <ControlHint />
 
       <BackButton />
 

@@ -121,4 +121,12 @@ export const th = {
   panelFollowGuide: "กดชื่อที่ด้านบนแล้วเดินตามตัวจิ๋วไปได้เลย",
   panelTechStack: "เทคโนโลยีที่ใช้",
   panelProject: "ผลงาน",
+  // ---------- HUD ----------
+  hudTagline: "พอร์ตโฟลิโอกลุ่มในรูปเมืองนีออน",
+  hintClickKey: "คลิก",
+  hintClick: "เลือก / เดินไปจุดชม",
+  hintRightKey: "คลิกขวา",
+  hintRight: "ย้อนกลับ",
+  hintMoveKey: "เลื่อนเมาส์",
+  hintMove: "มองรอบ ๆ",
 };
