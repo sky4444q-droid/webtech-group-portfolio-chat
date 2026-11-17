@@ -111,9 +111,14 @@ function ElevatorEntrance({ color }: { color: string }) {
         <boxGeometry args={[DOOR_W * 2 + 1, 0.7, 0.1]} />
         {steel}
       </mesh>
-      {/* แสงในตู้ลิฟต์ด้านหลังประตู (เห็นเมื่อเปิด) */}
+      {/* ผนังตู้ลิฟต์ด้านหลังประตู (เห็นเมื่อเปิด) */}
       <mesh position={[0, DOOR_H / 2, 0.005]}>
         <planeGeometry args={[DOOR_W * 2, DOOR_H]} />
+        <meshBasicMaterial map={steelTex} color="#5a5650" />
+      </mesh>
+      {/* ไฟเพดานตู้ลิฟต์ที่มองเห็นผ่านประตู */}
+      <mesh position={[0, DOOR_H - 0.12, 0.008]}>
+        <planeGeometry args={[DOOR_W * 1.6, 0.1]} />
         <meshBasicMaterial color="#fff1dc" toneMapped={false} />
       </mesh>
       {/* ประตูบานเลื่อนคู่ (หลังกรอบ เหนือแผ่นไฟในช่องลิฟต์) */}

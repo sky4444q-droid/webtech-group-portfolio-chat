@@ -37,8 +37,8 @@ export function Environment() {
       <EnergyCoreTower />
       <Suspense fallback={<FloorPlain />}>
         <Floor high={fx.reflector} />
-        {/* แสงสะท้อนจาก HDRI กลางคืน (CC0) — ไม่ใช้เป็นพื้นหลัง */}
-        <HdrEnvironment files="/assets/hdri/dikhololo_night_1k.hdr" environmentIntensity={0.35} />
+        {/* แสงสะท้อนจาก HDRI กลางคืน (CC0) — ไม่ใช้เป็นพื้นหลัง · ต่ำไว้ เพราะพื้นมุมเฉียงสะท้อนฟ้า HDRI เป็นแผ่นเทาซีด */}
+        <HdrEnvironment files="/assets/hdri/dikhololo_night_1k.hdr" environmentIntensity={0.12} />
       </Suspense>
       {/* รอยบนพื้น (ฝาท่อ/เส้นเลน/หย่อมกระเบื้อง) ที่ y 0.01 แสดงทั้งสองโหมดคุณภาพ */}
       <FloorDecals />
