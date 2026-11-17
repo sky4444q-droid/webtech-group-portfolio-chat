@@ -12,7 +12,8 @@ import { useWorld, type Panel } from "../../store/useWorld";
 import { useT } from "../../i18n";
 import { NeonSign } from "../NeonSign";
 import { AiPresence } from "../ai/AiPresence";
-import { buildingWindowsTexture, screenTexture } from "../textures";
+import { screenTexture } from "../textures";
+import { curtainWallTexture, windowGrid } from "../street/windowMaterial";
 import { TEAM_LOBBY_OFFSET, TEAM_TOWER } from "../street/streets";
 import { HoloCard } from "../HoloCard";
 import { TEAM_HOLO_CARD } from "../../config/viewpoints";
@@ -24,8 +25,10 @@ export function TeamDistrict() {
   const cfg = DISTRICTS.team;
   const tr = useT();
   const windows = useMemo(() => {
-    const tex = buildingWindowsTexture().clone();
-    tex.repeat.set(1, 1);
+    // ไม่ได้แพตช์ shader → ตั้ง repeat ให้หน้าต่างขนาดเท่าตึกอื่น (แผ่นละ 8×16 ช่อง)
+    const tex = curtainWallTexture().clone();
+    const g = windowGrid(Math.max(TEAM_TOWER.size[0], TEAM_TOWER.size[2]), TEAM_TOWER.size[1]);
+    tex.repeat.set(g.cols / 8, g.rows / 16);
     tex.needsUpdate = true;
     return tex;
   }, []);

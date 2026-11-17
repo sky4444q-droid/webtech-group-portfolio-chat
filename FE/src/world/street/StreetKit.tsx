@@ -10,7 +10,7 @@ import { useWorld } from "../../store/useWorld";
 import { cityLayout, type KitItem, type KitType } from "./kitLayout";
 import { streetOf, type StreetId } from "./streets";
 import { KitInstances, ScreenGroup, SignFaces, neonColor, type SignFace } from "./kitMeshes";
-import { buildingWindowsTexture } from "../textures";
+import { curtainWallTexture, patchWindowUv } from "./windowMaterial";
 import { SIGN_WORDS } from "../../config/signWords";
 import { signAtlas } from "./signAtlas";
 import { SCREEN_PROGRAMS } from "./screenPrograms";
@@ -80,7 +80,7 @@ export function StreetKit() {
     "/assets/textures/metalplates013_normal.jpg",
     "/assets/textures/metalplates013_roughness.jpg",
   ]);
-  const windows = useMemo(() => buildingWindowsTexture(), []);
+  const windows = useMemo(() => curtainWallTexture(), []);
   useMemo(() => {
     for (const t of [concrete, concreteN, metalN, metalR]) t.wrapS = t.wrapT = THREE.RepeatWrapping;
     concrete.colorSpace = THREE.SRGBColorSpace;
@@ -96,9 +96,9 @@ export function StreetKit() {
 
   return (
     <group>
-      {/* ตึก: คอนกรีตเก่าสีเข้ม + หน้าต่างเปิดไฟสุ่ม */}
+      {/* ตึก (รวมตึกสี่แยก): คอนกรีตเก่าสีเข้ม + ผนังกระจกหน้าต่างขนาดจริงคงที่ · เข้มขึ้นตามความสูง */}
       <KitInstances items={[...get("facade"), ...get("endCap"), ...get("tier")]} color={facadeTint}>
-        <meshStandardMaterial map={concrete} normalMap={concreteN} roughness={0.85} metalness={0.1} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.55} />
+        <meshStandardMaterial ref={(m: THREE.MeshStandardMaterial | null) => m && patchWindowUv(m)} map={concrete} normalMap={concreteN} roughness={0.85} metalness={0.1} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.55} />
       </KitInstances>
       {/* หน้าร้าน: กระจกมืดเงา ๆ มีแสงสีร้านจาง ๆ (ไม่ใช่บล็อกนีออนทึบ) */}
       <KitInstances items={get("shopfront")} color={shopColor}>

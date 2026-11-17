@@ -100,6 +100,47 @@ export function buildingWindowsTexture(): THREE.CanvasTexture {
   return windowsTexture;
 }
 
+let curtainTexture: THREE.CanvasTexture | null = null;
+
+/** ผนังกระจกตึก: แผ่นต่อ 8×16 ช่อง (กว้าง 1.3 ม. × สูง 3.3 ม. ต่อช่อง) มีแถบพื้นชั้นและเสาค้ำ · เปิดไฟราว 35% */
+export function curtainWallTexture(): THREE.CanvasTexture {
+  if (curtainTexture) return curtainTexture;
+  const W = 256, H = 1024, COLS = 8, ROWS = 16;
+  const bw = W / COLS, bh = H / ROWS;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    // พื้นดำ = แถบพื้นชั้น + เสาค้ำ (ไม่เรืองแสง)
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, W, H);
+    let seed = 11;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const x = c * bw + 2, y = r * bh + 2, w = bw - 4, h = bh - 12; // เสาค้ำ 4px · แถบพื้นชั้น 10px ด้านล่าง
+        if (rand() < 0.35) {
+          const k = rand();
+          ctx.fillStyle = k < 0.55 ? "#ffd9a8" : k < 0.85 ? "#9fc4ff" : "#D946EF";
+          ctx.globalAlpha = 0.55 + rand() * 0.45;
+        } else {
+          // กระจกดับ: สะท้อนฟ้าจาง ๆ
+          ctx.fillStyle = "#0a1020";
+          ctx.globalAlpha = 1;
+        }
+        ctx.fillRect(x, y, w, h);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  curtainTexture = new THREE.CanvasTexture(canvas);
+  curtainTexture.colorSpace = THREE.SRGBColorSpace;
+  curtainTexture.wrapS = curtainTexture.wrapT = THREE.RepeatWrapping;
+  curtainTexture.anisotropy = 4;
+  return curtainTexture;
+}
+
 /** จอโฮโลแกรม: กรอบ เส้นตาราง และหัวข้อ */
 export function screenTexture(title: string, color: string): THREE.CanvasTexture {
   const key = `screen|${title}|${color}`;
