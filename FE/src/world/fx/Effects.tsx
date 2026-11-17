@@ -5,6 +5,7 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import * as THREE from "three";
 import { trafficLanes } from "./trafficLanes";
+import { mulberry32 } from "../../lib/rng";
 
 // ---------- หมอกพื้นเป็นชั้น ----------
 
@@ -164,13 +165,15 @@ export function DustMotes() {
   const data = useMemo(() => {
     const pos = new Float32Array(MOTES * 3);
     const vel = new Float32Array(MOTES * 3);
+    // ใช้ seed คงที่ให้ตำแหน่งเริ่มต้นเหมือนกันทุกครั้ง
+    const rnd = mulberry32(0xd057);
     for (let i = 0; i < MOTES; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * BOX[0];
-      pos[i * 3 + 1] = Math.random() * BOX[1];
-      pos[i * 3 + 2] = (Math.random() - 0.5) * BOX[2];
-      vel[i * 3] = (Math.random() - 0.5) * 0.15;
-      vel[i * 3 + 1] = (Math.random() - 0.5) * 0.08;
-      vel[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
+      pos[i * 3] = (rnd() - 0.5) * BOX[0];
+      pos[i * 3 + 1] = rnd() * BOX[1];
+      pos[i * 3 + 2] = (rnd() - 0.5) * BOX[2];
+      vel[i * 3] = (rnd() - 0.5) * 0.15;
+      vel[i * 3 + 1] = (rnd() - 0.5) * 0.08;
+      vel[i * 3 + 2] = (rnd() - 0.5) * 0.15;
     }
     return { pos, vel };
   }, []);

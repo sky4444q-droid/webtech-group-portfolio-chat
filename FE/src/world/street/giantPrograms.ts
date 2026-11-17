@@ -88,6 +88,7 @@ void main() {
   gl_FragColor = vec4(clamp(col, 0.0, 1.0) * ${GIANT_GAIN.toFixed(2)}, 1.0);
 }`;
 
+// แคชนี้เป็น singleton ตลอดอายุแอป ตั้งใจไม่ dispose
 let strip: THREE.CanvasTexture | null = null;
 /** แถบตัวอักษรแนวตั้งของโปรแกรม type (สร้างครั้งเดียวแล้วแคช) */
 export function typeStrip(): THREE.CanvasTexture {

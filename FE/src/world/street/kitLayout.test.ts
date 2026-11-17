@@ -211,6 +211,16 @@ describe("giant wrap-around screens", () => {
       expect(higher || far, s.id).toBe(true);
     }
   });
+
+  it("keeps each giant screen's bottom above the top of its street's key bigScreen", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const key = items.find((i) => i.type === "bigScreen")!;
+      for (const g of items.filter((i) => i.type === "giantScreen")) {
+        expect(bottom(g), s.id).toBeGreaterThan(key.position[1] + key.size[1] / 2);
+      }
+    }
+  });
 });
 
 describe("giant screen support", () => {

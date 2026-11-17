@@ -20,6 +20,13 @@ describe("spillsFor", () => {
     expect(spills.filter((s) => s.kind === "floor").length).toBe(lowN);
   });
 
+  it("ignores giantScreen and ticker items", () => {
+    const items = [...streets.flatMap((s) => layoutStreet(s, CITY_SEED)), ...layoutNexus(CITY_SEED)];
+    const extra = items.filter((i) => i.type === "giantScreen" || i.type === "ticker");
+    expect(extra.length).toBeGreaterThan(0);
+    expect(spillsFor(extra)).toEqual([]);
+  });
+
   it("emits no floor spill from a non-bigScreen source above y 9", () => {
     expect(spillsFor([item(9.5), item(20)]).filter((s) => s.kind === "floor")).toEqual([]);
     expect(spillsFor([item(9)]).filter((s) => s.kind === "floor").length).toBe(1);

@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { KitItem } from "./kitLayout";
 import { neonColor } from "./kitMeshes";
 
+// texture นี้เป็น singleton ตลอดอายุแอป ตั้งใจไม่ dispose
 let gradient: THREE.Texture | null = null;
 /** สว่างที่โคนตึก จางหายไปทางกลางถนน */
 function getGradient(): THREE.Texture {

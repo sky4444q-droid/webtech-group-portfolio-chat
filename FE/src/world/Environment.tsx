@@ -88,15 +88,23 @@ function getPuddleMap(): THREE.CanvasTexture {
   return puddleMap;
 }
 
+// โหมดต่ำเท่านั้นที่ใช้ roughness map (โหมดสูงใช้แผนที่แอ่งน้ำ) จึงโหลดเฉพาะตรงนี้
+function LowFloorMaterial({ normalMap }: { normalMap: THREE.Texture }) {
+  const roughnessMap = useTexture("/assets/textures/tiles052_roughness.jpg");
+  useMemo(() => {
+    roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping;
+    roughnessMap.repeat.set(105, 105);
+  }, [roughnessMap]);
+  return <meshStandardMaterial color="#050507" metalness={0.7} roughness={0.45} normalMap={normalMap} roughnessMap={roughnessMap} />;
+}
+
 function Floor({ high }: { high: boolean }) {
   // พื้นกระเบื้องดำแผ่นใหญ่เงา (ตามรูปตัวอย่าง): normal + roughness จาก ambientCG Tiles052 (CC0) ให้เห็นรอยต่อกระเบื้อง
-  const [normalMap, roughnessMap] = useTexture(["/assets/textures/tiles052_normal.jpg", "/assets/textures/tiles052_roughness.jpg"]);
+  const normalMap = useTexture("/assets/textures/tiles052_normal.jpg");
   useMemo(() => {
-    for (const t of [normalMap, roughnessMap]) {
-      t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      t.repeat.set(105, 105);
-    }
-  }, [normalMap, roughnessMap]);
+    normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
+    normalMap.repeat.set(105, 105);
+  }, [normalMap]);
   const puddles = useMemo(() => getPuddleMap(), []);
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
@@ -123,7 +131,7 @@ function Floor({ high }: { high: boolean }) {
           mirror={1}
         />
       ) : (
-        <meshStandardMaterial color="#050507" metalness={0.7} roughness={0.45} normalMap={normalMap} roughnessMap={roughnessMap} />
+        <LowFloorMaterial normalMap={normalMap} />
       )}
     </mesh>
   );

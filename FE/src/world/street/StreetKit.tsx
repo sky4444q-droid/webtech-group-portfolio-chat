@@ -76,6 +76,8 @@ export function StreetKit() {
   // แสงย้อยจากป้าย/จอ ทุกถนนที่วาดอยู่ + สี่แยก
   const spills = useMemo(() => spillsFor([...byType.values()].flat()), [byType]);
   const get = (t: KitType) => byType.get(t) ?? [];
+  // เก็บ spans ไว้ไม่ให้ geometry ของสายเคเบิลถูกสร้างใหม่ทุกครั้งที่ StreetKit render
+  const spans = useMemo(() => cableSpans(get("cable")), [byType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [concrete, concreteN, metalN, metalR] = useTexture([
     "/assets/textures/concrete036_color.jpg",
@@ -152,7 +154,7 @@ export function StreetKit() {
         <meshStandardMaterial color="#0c0c10" metalness={0.6} roughness={0.5} />
       </KitInstances>
       {/* สายไฟข้ามถนนแบบหย่อน (สายตั้งของโคมยังเป็นกล่องด้านบน) */}
-      <Cables spans={cableSpans(get("cable"))} />
+      <Cables spans={spans} />
       {/* เส้นนีออนตั้งที่มุมตึก */}
       <KitInstances items={get("edgeStrip")} color={stripColor}>
         <meshBasicMaterial toneMapped={false} />
