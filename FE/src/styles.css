@@ -3,7 +3,12 @@
   color-scheme: dark;
   --bg: #040406;
   --fog: #05070c;
-  --red: #ff1f3d;
+  --red: #ff1f3d; /* ใช้เฉพาะฉาก 3D (theme.ts) — UI ใช้สีแบรนด์ด้านล่าง */
+  --brand-purple: #8B5CF6;
+  --brand-magenta: #D946EF;
+  --brand-silver: #C0C4D0;
+  --brand-line: rgba(139, 92, 246, 0.6);
+  --brand-fill: linear-gradient(90deg, var(--brand-purple), var(--brand-magenta));
   --surface: rgba(14, 9, 34, 0.72);
   --surface-strong: rgba(18, 12, 44, 0.9);
   --line: rgba(185, 103, 255, 0.35);
@@ -73,7 +78,7 @@ button {
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 .btn:hover:not(:disabled) {
-  border-color: var(--red);
+  border-color: var(--brand-line);
   color: #fff;
 }
 .btn:active:not(:disabled) {
@@ -103,8 +108,8 @@ button {
   transition: border-color 0.2s, color 0.2s;
 }
 .icon-btn:hover {
-  border-color: var(--red);
-  color: var(--red);
+  border-color: var(--brand-line);
+  color: var(--brand-magenta);
 }
 
 .pending-badge {
@@ -121,7 +126,7 @@ button {
   white-space: nowrap;
 }
 
-/* ===== HUD (แบนราบ แดงตัวหนา + แคปซูล) ===== */
+/* ===== HUD (แบนราบ สีแบรนด์ม่วง-บานเย็น + แคปซูล) ===== */
 .hud {
   position: absolute;
   inset: 0;
@@ -148,8 +153,8 @@ button {
 .hud-brand {
   justify-self: start;
   max-width: 360px;
-  color: var(--red);
-  /* เงาดำบาง ๆ ให้ตัวแดงอ่านออกบนฉากที่สว่าง (ไม่ใช่แสงเรือง) */
+  color: var(--brand-magenta);
+  /* เงาดำบาง ๆ ให้ตัวอักษรอ่านออกบนฉากที่สว่าง (ไม่ใช่แสงเรือง) */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 .hud-brand-row {
@@ -158,22 +163,24 @@ button {
   gap: 10px;
 }
 .hud-logo {
+  display: block;
   width: 30px;
-  height: auto;
+  height: 30px;
+  object-fit: contain;
 }
+/* ขนาดตัวอักษรให้ความสูงตัวพิมพ์ใหญ่ใกล้สัญลักษณ์ 30px */
 .hud-brand-name {
-  font-family: "Inter Tight", var(--font-body);
-  font-weight: 800;
-  font-size: 34px;
+  font-size: 28px;
   line-height: 1;
-  letter-spacing: -0.01em;
+  /* drop-shadow ของ wordmark แทน text-shadow (ตัวอักษรโปร่งใส) */
+  text-shadow: none;
 }
 .hud-line {
   margin: 4px 0 0;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
-  color: var(--red);
+  color: var(--brand-magenta);
 }
 .hud-line-place {
   margin-top: 8px;
@@ -182,7 +189,7 @@ button {
   animation: fade-in 0.5s ease both;
 }
 .hud-line-hint {
-  color: rgba(255, 31, 61, 0.78);
+  color: rgba(217, 70, 239, 0.78);
   font-weight: 500;
 }
 .nav-pills {
@@ -198,7 +205,7 @@ button {
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
-  color: var(--red);
+  color: var(--brand-magenta);
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
@@ -206,7 +213,7 @@ button {
   transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 .nav-pill:hover:not(.is-active) {
-  border-color: var(--red);
+  border-color: var(--brand-line);
 }
 .nav-pill[aria-disabled="true"] {
   opacity: 0.4;
@@ -216,7 +223,7 @@ button {
   border-color: transparent;
 }
 .nav-pill.is-active {
-  background: var(--red);
+  background: var(--brand-magenta);
   color: #fff;
   cursor: default;
 }
@@ -244,7 +251,7 @@ button {
   color: var(--muted);
 }
 .lang-switch button.is-active {
-  background: var(--red);
+  background: var(--brand-magenta);
   color: #fff;
 }
 .settings {
@@ -276,10 +283,10 @@ button {
   cursor: pointer;
 }
 .settings-menu button:hover {
-  color: var(--red);
+  color: var(--brand-magenta);
 }
 .settings-menu button.is-active {
-  background: var(--red);
+  background: var(--brand-magenta);
   color: #fff;
 }
 .control-hint {
@@ -304,9 +311,9 @@ button {
 }
 .control-hint-key {
   padding: 1px 8px;
-  border: 1px solid var(--red);
+  border: 1px solid var(--brand-line);
   border-radius: 999px;
-  color: var(--red);
+  color: var(--brand-magenta);
   font-weight: 700;
 }
 .control-hint-key:not(:first-child) {
@@ -325,18 +332,19 @@ button {
 }
 .btn-ai {
   padding: 9px 20px;
-  border-color: var(--red);
-  background: var(--red);
+  border-color: var(--brand-line);
+  background: var(--brand-fill);
   color: #fff;
   font-weight: 700;
 }
 .btn-ai:hover:not(:disabled) {
-  background: #ff3a55;
+  background: var(--brand-fill);
+  filter: brightness(1.12);
   color: #fff;
 }
 .btn-ai.is-active {
   background: transparent;
-  color: var(--red);
+  color: var(--brand-magenta);
 }
 .btn-ai-dot {
   width: 8px;
@@ -778,67 +786,91 @@ button {
   justify-items: center;
   gap: 12px;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 16px;
+  max-width: 100%;
 }
 .intro-kicker {
   margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--brand-silver);
+  animation: fade-in 1s ease both;
+}
+/* โลโก้ + ชื่อ เป็นชุดเดียว มีพื้นมืดวงรีนุ่ม ๆ ด้านหลัง (ไม่เต็มจอ) */
+.intro-lockup {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 18px 48px 22px;
+  isolation: isolate;
+}
+.intro-lockup::before {
+  content: "";
+  position: absolute;
+  inset: -12% -18%;
+  z-index: -1;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(5, 3, 12, 0.72), rgba(5, 3, 12, 0.4) 55%, transparent 100%);
+  pointer-events: none;
+}
+/* mask วงกลมตัดตารางจาง ๆ ในแสงรอบนอกของ PNG ทิ้ง เหลือวงแหวน */
+.intro-logo {
+  display: block;
+  width: min(220px, 40vw);
+  margin: 0 auto 4px;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 52%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 52%, transparent 70%);
+  animation: logo-float 4s ease-in-out infinite;
+}
+@keyframes logo-float { 50% { transform: translateY(-6px); } }
+/* wordmark ร่วม: Orbitron ไล่สีม่วง → บานเย็น → เงิน */
+.brand-wordmark {
   font-family: var(--font-display);
-  font-size: 12px;
-  letter-spacing: 0.5em;
-  color: var(--cyan);
-  animation: fade-in 1s ease both, flicker 3s linear infinite;
+  font-weight: 900;
+  color: transparent;
+  background: linear-gradient(90deg, var(--brand-purple), var(--brand-magenta) 55%, var(--brand-silver));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.45));
 }
 .intro-title {
   position: relative;
   margin: 0;
-  font-family: var(--font-display);
   font-size: clamp(30px, 5vw, 64px);
-  font-weight: 900;
   letter-spacing: 0.06em;
-  text-shadow: 0 0 18px var(--purple), 0 0 42px var(--pink);
-  animation: glitch-in 1.2s steps(3, end) both;
+  background-size: 200% 100%;
+  background-position: 0 0;
+  animation: fade-up 0.8s ease both, wordmark-shimmer 1.6s ease-out 0.4s 1 both;
 }
-.intro-title::before,
-.intro-title::after {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  opacity: 0.6;
-  pointer-events: none;
-}
-.intro-title::before {
-  color: var(--cyan);
-  transform: translate(-2px, 0);
-  clip-path: inset(10% 0 60% 0);
-  animation: glitch-a 2.4s steps(2, end) infinite;
-}
-.intro-title::after {
-  color: var(--pink);
-  transform: translate(2px, 0);
-  clip-path: inset(55% 0 15% 0);
-  animation: glitch-b 1.9s steps(2, end) infinite;
+/* ประกายวิ่งผ่านครั้งเดียวตอนเปิด */
+@keyframes wordmark-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
 }
 .intro-bar {
   width: min(360px, 70vw);
   height: 3px;
   margin-top: 18px;
-  background: rgba(185, 103, 255, 0.2);
+  background: rgba(139, 92, 246, 0.2);
   border-radius: 3px;
   overflow: hidden;
 }
 .intro-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--purple), var(--cyan));
-  box-shadow: 0 0 12px var(--cyan);
+  background: var(--brand-fill);
   transform-origin: left;
 }
 .intro-percent {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.25em;
-  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  color: var(--brand-silver);
 }
 .btn-enter {
   margin-top: 10px;
@@ -846,10 +878,14 @@ button {
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.08em;
-  border-color: var(--pink);
-  background: linear-gradient(90deg, rgba(255, 42, 109, 0.3), rgba(185, 103, 255, 0.3));
-  box-shadow: 0 0 26px rgba(255, 42, 109, 0.5);
-  animation: fade-up 0.5s ease both, glow 2s ease-in-out infinite;
+  border-color: var(--brand-line);
+  background: var(--brand-fill);
+  color: #fff;
+  animation: fade-up 0.5s ease both;
+}
+.btn-enter:hover:not(:disabled) {
+  border-color: var(--brand-silver);
+  filter: brightness(1.1);
 }
 .intro-skip {
   margin-top: 10px;
@@ -978,37 +1014,6 @@ button {
     opacity: 0.2;
   }
 }
-@keyframes glitch-in {
-  0% {
-    opacity: 0;
-    transform: translateX(-8px) skewX(-12deg);
-  }
-  50% {
-    opacity: 1;
-    transform: translateX(4px) skewX(6deg);
-  }
-  100% {
-    transform: none;
-  }
-}
-@keyframes glitch-a {
-  0%,
-  100% {
-    transform: translate(-2px, 0);
-  }
-  50% {
-    transform: translate(3px, -1px);
-  }
-}
-@keyframes glitch-b {
-  0%,
-  100% {
-    transform: translate(2px, 0);
-  }
-  50% {
-    transform: translate(-3px, 1px);
-  }
-}
 @keyframes travel-flash {
   0% {
     opacity: 0;
@@ -1034,12 +1039,13 @@ button {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+  /* ปิดประกายและการลอยของชุดโลโก้ */
+  .intro-title,
+  .intro-logo {
+    animation: none;
+  }
 }
 
-/* ---------- โลโก้ NEXORA ---------- */
-.intro-logo { width: min(220px, 40vw); margin: 0 auto 8px; display: block; filter: drop-shadow(0 0 24px rgba(177, 76, 255, 0.55)); animation: logo-float 4s ease-in-out infinite; }
-@keyframes logo-float { 50% { transform: translateY(-6px); } }
-.hud-logo { width: 46px; height: auto; margin-right: 12px; align-self: flex-start; }
 
 /* ---------- ซับไตเติลคำพูด AI ---------- */
 .ai-subtitle {
@@ -1311,15 +1317,6 @@ button {
 }
 .fullscreen {
   background: rgba(4, 4, 6, 0.72);
-}
-.intro-title {
-  text-shadow: none !important;
-}
-.intro-logo {
-  filter: none;
-}
-.btn-enter {
-  box-shadow: none !important;
 }
 .ai-subtitle {
   border-color: rgba(233, 230, 255, 0.2) !important;

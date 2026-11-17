@@ -58,10 +58,11 @@ export function Intro() {
       <div className="intro-scanlines" aria-hidden="true" />
       <div className="intro-content">
         <p className="intro-kicker">{tr("introKicker")}</p>
-        {portfolio.group.logo && <img className="intro-logo" src={portfolio.group.logo} alt="" />}
-        <h1 className="intro-title" data-text={p(portfolio.group.name)}>
-          {p(portfolio.group.name)}
-        </h1>
+        {/* ชุดโลโก้ + ชื่อแบรนด์ (wordmark เดียวกับมุมซ้ายบนของ HUD) */}
+        <div className="intro-lockup">
+          {portfolio.group.logo && <img className="intro-logo" src={portfolio.group.logo} alt="" />}
+          <h1 className="intro-title brand-wordmark">{p(portfolio.group.name)}</h1>
+        </div>
         <div className="intro-bar" role="progressbar" aria-valuenow={Math.round(k * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={tr("introLoading")}>
           <span style={{ transform: `scaleX(${k})` }} />
         </div>

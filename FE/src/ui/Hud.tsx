@@ -33,11 +33,11 @@ export function Hud() {
   return (
     <div className="hud">
       <header className="hud-top">
-        {/* มุมซ้ายบน: ชื่อแบรนด์แดงตัวหนา + บรรทัดเล็กสีแดง (ที่อยู่ตอนนี้ / ข้อความทั่วไป / วิธีใช้ที่นี่) */}
+        {/* มุมซ้ายบน: wordmark ม่วง-บานเย็น + บรรทัดเล็กสีบานเย็น (ที่อยู่ตอนนี้ / ข้อความทั่วไป / วิธีใช้ที่นี่) */}
         <div className="hud-brand">
           <div className="hud-brand-row">
             {portfolio.group.logo && <img className="hud-logo" src="/images/nexora-symbol.png" alt="" />}
-            <span className="hud-brand-name">NEXORA</span>
+            <span className="hud-brand-name brand-wordmark">NEXORA</span>
           </div>
           <h1 key={shown} className="hud-line hud-line-place">
             {travel ? `${tr("traveling")} → ` : ""}
