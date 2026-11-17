@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ENERGY_CORE_POS, layoutSkyline } from "./skylineLayout";
+import * as THREE from "three";
+import { ENERGY_CORE_POS, ENERGY_CORE_Y, layoutSkyline } from "./skylineLayout";
 import { STREETS, distanceToPolyline } from "./streets";
 import { DISTRICTS } from "../../config/districts";
 
@@ -52,5 +53,20 @@ describe("ENERGY_CORE_POS", () => {
     for (const t of layoutSkyline(7)) {
       expect(Math.hypot(t.position[0] - ENERGY_CORE_POS[0], t.position[2] - ENERGY_CORE_POS[2])).toBeGreaterThan(14);
     }
+  });
+
+  it("lands the core inside the frame of at least 3 first viewpoints", () => {
+    const views: [number, number, number][] = [[-46, 0, 0], [0, 0, 0], [46, 0, 0], [0, 0, 44]];
+    const core = new THREE.Vector3(ENERGY_CORE_POS[0], ENERGY_CORE_Y, ENERGY_CORE_POS[2]);
+    let inFrame = 0;
+    for (const d of views) {
+      const cam = new THREE.PerspectiveCamera(55, 16 / 9, 0.1, 500);
+      cam.position.set(d[0], d[1] + 5, d[2] + 17);
+      cam.lookAt(d[0], d[1] + 3, d[2]);
+      cam.updateMatrixWorld();
+      const n = core.clone().project(cam);
+      if (Math.abs(n.x) <= 0.9 && Math.abs(n.y) <= 0.9 && n.z >= -1 && n.z <= 1) inFrame++;
+    }
+    expect(inFrame).toBeGreaterThanOrEqual(3);
   });
 });

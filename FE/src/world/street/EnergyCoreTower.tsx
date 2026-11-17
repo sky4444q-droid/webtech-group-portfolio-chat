@@ -1,21 +1,22 @@
-// หอ Energy Core: หอทรงเรียวสูง ~180 ม. วงแหวนไฟ 3 ชั้น แกนพลังงานกลางเต้นม่วง–ชมพู และไฟเตือนแดงบนยอด
+// หอ Energy Core: หอทรงเรียวสูง ~130 ม. (ย่อให้แกนอยู่ในกรอบมุมแรก) วงแหวนไฟ 3 ชั้น แกนพลังงานกลางเต้นม่วง–ชมพู และไฟเตือนแดงบนยอด
 
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { BRAND } from "../../config/brand";
-import { ENERGY_CORE_POS } from "./skylineLayout";
+import { ENERGY_CORE_POS, ENERGY_CORE_Y } from "./skylineLayout";
 
-/** ช่วงลำตัว: [รัศมีล่าง, รัศมีบน, สูง] ซ้อนจากล่างขึ้นบน */
-const SEGMENTS: [number, number, number][] = [
-  [11, 8, 60],
-  [8, 5.5, 50],
-  [5.5, 3, 45],
-  [3, 0.6, 20],
+/** ช่วงลำตัว: [y ฐาน, รัศมีล่าง, รัศมีบน, สูง] — เว้นช่องว่าง y 24–40 ให้แกนพลังงานลอยในกรอบหกเหลี่ยม */
+const SEGMENTS: [number, number, number, number][] = [
+  [0, 10, 7.5, 24],
+  [40, 7, 5, 36],
+  [76, 5, 2.8, 32],
+  [108, 2.8, 0.5, 18],
 ];
-const CORE_Y = 110;
-const RING_YS = [60, 110, 155];
-const TIP_Y = SEGMENTS.reduce((s, x) => s + x[2], 0); // 175 + เสา = ~180
+const CORE_Y = ENERGY_CORE_Y;
+const RING_YS = [24, 40, 90];
+const RING_RS = [8.8, 8.2, 5.2];
+const TIP_Y = 126;
 const PULSE_PERIOD = 4;
 const BEACON_PERIOD = 1.6;
 
@@ -51,12 +52,13 @@ export function EnergyCoreTower() {
         uniforms: { uA: { value: new THREE.Color(BRAND.purple) }, uB: { value: new THREE.Color(BRAND.magenta) }, uT: { value: 0 } },
         blending: THREE.AdditiveBlending,
         transparent: true,
+        fog: false,
         depthWrite: false,
         toneMapped: false,
       }),
     [],
   );
-  const ringMat = useMemo(() => new THREE.MeshBasicMaterial({ toneMapped: false }), []);
+  const ringMat = useMemo(() => new THREE.MeshBasicMaterial({ toneMapped: false, fog: false }), []);
   const beacon = useRef<THREE.MeshBasicMaterial>(null);
   const ringA = useMemo(() => new THREE.Color(BRAND.purple), []);
   const ringB = useMemo(() => new THREE.Color(BRAND.magenta), []);
@@ -73,23 +75,18 @@ export function EnergyCoreTower() {
     beacon.current?.color.copy(red).multiplyScalar((t % BEACON_PERIOD) / BEACON_PERIOD < 0.3 ? 1 : 0.08);
   });
 
-  let y = 0;
   return (
     <group position={ENERGY_CORE_POS}>
-      {SEGMENTS.map(([rb, rt, h], i) => {
-        const cy = y + h / 2;
-        y += h;
-        return (
-          <mesh key={i} position={[0, cy, 0]}>
-            <cylinderGeometry args={[rt, rb, h, 16]} />
-            <meshStandardMaterial color="#14101f" metalness={0.8} roughness={0.35} emissive={BRAND.purple} emissiveIntensity={0.08} envMapIntensity={0} />
-          </mesh>
-        );
-      })}
+      {SEGMENTS.map(([by, rb, rt, h], i) => (
+        <mesh key={i} position={[0, by + h / 2, 0]}>
+          <cylinderGeometry args={[rt, rb, h, 16]} />
+          <meshStandardMaterial color="#14101f" metalness={0.8} roughness={0.35} emissive={BRAND.purple} emissiveIntensity={0.08} envMapIntensity={0} />
+        </mesh>
+      ))}
       {/* วงแหวนไฟ 3 ชั้น (ใช้ material เดียวกันเปลี่ยนสีตามจังหวะแกน) */}
       {RING_YS.map((ry, i) => (
         <mesh key={ry} position={[0, ry, 0]} rotation={[Math.PI / 2, 0, 0]} material={ringMat}>
-          <torusGeometry args={[[9.6, 7.2, 4.6][i], 0.45, 8, 48]} />
+          <torusGeometry args={[RING_RS[i], 0.45, 8, 48]} />
         </mesh>
       ))}
       {/* แกนพลังงานในกรอบหกเหลี่ยม */}
@@ -97,8 +94,8 @@ export function EnergyCoreTower() {
         <sphereGeometry args={[6, 32, 24]} />
       </mesh>
       <mesh position={[0, CORE_Y, 0]}>
-        <cylinderGeometry args={[8.5, 8.5, 14, 6, 1, true]} />
-        <meshBasicMaterial color={BRAND.silver} wireframe toneMapped={false} />
+        <cylinderGeometry args={[8.5, 8.5, 16, 6, 1, true]} />
+        <meshBasicMaterial color={BRAND.silver} wireframe toneMapped={false} fog={false} />
       </mesh>
       {/* เสาและไฟเตือนบนยอด */}
       <mesh position={[0, TIP_Y + 2.5, 0]}>
@@ -107,7 +104,7 @@ export function EnergyCoreTower() {
       </mesh>
       <mesh position={[0, TIP_Y + 5.4, 0]}>
         <sphereGeometry args={[0.9, 10, 8]} />
-        <meshBasicMaterial ref={beacon} toneMapped={false} />
+        <meshBasicMaterial ref={beacon} toneMapped={false} fog={false} />
       </mesh>
     </group>
   );

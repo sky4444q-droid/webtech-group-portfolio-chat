@@ -12,11 +12,13 @@ export interface SkyTower {
 export const SKYLINE_COUNT = 108;
 
 /**
- * หอ Energy Core: แนวทแยงระหว่างซอยทางเข้า (ตะวันตก) กับ Gallery Avenue (เหนือ)
- * ห่างถนนทุกสาย ~62 ม. นอกวงแหวนตึกไกล (รัศมี ~88) — เห็นจากสี่แยก ปลายซอยทางเข้า ปลาย Gallery และปลาย Office Row
- * อยู่นอกแกนสายตาของถนน จึงไม่ถูกจอ WaterScreen ประจำถนนบัง
+ * หอ Energy Core: ทางทิศ −z ด้านในวงแหวนตึกไกล (รัศมี ~89 < 95) ตึกไกลทุกหลังจึงอยู่หลังหอ ไม่บัง
+ * มุมแรกของทุกที่มองไปทาง −z (กล้อง = ที่ + [0,5,17]) → แกน (สูง ENERGY_CORE_Y) อยู่ในกรอบจาก Gate / Nexus / Team / Sanctuary
+ * เยื้องซ้ายจากแกน Gallery Avenue 26 ม. ไม่ตรงหลังจอ WaterScreen ของถนน · ห่างลาน Projects 45 ม.
  */
-export const ENERGY_CORE_POS: Vec3 = [-62, 0, -62];
+export const ENERGY_CORE_POS: Vec3 = [-26, 0, -85];
+/** ความสูงของแกนพลังงาน (ต่ำพอให้อยู่ในกรอบจาก Nexus) */
+export const ENERGY_CORE_Y = 32;
 
 /** วางตึกเป็นช่องมุมเท่า ๆ กัน (ช่องละ 3.33°) แล้วสุ่มเลื่อนในช่อง → ทุกเซกเตอร์ 15° มีตึกเสมอ */
 export function layoutSkyline(seed: number): SkyTower[] {
@@ -24,15 +26,11 @@ export function layoutSkyline(seed: number): SkyTower[] {
   const out: SkyTower[] = [];
   for (let i = 0; i < SKYLINE_COUNT; i++) {
     const a = ((i + 0.15 + rnd() * 0.7) / SKYLINE_COUNT) * Math.PI * 2;
-    let r = 98 + rnd() * 44;
-    const x0 = Math.cos(a);
-    const z0 = Math.sin(a);
-    // ใกล้หอ Energy Core → ถอยออกไปแถวหลัง ไม่ให้บังฐานหอ
-    if (Math.hypot(x0 * r - ENERGY_CORE_POS[0], z0 * r - ENERGY_CORE_POS[2]) < 30) r = 136 + rnd() * 8;
+    const r = 98 + rnd() * 44;
     const w = 8 + rnd() * 8;
     const d = 8 + rnd() * 8;
     const h = 60 + rnd() * 100;
-    out.push({ position: [x0 * r, h / 2, z0 * r], size: [w, h, d], variant: Math.floor(rnd() * 4) });
+    out.push({ position: [Math.cos(a) * r, h / 2, Math.sin(a) * r], size: [w, h, d], variant: Math.floor(rnd() * 4) });
   }
   return out;
 }
