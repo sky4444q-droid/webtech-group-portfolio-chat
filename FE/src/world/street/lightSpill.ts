@@ -55,3 +55,22 @@ export function spillsFor(items: KitItem[]): Spill[] {
   }
   return out;
 }
+
+export interface HazePatch {
+  position: Vec3;
+  radius: number;
+  variant: number;
+  strength: number;
+}
+
+/** หมอกสีใต้แหล่งแสงระดับถนน: หนึ่งดวงต่อ floor spill (ผนังไม่มี) ลอยเหนือพื้นเล็กน้อยเพื่อไม่ z-fight */
+export function hazePatches(spills: Spill[]): HazePatch[] {
+  return spills
+    .filter((s) => s.kind === "floor")
+    .map((s) => ({
+      position: [s.position[0], 0.25, s.position[2]] as Vec3,
+      radius: Math.max(s.size[0], s.size[1]) * 0.8,
+      variant: s.variant,
+      strength: s.strength,
+    }));
+}

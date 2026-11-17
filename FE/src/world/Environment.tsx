@@ -15,6 +15,8 @@ import { EnergyCoreTower } from "./street/EnergyCoreTower";
 import { DustMotes, GroundFog, RainSplashes, Traffic } from "./fx/Effects";
 import { HoloFish } from "./fx/HoloFish";
 import { SteamPlumes } from "./fx/SteamPlumes";
+import { cityLayout } from "./street/kitLayout";
+import { hazePatches, spillsFor } from "./street/lightSpill";
 import { mulberry32 } from "../lib/rng";
 
 export function Environment() {
@@ -23,6 +25,8 @@ export function Environment() {
   const high = quality === "high";
   const fx = fxEnabled(quality);
   const center = DISTRICTS[district].position;
+  // หมอกใต้แสงทั้งเมือง คำนวณครั้งเดียว (ไม่ผูกกับย่านปัจจุบัน)
+  const patches = useMemo(() => hazePatches(spillsFor(Object.values(cityLayout()).flat())), []);
   return (
     <>
       {/* แสงรวมกลาง ๆ จางมาก — แสงหลักมาจากป้าย จอ และไฟถนนเอง (ไม่มีแสงม่วงรวมแล้ว) */}
@@ -41,7 +45,7 @@ export function Environment() {
       {fx.dust && <DustMotes />}
       {fx.fish && <HoloFish />}
       {fx.steam && <SteamPlumes />}
-      <GroundFog layers={fx.fogLayers} center={[center[0], 0, center[2]]} />
+      <GroundFog layers={fx.fogLayers} center={[center[0], 0, center[2]]} patches={patches} hazeOn={fx.steam} />
     </>
   );
 }

@@ -6,6 +6,8 @@ import { useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import * as THREE from "three";
 import { trafficLanes } from "./trafficLanes";
 import { mulberry32 } from "../../lib/rng";
+import { neonColor } from "../street/kitMeshes";
+import type { HazePatch } from "../street/lightSpill";
 
 // ---------- หมอกพื้นเป็นชั้น ----------
 
@@ -32,7 +34,89 @@ function getFogTexture(): THREE.Texture {
   return fogTexture;
 }
 
-export function GroundFog({ layers, center }: { layers: number; center: [number, number, number] }) {
+/** แผ่นวงกลมขอบนุ่ม (alpha ไล่ออกที่ขอบ) ใช้เป็นรูปทรงของหมอกแต่ละดวง */
+let hazeDisc: THREE.Texture | null = null;
+function getHazeDisc(): THREE.Texture {
+  if (hazeDisc) return hazeDisc;
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const g = c.getContext("2d")!;
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, "rgba(255,255,255,1)");
+  grad.addColorStop(0.5, "rgba(255,255,255,0.45)");
+  grad.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+  hazeDisc = new THREE.CanvasTexture(c);
+  return hazeDisc;
+}
+
+const hazeDummy = new THREE.Object3D();
+
+/** หมอกสีใต้ป้าย/จอ: instanced เดียว (draw call เดียว) สีตามแสง · เนื้อหมอกเลื่อนช้า ๆ ด้วย uniform ร่วม */
+function HazePatches({ patches }: { patches: HazePatch[] }) {
+  const mesh = useRef<THREE.InstancedMesh>(null);
+  const fog = useMemo(() => getFogTexture(), []);
+  const disc = useMemo(() => getHazeDisc(), []);
+  const offset = useMemo(() => ({ value: new THREE.Vector2() }), []);
+  useLayoutEffect(() => {
+    const m = mesh.current;
+    if (!m) return;
+    patches.forEach((p, i) => {
+      hazeDummy.position.set(...p.position);
+      hazeDummy.rotation.set(-Math.PI / 2, 0, 0);
+      hazeDummy.scale.set(p.radius * 2, p.radius * 2, 1);
+      hazeDummy.updateMatrix();
+      m.setMatrixAt(i, hazeDummy.matrix);
+      // สีเดียวกับแสงย้อย (NEON) · ความเข้มต่อดวงตาม strength ผ่านสี (normal blending จึงไม่ท่วมพื้น)
+      m.setColorAt(i, neonColor(p.variant, 0.5 + p.strength * 0.5));
+    });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [patches]);
+  useFrame((_, dt) => {
+    offset.value.x += dt * 0.01;
+    offset.value.y += dt * 0.006;
+  });
+  if (patches.length === 0) return null;
+  const strength = patches.reduce((a, p) => a + p.strength, 0) / patches.length;
+  return (
+    <instancedMesh ref={mesh} args={[undefined, undefined, patches.length]} frustumCulled={false} renderOrder={-1}>
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial
+        map={disc}
+        transparent
+        opacity={0.12 + strength * 0.1}
+        depthWrite={false}
+        fog={false}
+        toneMapped={false}
+        onBeforeCompile={(sh) => {
+          sh.uniforms.uFog = { value: fog };
+          sh.uniforms.uOff = offset;
+          sh.fragmentShader = sh.fragmentShader
+            .replace("#include <common>", "#include <common>\nuniform sampler2D uFog;\nuniform vec2 uOff;")
+            .replace(
+              "#include <map_fragment>",
+              "#include <map_fragment>\ndiffuseColor.a *= 0.45 + 0.55 * clamp(texture2D(uFog, vMapUv * 2.0 + uOff).a * 3.0, 0.0, 1.0);",
+            );
+        }}
+      />
+    </instancedMesh>
+  );
+}
+
+export function GroundFog({
+  layers,
+  center,
+  patches = [],
+  hazeOn = false,
+}: {
+  layers: number;
+  center: [number, number, number];
+  patches?: HazePatch[];
+  /** เปิดหมอกใต้แสง (โหมด high) — โหมด low ใช้แผ่นใหญ่เดิมเท่านั้น */
+  hazeOn?: boolean;
+}) {
   const mats = useRef<THREE.MeshBasicMaterial[]>([]);
   const tex = useMemo(() => getFogTexture(), []);
   const textures = useMemo(
@@ -54,25 +138,30 @@ export function GroundFog({ layers, center }: { layers: number; center: [number,
   // หมอกชั้นเดียวบาง ๆ ใต้เข่า สีม่วงเข้ม
   const colors = ["#3a2a6a"];
   return (
-    <group position={center}>
-      {textures.map((t, i) => (
-        // ทุกชั้นต่ำกว่าระดับสายตา · ใช้ blending ปกติ (additive บนแผ่นใหญ่ทำให้ภาพดำทั้งจอเมื่อมี Bloom)
-        <mesh key={i} position={[0, 0.1 + i * 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
-          <planeGeometry args={[160, 160]} />
-          <meshBasicMaterial
-            ref={(m) => {
-              if (m) mats.current[i] = m;
-            }}
-            map={t}
-            color={colors[i % colors.length]}
-            transparent
-            opacity={0.09 - i * 0.02}
-            depthWrite={false}
-            fog={false}
-          />
-        </mesh>
-      ))}
-    </group>
+    <>
+      {hazeOn && <HazePatches patches={patches} />}
+      {!hazeOn && (
+        <group position={center}>
+          {textures.map((t, i) => (
+            // ทุกชั้นต่ำกว่าระดับสายตา · ใช้ blending ปกติ (additive บนแผ่นใหญ่ทำให้ภาพดำทั้งจอเมื่อมี Bloom)
+            <mesh key={i} position={[0, 0.1 + i * 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
+              <planeGeometry args={[160, 160]} />
+              <meshBasicMaterial
+                ref={(m) => {
+                  if (m) mats.current[i] = m;
+                }}
+                map={t}
+                color={colors[i % colors.length]}
+                transparent
+                opacity={0.09 - i * 0.02}
+                depthWrite={false}
+                fog={false}
+              />
+            </mesh>
+          ))}
+        </group>
+      )}
+    </>
   );
 }
 

@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { fxEnabled } from "./fxEnabled";
 import { COLORS } from "../../config/theme";
 import { BRAND } from "../../config/brand";
+import { cityLayout } from "../street/kitLayout";
+import { hazePatches, spillsFor } from "../street/lightSpill";
 
 const ROOT = join(import.meta.dirname, "../../..");
 const ASSETS = join(ROOT, "public/assets");
@@ -71,5 +73,15 @@ describe("CC0 assets", () => {
   it("keeps public/assets at or under 8 MB", () => {
     const total = files.reduce((n, f) => n + statSync(f).size, 0);
     expect(total).toBeLessThanOrEqual(8 * 1024 * 1024);
+  });
+});
+
+describe("hazePatches", () => {
+  it("makes one haze patch per floor spill and none for wall spills", () => {
+    const items = Object.values(cityLayout()).flat();
+    const spills = spillsFor(items);
+    const patches = hazePatches(spills);
+    expect(patches).toHaveLength(spills.filter((s) => s.kind === "floor").length);
+    for (const p of patches) expect(p.position[1]).toBeCloseTo(0.25);
   });
 });
