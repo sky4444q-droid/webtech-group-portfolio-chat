@@ -9,7 +9,7 @@ import { INTRO_MS } from "../config/timing";
 import { usePortfolio } from "../store/usePortfolio";
 import { useWorld } from "../store/useWorld";
 import { showcaseCamera } from "./layout";
-import { viewpointWorld } from "../config/viewpoints";
+import { teamHoloCamera, viewpointWorld } from "../config/viewpoints";
 import { guideAt, planGuideTrip, type GuidePlan } from "./travel/guideTrip";
 import { guideState } from "./travel/guideState";
 import { mascotAt } from "./intro/introPath";
@@ -207,6 +207,12 @@ export function CameraRig() {
         parallax = 0.25;
         eye = false;
       }
+    }
+    // การ์ดทีมเปิดอยู่: ถอยกล้องให้เห็นการ์ดทั้งใบ และหยุดหันตามเมาส์ (ไม่งั้นการ์ดถูกเหวี่ยงไปข้าง ๆ ตอนเลื่อนเมาส์ไปกด)
+    if (s.panel?.kind === "team" && s.panel.display === "holo" && s.district === "team") {
+      pose = teamHoloCamera();
+      parallax = 0.15;
+      eye = false;
     }
     pos.set(...pose.position);
     look.set(...pose.target);

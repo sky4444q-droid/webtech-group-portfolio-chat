@@ -15,6 +15,7 @@ import { AiPresence } from "../ai/AiPresence";
 import { buildingWindowsTexture, screenTexture } from "../textures";
 import { TEAM_LOBBY_OFFSET, TEAM_TOWER } from "../street/streets";
 import { HoloCard } from "../HoloCard";
+import { TEAM_HOLO_CARD } from "../../config/viewpoints";
 import { usePortfolio } from "../../store/usePortfolio";
 import { usePick } from "../../i18n";
 import { Text } from "../../ui/Pending";
@@ -193,8 +194,8 @@ function TeamHolo() {
   if (!open) return null;
   // การ์ดเดียวรวมทุกคน: ให้ CSS จัดเรียง แทนการวางการ์ดแยกตามพิกัดฉาก (ซึ่งซ้อนกันบนจอเตี้ย)
   return (
-    <group position={[-3.6, 2.1, -1.2]}>
-      <HoloCard position={[0, -0.2, 0.4]} color={COLORS.green} className="holo-card-team">
+    <group position={TEAM_HOLO_CARD}>
+      <HoloCard position={[0, 0, 0]} color={COLORS.green} className="holo-card-team">
         <div className="holo-team-grid">
           {members.map((m, i) => (
             <button

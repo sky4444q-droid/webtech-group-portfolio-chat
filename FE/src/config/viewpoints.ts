@@ -59,3 +59,17 @@ export function viewpointWorld(district: DistrictId, index: number): { position:
   const base = DISTRICTS[district].position;
   return { position: add(base, vp.position), target: add(base, vp.target), lookRange: vp.lookRange, mode: vp.mode };
 }
+
+/** ตำแหน่งการ์ด Hologram ทีม (สัมพัทธ์กับล็อบบี้) — TeamDistrict วางการ์ดที่นี่ */
+export const TEAM_HOLO_CARD: Vec3 = [-3.6, 1.9, -0.8];
+const teamBase = DISTRICTS.team.position;
+export const TEAM_HOLO_CARD_WORLD: Vec3 = add(teamBase, lobby(TEAM_HOLO_CARD));
+
+/** ระยะกล้องจากการ์ดทีม: ไกลพอให้การ์ด (ขนาด px คงที่) ไม่ล้นจอ */
+const TEAM_HOLO_DISTANCE = 7.2;
+
+/** ท่ากล้องตอนเปิดการ์ดทีม — มองตรงที่การ์ด และไม่หันตามเมาส์ (เหมือนท่าดูผลงานใน Projects) */
+export function teamHoloCamera(): { position: Vec3; target: Vec3 } {
+  const [x, y, z] = TEAM_HOLO_CARD_WORLD;
+  return { position: [x, y, z + TEAM_HOLO_DISTANCE], target: [x, y, z] };
+}
