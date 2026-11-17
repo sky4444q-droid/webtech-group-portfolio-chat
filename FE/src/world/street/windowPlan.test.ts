@@ -17,6 +17,10 @@ describe("planWindows", () => {
       const counts = planWindows(s).map((row) => row.filter((b) => b.lit).length);
       expect(counts.filter((c) => c >= 6).length).toBeGreaterThanOrEqual(3);
       expect(counts.filter((c) => c <= 1).length).toBeGreaterThanOrEqual(3);
+      // จับกลุ่มจริง: ความแปรปรวนจำนวนไฟต่อชั้นสูงกว่าการสุ่มอิสระ (binomial 8×p×(1-p) ≤ 2) อย่างชัดเจน
+      const mean = counts.reduce((a, b) => a + b, 0) / counts.length;
+      const variance = counts.reduce((a, c) => a + (c - mean) ** 2, 0) / counts.length;
+      expect(variance).toBeGreaterThan(4);
     }
   });
   it("keeps coloured bays rare", () => {

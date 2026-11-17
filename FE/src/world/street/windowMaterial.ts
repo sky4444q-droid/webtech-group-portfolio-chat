@@ -76,11 +76,15 @@ function fragEmissive(animate: boolean): string {
   const toggle = animate
     ? /* glsl */ `
   vec2 winCell = floor(vWinUv * vec2(${TILE_COLS}.0, ${TILE_ROWS}.0));
-  float winH = fract(sin(dot(winCell, vec2(12.9898, 78.233)) + vWinBld * 97.13) * 43758.5453);
+  // ปัด hash ตึกให้คงที่ทั้งตึก (กัน noise จากการ interpolate varying ถูกขยายใน sin)
+  float winB = floor(vWinBld * 1024.0 + 0.5);
+  float winH = fract(sin(dot(winCell, vec2(12.9898, 78.233)) + winB * 0.0947) * 43758.5453);
   if (winToggle(winH, uWinTime) > 0.5) {
     vec2 winF = fract(vWinUv * vec2(${TILE_COLS}.0, ${TILE_ROWS}.0));
     float winGlass = step(0.0625, winF.x) * step(winF.x, 0.9375) * step(0.19, winF.y) * step(winF.y, 0.97);
-    float winLit = step(0.12, max(winTex.r, max(winTex.g, winTex.b)));
+    // ตัดสินว่าช่องเปิดไฟอยู่หรือไม่จากจุดเดียวใกล้เพดาน (ทั้งช่องได้ผลเดียวกัน ไม่สว่างครึ่งช่อง)
+    vec3 winRef = texture2D(emissiveMap, (winCell + vec2(0.5, 0.85)) / vec2(${TILE_COLS}.0, ${TILE_ROWS}.0)).rgb;
+    float winLit = step(0.12, max(winRef.r, max(winRef.g, winRef.b)));
     winTex = mix(mix(vec3(1.0, 0.85, 0.66) * 0.6, winTex, 1.0 - winGlass), winTex * 0.1, winLit);
   }`
     : "";

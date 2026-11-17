@@ -18,6 +18,13 @@ describe("curtainWallTexture", () => {
 
 import * as THREE from "three";
 import { patchWindowUv, windowUvScale } from "./windowMaterial";
+import { WINDOW_TOGGLE_GLSL } from "./windowPlan";
+
+function compile(mat: THREE.MeshStandardMaterial) {
+  const shader = { vertexShader: THREE.ShaderLib.standard.vertexShader, fragmentShader: THREE.ShaderLib.standard.fragmentShader, uniforms: {} as Record<string, unknown> };
+  mat.onBeforeCompile(shader as never, undefined as never);
+  return shader;
+}
 
 describe("patchWindowUv", () => {
   it("แทนที่ chunk ใน shader มาตรฐานได้จริง", () => {
@@ -31,6 +38,21 @@ describe("patchWindowUv", () => {
     expect(shader.fragmentShader).toContain("winToggle(");
     expect(shader.vertexShader).toContain("instanceMatrix[3]");
     expect(mat.userData.winTime).toEqual({ value: 0 });
+  });
+  it("ผูก uniform เวลาและใช้สูตร GLSL ตัวเดียวกับ JS", () => {
+    const mat = new THREE.MeshStandardMaterial();
+    patchWindowUv(mat);
+    const shader = compile(mat);
+    expect(shader.uniforms.uWinTime).toBe(mat.userData.winTime);
+    expect(shader.fragmentShader).toContain(WINDOW_TOGGLE_GLSL);
+    expect(shader.fragmentShader).toMatch(/winToggle\(winH, uWinTime\)/);
+  });
+  it("animate:false ไม่สลับไฟ", () => {
+    const mat = new THREE.MeshStandardMaterial();
+    patchWindowUv(mat, { animate: false });
+    const shader = compile(mat);
+    expect(shader.fragmentShader).not.toContain("winToggle(winH");
+    expect(mat.customProgramCacheKey()).not.toBe((() => { const m = new THREE.MeshStandardMaterial(); patchWindowUv(m); return m.customProgramCacheKey(); })());
   });
   it("ตึก 13×33 ม. = 10 ช่อง × 10 ชั้น = 1.25 × 0.625 แผ่น", () => {
     const [u, v] = windowUvScale(13, 33);
