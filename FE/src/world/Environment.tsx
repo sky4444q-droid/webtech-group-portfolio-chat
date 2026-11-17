@@ -12,7 +12,7 @@ import { buildingWindowsTexture } from "./textures";
 import { fxEnabled } from "./fx/fxEnabled";
 import { Skyline } from "./street/Skyline";
 import { EnergyCoreTower } from "./street/EnergyCoreTower";
-import { GroundFog, RainSplashes, Traffic } from "./fx/Effects";
+import { DustMotes, GroundFog, RainSplashes, Traffic } from "./fx/Effects";
 
 export function Environment() {
   const quality = useWorld((s) => s.quality);
@@ -35,6 +35,7 @@ export function Environment() {
       {fx.rain && <Rain />}
       {fx.rain && <RainSplashes />}
       {fx.traffic && <Traffic />}
+      {fx.dust && <DustMotes />}
       <GroundFog layers={fx.fogLayers} center={[center[0], 0, center[2]]} />
     </>
   );

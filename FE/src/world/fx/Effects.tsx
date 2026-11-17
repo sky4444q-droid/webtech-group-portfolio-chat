@@ -1,10 +1,10 @@
 // เอฟเฟกต์บรรยากาศ: หมอกพื้นเป็นชั้น, โดรน/รถลอย, ฝนกระเซ็น
 // ทุกตัวเบา (mesh โปร่งแสงแบบ additive) และปิดได้ตามคุณภาพ (fxEnabled)
 
-import { useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import * as THREE from "three";
-import { COLORS } from "../../config/theme";
+import { trafficLanes } from "./trafficLanes";
 
 // ---------- หมอกพื้นเป็นชั้น ----------
 
@@ -75,50 +75,65 @@ export function GroundFog({ layers, center }: { layers: number; center: [number,
   );
 }
 
-// ---------- โดรนและรถลอยวิ่งเป็นวงไกล ๆ ----------
+// ---------- รถลอยวิ่งตามเลนถนน (ไฟหน้าขาว ไฟท้ายแดง) ----------
 
-const VEHICLES = 26;
+const VEHICLES = 30;
 
 export function Traffic() {
   const body = useRef<THREE.InstancedMesh>(null);
-  const lights = useRef<THREE.InstancedMesh>(null);
+  const head = useRef<THREE.InstancedMesh>(null);
+  const tail = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  const lanes = useMemo(
-    () =>
-      Array.from({ length: VEHICLES }, (_, i) => ({
-        radius: 70 + (i % 6) * 22,
-        height: 18 + (i % 5) * 7,
-        speed: (0.03 + (i % 4) * 0.012) * (i % 2 ? 1 : -1),
-        phase: (i / VEHICLES) * Math.PI * 2 * 3.7,
-        drone: i % 3 === 0,
-      })),
-    [],
-  );
-  const c = useMemo(() => new THREE.Color(), []);
+  // คำนวณทิศ/ความยาวเลนไว้ล่วงหน้า ไม่สร้างของใหม่ในเฟรม
+  const cars = useMemo(() => {
+    const lanes = trafficLanes(7);
+    return Array.from({ length: VEHICLES }, (_, i) => {
+      const l = lanes[i % lanes.length];
+      const dx = l.to[0] - l.from[0];
+      const dz = l.to[2] - l.from[2];
+      return { l, yaw: Math.atan2(dx, dz), off: i / VEHICLES + l.phase };
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    const h = new THREE.Color("#ffffff").multiplyScalar(3);
+    const t = new THREE.Color("#ff2030").multiplyScalar(3);
+    for (let i = 0; i < VEHICLES; i++) {
+      head.current?.setColorAt(i, h);
+      tail.current?.setColorAt(i, t);
+    }
+    if (head.current?.instanceColor) head.current.instanceColor.needsUpdate = true;
+    if (tail.current?.instanceColor) tail.current.instanceColor.needsUpdate = true;
+  }, []);
 
   useFrame(({ clock }) => {
-    if (!body.current || !lights.current) return;
+    if (!body.current || !head.current || !tail.current) return;
     const t = clock.elapsedTime;
-    lanes.forEach((l, i) => {
-      const a = l.phase + t * l.speed;
-      const x = Math.cos(a) * l.radius;
-      const z = Math.sin(a) * l.radius;
-      const y = l.height + Math.sin(t * 0.8 + i) * (l.drone ? 1.2 : 0.3);
+    for (let i = 0; i < VEHICLES; i++) {
+      const { l, yaw, off } = cars[i];
+      const u = (off + t * l.speed) % 1;
+      const x = l.from[0] + (l.to[0] - l.from[0]) * u;
+      const y = l.from[1] + (l.to[1] - l.from[1]) * u + Math.sin(t * 0.8 + i) * 0.2;
+      const z = l.from[2] + (l.to[2] - l.from[2]) * u;
       dummy.position.set(x, y, z);
-      dummy.rotation.set(0, -a + (l.speed > 0 ? 0 : Math.PI), 0);
-      dummy.scale.set(l.drone ? 0.8 : 2.2, l.drone ? 0.25 : 0.5, l.drone ? 0.8 : 0.9);
+      dummy.rotation.set(0, yaw, 0);
+      dummy.scale.set(0.9, 0.35, 2.2);
       dummy.updateMatrix();
-      body.current!.setMatrixAt(i, dummy.matrix);
-      dummy.scale.set(l.drone ? 0.2 : 2.4, 0.1, l.drone ? 0.2 : 0.95);
-      dummy.position.y -= 0.25;
+      body.current.setMatrixAt(i, dummy.matrix);
+      // ไฟหน้า/ท้ายเป็นแท่งบางที่ปลายตัวถัง (แกน z ของรถคือทิศวิ่ง)
+      const s = Math.sin(yaw);
+      const c = Math.cos(yaw);
+      dummy.scale.set(0.8, 0.14, 0.08);
+      dummy.position.set(x + s * 1.1, y, z + c * 1.1);
       dummy.updateMatrix();
-      lights.current!.setMatrixAt(i, dummy.matrix);
-      c.set(l.drone ? COLORS.green : i % 2 ? COLORS.pink : COLORS.cyan).multiplyScalar(2.5);
-      lights.current!.setColorAt(i, c);
-    });
+      head.current.setMatrixAt(i, dummy.matrix);
+      dummy.position.set(x - s * 1.1, y, z - c * 1.1);
+      dummy.updateMatrix();
+      tail.current.setMatrixAt(i, dummy.matrix);
+    }
     body.current.instanceMatrix.needsUpdate = true;
-    lights.current.instanceMatrix.needsUpdate = true;
-    if (lights.current.instanceColor) lights.current.instanceColor.needsUpdate = true;
+    head.current.instanceMatrix.needsUpdate = true;
+    tail.current.instanceMatrix.needsUpdate = true;
   });
 
   return (
@@ -127,11 +142,66 @@ export function Traffic() {
         <boxGeometry />
         <meshStandardMaterial color="#1a1530" metalness={0.8} roughness={0.3} />
       </instancedMesh>
-      <instancedMesh ref={lights} args={[undefined, undefined, VEHICLES]} frustumCulled={false}>
+      <instancedMesh ref={head} args={[undefined, undefined, VEHICLES]} frustumCulled={false}>
+        <boxGeometry />
+        <meshBasicMaterial toneMapped={false} />
+      </instancedMesh>
+      <instancedMesh ref={tail} args={[undefined, undefined, VEHICLES]} frustumCulled={false}>
         <boxGeometry />
         <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
     </group>
+  );
+}
+
+// ---------- ฝุ่นลอยใกล้กล้อง ----------
+
+const MOTES = 300;
+const BOX: [number, number, number] = [20, 8, 20];
+
+export function DustMotes() {
+  const pts = useRef<THREE.Points>(null);
+  const data = useMemo(() => {
+    const pos = new Float32Array(MOTES * 3);
+    const vel = new Float32Array(MOTES * 3);
+    for (let i = 0; i < MOTES; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * BOX[0];
+      pos[i * 3 + 1] = Math.random() * BOX[1];
+      pos[i * 3 + 2] = (Math.random() - 0.5) * BOX[2];
+      vel[i * 3] = (Math.random() - 0.5) * 0.15;
+      vel[i * 3 + 1] = (Math.random() - 0.5) * 0.08;
+      vel[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
+    }
+    return { pos, vel };
+  }, []);
+
+  useFrame(({ camera }, delta) => {
+    const g = pts.current;
+    if (!g) return;
+    const dt = Math.min(delta, 0.05);
+    // กล่องตามกล้อง (เหมือนฝน) แล้ววนค่ากลับเมื่อหลุดกล่อง
+    g.position.set(camera.position.x, 0, camera.position.z);
+    const a = data.pos;
+    for (let i = 0; i < MOTES; i++) {
+      for (let k = 0; k < 3; k++) {
+        const j = i * 3 + k;
+        a[j] += data.vel[j] * dt;
+        const lo = k === 1 ? 0 : -BOX[k] / 2;
+        const hi = k === 1 ? BOX[1] : BOX[k] / 2;
+        if (a[j] < lo) a[j] = hi;
+        else if (a[j] > hi) a[j] = lo;
+      }
+    }
+    g.geometry.attributes.position.needsUpdate = true;
+  });
+
+  return (
+    <points ref={pts} frustumCulled={false}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[data.pos, 3]} />
+      </bufferGeometry>
+      <pointsMaterial color="#dcd6ff" size={0.04} transparent opacity={0.6} depthWrite={false} blending={THREE.AdditiveBlending} sizeAttenuation />
+    </points>
   );
 }
 
