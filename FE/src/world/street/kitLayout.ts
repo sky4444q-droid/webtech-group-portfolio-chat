@@ -29,7 +29,8 @@ export type KitType =
   | "roof"
   | "antenna"
   | "edgeStrip"
-  | "beacon";
+  | "beacon"
+  | "giantScreen";
 
 export interface KitItem {
   type: KitType;
@@ -42,6 +43,8 @@ export interface KitItem {
   /** ใช้เลือกสี/ข้อความ/ลาย */
   variant: number;
   side: -1 | 1;
+  /** จอยักษ์โค้ง: มุมตึกอยู่ทางแกน x ท้องถิ่นด้านไหน (+1/-1) */
+  corner?: -1 | 1;
 }
 
 export const CITY_SEED = 2026;
@@ -230,6 +233,7 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
   // ถนน Team จบที่ตัวตึกสำนักงาน: ตึกริมถนนต้องหยุดก่อนหน้าตึก ไม่งั้นทะลุเข้าไปในล็อบบี้
   const rowLen = s.id === "officeRow" ? len - (TEAM_TOWER.size[0] / 2 - TEAM_TOWER.center[0]) - 0.2 : len;
 
+  const lots: { base: ReturnType<typeof sample>; side: -1 | 1; w: number; h: number; d: number }[] = [];
   for (const side of [-1, 1] as const) {
     let d = 0;
     while (d < rowLen - 0.01) {
@@ -239,11 +243,13 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
       put(c, s, base, side, "facade", 0, s.halfWidth + FACADE_DEPTH / 2, h / 2, [w, h, FACADE_DEPTH]);
       dressFacade(c, s, base, side, w, h);
       crownFacade(c, s, base, side, w, h);
+      lots.push({ base, side, w, h, d });
       d += w;
     }
   }
 
   // จอใหญ่จุดเด่นกลางถนน (ฝั่งสลับตาม seed)
+  const bigAt = c.out.length;
   const mid = sample(s.points, len * pick(r, 0.4, 0.6));
   put(c, s, mid, r() < 0.5 ? -1 : 1, "bigScreen", 0, s.halfWidth + 0.2, pick(r, 9, 13), [Math.min(9, len * 0.2), 5, 0.3]);
 
@@ -285,7 +291,39 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
       side: 1,
     });
   }
+  // จอยักษ์โค้งรอบมุมตึก (ใช้ตัวสุ่ม crown ต่อท้าย ตำแหน่งชิ้นอื่นไม่เลื่อน)
+  giantForStreet(c, s, lots, c.out[bigAt], rowLen);
   return c.out;
+}
+
+/** ฐานจอยักษ์บนถนน: สูงกว่าขอบบนจอใหญ่สำคัญเสมอ */
+const GIANT_STREET_BOTTOM = 17;
+
+function giantForStreet(c: Ctx, s: Street, lots: { base: ReturnType<typeof sample>; side: -1 | 1; w: number; h: number; d: number }[], key: KitItem, rowLen: number) {
+  const r = c.crown;
+  const height = pick(r, 12, 16);
+  const radius = pick(r, 3, 4);
+  // ตึกสูงพอ, ไม่ติดท้ายถนน (Team HQ), ชอบฝั่งตรงข้ามจอสำคัญ
+  const ok = lots.filter((l) => l.h >= GIANT_STREET_BOTTOM + height + 1 && l.d + l.w < rowLen - 12 && l.d > 4);
+  const opp = ok.filter((l) => l.side !== key.side);
+  const pool = opp.length ? opp : ok.length ? ok : lots;
+  const l = pool[Math.floor(r() * pool.length)];
+  const a = r() < 0.5 ? -1 : 1;
+  const along = (a * l.w) / 2;
+  const nx = -l.base.uz * l.side;
+  const nz = l.base.ux * l.side;
+  const off = s.halfWidth;
+  c.out.push({
+    type: "giantScreen",
+    street: s.id,
+    position: [l.base.x + l.base.ux * along + nx * off, GIANT_STREET_BOTTOM + height / 2, l.base.z + l.base.uz * along + nz * off],
+    rotationY: Math.atan2(-nx, -nz),
+    size: [(radius * Math.PI) / 2, height, radius],
+    variant: Math.floor(r() * VARIANTS),
+    side: l.side,
+    // แกน x ท้องถิ่น = -side * ทิศถนน
+    corner: (-l.side * a) as -1 | 1,
+  });
 }
 
 /** สี่แยก: ตึกสูงสี่มุม แต่ละมุมมีจอใหญ่และป้าย */
@@ -321,6 +359,30 @@ export function layoutNexus(seed: number): KitItem[] {
         side: 1,
       });
     }
+  }
+  // จอยักษ์โค้งรอบมุมด้านนอกของตึกมุมสองหลัง (เหนือจอใหญ่ y สูงสุด 20.5)
+  const facades = c.out.filter((i) => i.type === "facade");
+  for (const k of [0, 3]) {
+    const f = facades[k];
+    const [x, , z] = f.position;
+    const sx = Math.sign(x);
+    const sz = Math.sign(z);
+    const bottom = 22;
+    const height = Math.min(20, Math.max(12, f.size[1] - bottom - 1));
+    const radius = pick(c.crown, 3.5, 4.5);
+    // มุมตึกที่หันออกด้านข้าง (มุม x ใน, z นอก) ให้จอหันเข้ากลางแยก
+    c.out.push({
+      type: "giantScreen",
+      street: "nexus",
+      position: [x - sx * 7, bottom + height / 2, z + sz * 7],
+      rotationY: Math.atan2(-sx, 0),
+      size: [(radius * Math.PI) / 2, height, radius],
+      // k=0 → core, k=3 → type (variant % 4)
+      variant: k === 0 ? 0 : 2,
+      side: 1,
+      // แกน x ท้องถิ่น = sx * แกน z โลก, มุมอยู่ทาง +sz
+      corner: (sx * sz) as -1 | 1,
+    });
   }
   return c.out;
 }

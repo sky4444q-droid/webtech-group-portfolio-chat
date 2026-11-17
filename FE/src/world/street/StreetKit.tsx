@@ -15,6 +15,7 @@ import { SIGN_WORDS } from "../../config/signWords";
 import { signAtlas } from "./signAtlas";
 import { SCREEN_PROGRAMS } from "./screenPrograms";
 import { WaterScreen } from "./WaterScreen";
+import { GiantScreen } from "./GiantScreen";
 import { InfoPanel, panelContent } from "./InfoPanel";
 import { STREETS } from "./streets";
 import { FakeReflections } from "./FakeReflections";
@@ -132,6 +133,10 @@ export function StreetKit() {
       {/* จอใหญ่แสงใต้น้ำ — จอแรกของแต่ละถนนเป็นจอสำคัญ (โลโก้ + ป้ายบอกทาง) */}
       {get("bigScreen").map((it, i) => (
         <WaterScreen key={`${it.street}-${i}`} item={it} keyTarget={keyTargetOf(it, get("bigScreen"))} />
+      ))}
+      {/* จอยักษ์โค้งรอบมุมตึก (สูงกว่า/ไกลกว่าจอสำคัญ ไม่มีแสงย้อย) */}
+      {get("giantScreen").map((it, i) => (
+        <GiantScreen key={`${it.street}-g${i}`} item={it} />
       ))}
       {/* พื้นสะท้อนปลอม (โหมดต่ำ) ใต้จอใหญ่และป้ายตั้ง */}
       {!fx.reflector && <FakeReflections items={[...get("bigScreen"), ...get("signV")]} />}

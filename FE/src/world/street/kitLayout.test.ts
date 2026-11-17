@@ -184,3 +184,31 @@ describe("high signs", () => {
     }
   });
 });
+
+describe("giant wrap-around screens", () => {
+  const bottom = (i: KitItem) => i.position[1] - i.size[1] / 2;
+  it("puts at least 2 at nexus and exactly 1 per street", () => {
+    expect(layoutNexus(CITY_SEED).filter((i) => i.type === "giantScreen").length).toBeGreaterThanOrEqual(2);
+    for (const s of streets) expect(layoutStreet(s, CITY_SEED).filter((i) => i.type === "giantScreen").length, s.id).toBe(1);
+  });
+
+  it("keeps every giant screen high (bottom y >= 14, height 12-20)", () => {
+    const all = [...layoutNexus(CITY_SEED), ...streets.flatMap((s) => layoutStreet(s, CITY_SEED))].filter((i) => i.type === "giantScreen");
+    for (const g of all) {
+      expect(bottom(g)).toBeGreaterThanOrEqual(14);
+      expect(g.size[1]).toBeGreaterThanOrEqual(12);
+      expect(g.size[1]).toBeLessThanOrEqual(20);
+    }
+  });
+
+  it("sits higher than or far from each street's key bigScreen", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const key = items.find((i) => i.type === "bigScreen")!;
+      const g = items.find((i) => i.type === "giantScreen")!;
+      const higher = bottom(g) > key.position[1] + key.size[1] / 2;
+      const far = Math.hypot(g.position[0] - key.position[0], g.position[2] - key.position[2]) > 15;
+      expect(higher || far, s.id).toBe(true);
+    }
+  });
+});

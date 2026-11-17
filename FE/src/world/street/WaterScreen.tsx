@@ -19,18 +19,21 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
 
-const fragment = /* glsl */ `
-uniform float uTime;
-uniform float uSeed;
-varying vec2 vUv;
-// ลายแสงใต้น้ำ: บิดพิกัดด้วยคลื่น sin ซ้อนกันแล้วดึงเส้นสว่างบาง ๆ ออกมา
+/** ลายแสงใต้น้ำ: บิดพิกัดด้วยคลื่น sin ซ้อนกันแล้วดึงเส้นสว่างบาง ๆ ออกมา (ใช้ร่วมกับจอยักษ์) */
+export const WATER_GLSL = /* glsl */ `
 float water(vec2 q, float t) {
   for (int n = 1; n < 6; n++) {
     float fn = float(n);
     q += vec2(0.7 / fn * sin(fn * q.y + t * 0.6 + 0.3 * fn) + 0.8, 0.5 / fn * sin(fn * q.x + t * 0.5 + 0.3 * fn) - 0.8);
   }
   return pow(0.5 + 0.5 * sin(q.x + q.y), 9.0);
-}
+}`;
+
+const fragment = /* glsl */ `
+uniform float uTime;
+uniform float uSeed;
+varying vec2 vUv;
+${WATER_GLSL}
 void main() {
   vec2 q = vUv * vec2(9.0, 5.6) + uSeed;
   float c = water(q, uTime) * 0.75 + water(q * 1.7 + 3.0, uTime * 1.3) * 0.35;
