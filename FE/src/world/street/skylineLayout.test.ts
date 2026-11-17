@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { ENERGY_CORE_POS, ENERGY_CORE_Y, layoutSkyline } from "./skylineLayout";
+import { ENERGY_CORE_POS, ENERGY_CORE_Y, layoutSkyline, skylineStrips } from "./skylineLayout";
 import { STREETS, distanceToPolyline } from "./streets";
 import { DISTRICTS } from "../../config/districts";
 import { CAMERA_FOV } from "../../config/camera";
@@ -72,5 +72,30 @@ describe("ENERGY_CORE_POS", () => {
     // ลดจาก 3 เหลือ 2: จุดชมแรกจริงของ gate หันไปทาง −x และ sanctuary หันไปทาง +z
     // ส่วนแกนพลังงานอยู่ทาง −z ไกล (−26, −85) จึงเห็นได้แค่จาก nexus และ projects ไม่ว่าจะถอยกล้องเท่าไร
     expect(inFrame).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("skylineStrips", () => {
+  const towers = layoutSkyline(7);
+  const strips = skylineStrips(towers, 7);
+
+  it("puts strips on 30–50% of towers", () => {
+    const n = new Set(strips.map((s) => s.tower)).size;
+    expect(n / towers.length).toBeGreaterThanOrEqual(0.3);
+    expect(n / towers.length).toBeLessThanOrEqual(0.5);
+  });
+  it("keeps each strip inside its tower height and face width", () => {
+    for (const s of strips) {
+      const t = towers[s.tower];
+      const faceW = s.face < 2 ? t.size[0] : t.size[2];
+      expect(s.y).toBeGreaterThanOrEqual(0);
+      expect(s.y + s.height).toBeLessThanOrEqual(t.size[1]);
+      expect(s.width).toBeGreaterThan(0);
+      expect(s.width).toBeLessThanOrEqual(faceW);
+    }
+  });
+  it("is deterministic and leaves layoutSkyline unchanged", () => {
+    expect(skylineStrips(towers, 7)).toEqual(strips);
+    expect(layoutSkyline(7)).toEqual(towers);
   });
 });

@@ -34,3 +34,37 @@ export function layoutSkyline(seed: number): SkyTower[] {
   }
   return out;
 }
+
+/** แถบจอไฟบนผนังตึกไกล: face 0..3 = +z, −z, +x, −x ในพิกัดตึก · y = ระยะจากฐานตึกถึงขอบล่างแถบ · แถบอยู่กึ่งกลางผนัง */
+export interface SkyStrip {
+  tower: number;
+  face: 0 | 1 | 2 | 3;
+  y: number;
+  height: number;
+  width: number;
+  variant: number;
+}
+
+/** สัดส่วนตึกที่มีแถบจอ (ตรึงจำนวนตายตัวเพื่อไม่ให้หลุดช่วง 30–50% ตามโชค) */
+const STRIP_FRACTION = 0.4;
+
+/** สุ่มแถบจอบนตึก ใช้สตรีม RNG ของตัวเอง (ไม่แตะ layoutSkyline) → ผังตึกเดิมไม่เปลี่ยน */
+export function skylineStrips(towers: SkyTower[], seed: number): SkyStrip[] {
+  const rnd = mulberry32((seed ^ 0x5eed5) >>> 0);
+  const scored = towers.map((_, i) => ({ i, k: rnd() }));
+  scored.sort((a, b) => a.k - b.k || a.i - b.i);
+  const chosen = scored.slice(0, Math.round(towers.length * STRIP_FRACTION)).map((c) => c.i).sort((a, b) => a - b);
+  const out: SkyStrip[] = [];
+  for (const i of chosen) {
+    const t = towers[i];
+    const face = Math.floor(rnd() * 4) as 0 | 1 | 2 | 3;
+    const variant = Math.floor(rnd() * 4);
+    const faceW = face < 2 ? t.size[0] : t.size[2];
+    const vertical = variant % 2 === 0;
+    const width = vertical ? faceW * (0.12 + rnd() * 0.1) : faceW * (0.6 + rnd() * 0.3);
+    const height = vertical ? t.size[1] * (0.35 + rnd() * 0.3) : 1.2 + rnd() * 1.2;
+    const y = rnd() * (t.size[1] - height);
+    out.push({ tower: i, face, y, height, width, variant });
+  }
+  return out;
+}

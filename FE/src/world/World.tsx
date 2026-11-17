@@ -16,6 +16,8 @@ import { CAMERA_FOV } from "../config/camera";
 import { useWorld } from "../store/useWorld";
 import { CameraRig } from "./CameraRig";
 import { fxEnabled } from "./fx/fxEnabled";
+import { dofBokeh, FOG_NEAR } from "./fx/dofPolicy";
+import { VIEWPOINTS } from "../config/viewpoints";
 import { ViewpointMarkers } from "./ViewpointMarkers";
 import { StreetKit } from "./street/StreetKit";
 import { ElevatorScene } from "./travel/ElevatorScene";
@@ -42,6 +44,10 @@ export function World() {
   const high = quality === "high";
   const fx = fxEnabled(quality);
   const dof = useRef<DepthOfFieldEffect>(null);
+  // ปิดเบลอตอนมุมกว้าง / เดินทาง / ยืนสะพาน เพื่อให้ตึกไกลคม
+  const traveling = useWorld((s) => s.travel !== null);
+  const vp = useWorld((s) => VIEWPOINTS[s.district]?.[s.viewpoint]);
+  const bokeh = dofBokeh({ enabled: fx.dof, mode: vp?.mode ?? "eye", traveling, viewpointId: vp?.id });
 
   return (
     <Canvas
@@ -56,7 +62,7 @@ export function World() {
       }}
     >
       <color attach="background" args={[COLORS.bg]} />
-      <fog attach="fog" args={["#120c2a", 40, 210]} />
+      <fog attach="fog" args={["#120c2a", FOG_NEAR, 230]} />
       {high && <PerformanceMonitor onDecline={autoLowerQuality} />}
       <Suspense fallback={null}>
         <Environment />
@@ -77,7 +83,7 @@ export function World() {
           {/* ปรับสี: ดำลึก + คอนทราสต์ (ไม่ใช้ HueSaturation: บนฉากนี้ทำให้ผนังตึกขาวโพลน) */}
           <BrightnessContrast brightness={-0.03} contrast={fx.grading ? 0.16 : 0} />
           {/* ระยะชัดตื้นเบา ๆ โฟกัสที่ระยะตัวจิ๋ว */}
-          <DepthOfField ref={dof} worldFocusDistance={6} worldFocusRange={14} bokehScale={fx.dof ? 1.6 : 0} />
+          <DepthOfField ref={dof} worldFocusDistance={6} worldFocusRange={14} bokehScale={bokeh} />
           <Vignette eskil={false} offset={0.15} darkness={0.85} />
         </EffectComposer>
       )}
