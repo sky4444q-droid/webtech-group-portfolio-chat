@@ -128,13 +128,13 @@ function Floor({ high }: { high: boolean }) {
           resolution={1024}
           blur={[2, 120]}
           mixBlur={0.35}
-          mixStrength={1.6}
+          mixStrength={2.1}
           mixContrast={1.15}
           roughness={0.35}
           depthScale={0}
           // สีของวัสดุนี้ "คูณ" กับภาพสะท้อน (สูตรของ drei) — ถ้าดำ ภาพสะท้อนจะหายเกือบหมด
           // จึงใช้เทาอ่อน + mirror 1 + ไม่เป็นโลหะ: ความมืดของพื้นมาจากฉากที่สะท้อนเอง
-          color="#4a4e58"
+          color="#2e3446"
           metalness={0}
           envMapIntensity={0.15}
           mirror={1}

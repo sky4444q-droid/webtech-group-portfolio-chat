@@ -292,7 +292,7 @@ button {
 .control-hint {
   position: absolute;
   left: 24px;
-  bottom: 24px;
+  bottom: 80px; /* อยู่เหนือปุ่มย้อนกลับ */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1121,8 +1121,9 @@ button {
   box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
 }
 .hud-back {
+  /* มุมล่างซ้าย แยกจากกลุ่มปุ่มติดต่อ/คุยกับ AI ทางขวา จึงไม่ทับกันแม้จอแคบ */
   position: absolute;
-  left: 250px;
+  left: 24px;
   bottom: 24px;
   pointer-events: auto;
 }

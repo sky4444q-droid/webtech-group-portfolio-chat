@@ -418,3 +418,26 @@ describe("lower-facade screens and holograms", () => {
     expect(n).toBeGreaterThan(50);
   });
 });
+
+describe("nexus plaza screens", () => {
+  it("dress the plaza-facing corner walls in front of the facade, below the giant screens", () => {
+    const items = layoutNexus(CITY_SEED);
+    const facades = items.filter((i) => i.type === "facade");
+    const screens = items.filter((i) => i.type === "monitor" || i.type === "videoWall" || i.type === "holo");
+    expect(screens.length).toBeGreaterThan(20);
+    for (const s of screens) {
+      // ระยะจากระนาบหน้าตึกที่ใกล้ที่สุด ตามทิศที่ชิ้นหันออก
+      const nx = Math.sin(s.rotationY);
+      const nz = Math.cos(s.rotationY);
+      const f = facades.reduce((a, b) => (Math.hypot(b.position[0] - s.position[0], b.position[2] - s.position[2]) < Math.hypot(a.position[0] - s.position[0], a.position[2] - s.position[2]) ? b : a));
+      const wall = (f.position[0] + nx * f.size[0] / 2) * Math.abs(nx) + (f.position[2] + nz * f.size[2] / 2) * Math.abs(nz);
+      const out = (s.position[0] * Math.abs(nx) + s.position[2] * Math.abs(nz) - wall) * (nx + nz);
+      if (s.type === "holo") {
+        expect(out).toBeGreaterThanOrEqual(0.6);
+        expect(out).toBeLessThanOrEqual(1.2);
+      } else expect(out - s.size[2] / 2).toBeGreaterThanOrEqual(0.02 - 1e-9);
+      expect(s.position[1] - s.size[1] / 2).toBeGreaterThanOrEqual(4 - 1e-9);
+      expect(s.position[1] + s.size[1] / 2).toBeLessThanOrEqual(21 + 1e-9);
+    }
+  });
+});

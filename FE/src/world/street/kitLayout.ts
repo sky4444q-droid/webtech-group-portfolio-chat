@@ -458,6 +458,59 @@ function dressScreens(c: Ctx, s: Street, r: () => number) {
   }
 }
 
+/** จอ/วิดีโอวอลล์/โฮโลแกรม บนผนังตึกมุมสี่แยกสองด้านที่หันเข้าลาน (สูง 4–21 ม. ใต้จอยักษ์โค้ง)
+ * เว้นช่วง 3.6 ม. แรกจากมุมลาน ซึ่งเป็นที่ของจอใหญ่และป้ายเดิม */
+function dressNexusScreens(c: Ctx, r: () => number) {
+  const facades = c.out.filter((i) => i.type === "facade");
+  const D0 = 3.6;
+  const D1 = 13.6;
+  const Y0 = 4;
+  const TOP = 21;
+  for (const f of facades) {
+    const [x, , z] = f.position;
+    const sx = Math.sign(x);
+    const sz = Math.sign(z);
+    const half = f.size[0] / 2;
+    // สองหน้าที่หันเข้าลาน: หน้า x (ตั้งฉากแกน x) และหน้า z
+    for (const axis of ["x", "z"] as const) {
+      // n = ทิศหน้าตึกออกสู่ลาน · u = ทิศตามผนังจากมุมลานออกไปด้านนอก
+      const n: [number, number] = axis === "x" ? [-sx, 0] : [0, -sz];
+      const u: [number, number] = axis === "x" ? [0, sz] : [sx, 0];
+      const corner: [number, number] = [x - sx * half, z - sz * half];
+      const rotationY = Math.atan2(n[0], n[1]);
+      const taken: Rect[] = [];
+      const free = (q: Rect) => !taken.some((t) => q.x0 < t.x1 + 0.05 && q.x1 > t.x0 - 0.05 && q.y0 < t.y1 + 0.05 && q.y1 > t.y0 - 0.05);
+      const goal = SCREEN_COVER * (D1 - D0) * (TOP - Y0);
+      let cover = 0;
+      const push = (type: KitType, d: number, y: number, size: Vec3, off: number, variant: number) => {
+        const px = corner[0] + u[0] * d + n[0] * off;
+        const pz = corner[1] + u[1] * d + n[1] * off;
+        c.out.push({ type, street: "nexus", position: [px, y, pz], rotationY, size, variant, side: 1 });
+      };
+      for (let y0 = Y0; y0 < TOP - 0.9 && cover < goal; y0 += 0.25)
+        for (let d0 = D0; d0 < D1 - 1 && cover < goal; d0 += 0.25) {
+          const roll = r();
+          const kind: KitType = roll < 0.5 ? "monitor" : roll < 0.75 ? "videoWall" : "holo";
+          const bw = kind === "videoWall" ? (r() < 0.5 ? 2.8 : 4.2) : pick(r, kind === "holo" ? 1.5 : 2, kind === "holo" ? 3.5 : 5);
+          const bh = kind === "videoWall" ? 1.8 : pick(r, kind === "holo" ? 1 : 1.2, kind === "holo" ? 2.2 : 2.8);
+          const variant = kind === "holo" ? Math.floor(r() * VARIANTS) : TEXTLESS_VARIANTS[Math.floor(r() * TEXTLESS_VARIANTS.length)];
+          const q = { x0: d0, x1: d0 + bw, y0, y1: y0 + bh };
+          if (q.x1 > D1 || q.y1 > TOP || !free(q)) continue;
+          taken.push(q);
+          cover += bw * bh;
+          // ระยะยื่นจากผนัง: จอ ด้านหลังห่างผนัง 2 ซม. · โฮโล 0.75–1.05 ม.
+          const screenOff = 0.02 + SCREEN_DEPTH / 2;
+          if (kind === "monitor") push("monitor", d0 + bw / 2, y0 + bh / 2, [bw, bh, SCREEN_DEPTH], screenOff, variant);
+          else if (kind === "holo") push("holo", d0 + bw / 2, y0 + bh / 2, [bw, bh, 0.02], pick(r, 0.75, 1.05), variant);
+          else {
+            const cols = Math.round(bw / 1.4);
+            for (let i = 0; i < cols; i++) for (let j = 0; j < 2; j++) push("videoWall", d0 + 0.7 + i * 1.4, y0 + 0.45 + j * 0.9, [1.38, 0.88, SCREEN_DEPTH], screenOff, variant);
+          }
+        }
+    }
+  }
+}
+
 /** สี่แยก: ตึกสูงสี่มุม แต่ละมุมมีจอใหญ่และป้าย */
 export function layoutNexus(seed: number): KitItem[] {
   const c: Ctx = { rand: mulberry32(seed ^ 0x5eed), crown: mulberry32(seed ^ 0x5eed ^ 0xc0ffee), tick: mulberry32(seed ^ 0x5eed ^ 0x71c4e7), out: [], street: "nexus", last: new Map() };
@@ -492,6 +545,7 @@ export function layoutNexus(seed: number): KitItem[] {
       });
     }
   }
+  dressNexusScreens(c, mulberry32(seed ^ 0x5c4ee7 ^ 0x9e3779b9));
   // จอยักษ์โค้งรอบมุมด้านนอกของตึกมุมสองหลัง (เหนือจอใหญ่ y สูงสุด 20.5)
   const facades = c.out.filter((i) => i.type === "facade");
   for (const k of [0, 3]) {

@@ -37,7 +37,7 @@ export const VIEWPOINTS: Record<DistrictId, Viewpoint[]> = {
   nexus: [
     { id: "center", label: "vpNexusCenter", mode: "eye", position: [0, EYE_Y, 9], target: [0, 2.2, -8], lookRange: EYE, marker: [0, 0.05, 4] },
     // ยืนบนพื้นสะพานลอย (สูงระดับสายตาเหนือพื้นสะพาน) มองข้ามแยก
-    { id: "bridge", label: "vpNexusBridge", mode: "eye", position: [0, BRIDGE.y + 1.75, BRIDGE.z + 0.3], target: [0, 2.6, -14], lookRange: EYE, marker: [3, 0.05, -1] },
+    { id: "bridge", label: "vpNexusBridge", mode: "eye", position: [0, BRIDGE.y + 1.75, BRIDGE.z + 0.3], target: [0, 8.5, -20], lookRange: EYE, marker: [3, 0.05, -6] },
   ],
   projects: [
     { id: "hall", label: "vpProjectsHall", mode: "eye", position: [0, EYE_Y, 15], target: [0, 2.6, 0], lookRange: EYE, marker: [0, 0.05, 10] },
