@@ -1,5 +1,5 @@
 // เมืองจากชุดตัวต่อ: วาดเฉพาะถนนที่อยู่ + ถนนที่กำลังเดินผ่าน + สี่แยก
-// ป้าย/จอ/แผงในงานนี้เป็นสีเรืองแสงก่อน (หน้าตาจริงมาในงานป้ายและจอ)
+// ป้าย = กล่องเรืองแสงจาง ๆ + ตัวอักษรจาก atlas · จอ = canvas วาดตามจังหวะ · จอใหญ่ = แสงใต้น้ำ · แผง = แผงข้อมูล
 
 import { useMemo } from "react";
 import { useTexture } from "@react-three/drei";
@@ -7,8 +7,15 @@ import * as THREE from "three";
 import { useWorld } from "../../store/useWorld";
 import { cityLayout, type KitItem, type KitType } from "./kitLayout";
 import { streetOf, type StreetId } from "./streets";
-import { KitInstances, neonColor } from "./kitMeshes";
+import { KitInstances, ScreenGroup, SignFaces, neonColor, type SignFace } from "./kitMeshes";
 import { buildingWindowsTexture } from "../textures";
+import { SIGN_WORDS } from "../../config/signWords";
+import { signAtlas } from "./signAtlas";
+import { SCREEN_PROGRAMS } from "./screenPrograms";
+import { WaterScreen } from "./WaterScreen";
+import { InfoPanel, panelContent } from "./InfoPanel";
+import { STREETS } from "./streets";
+import type { DistrictId } from "../../types";
 
 type Key = StreetId | "nexus";
 
@@ -26,10 +33,29 @@ function useVisibleStreets(): Key[] {
   }, [district, travel]);
 }
 
-const GLOW: KitType[] = ["signH", "signV", "lightbox", "screen", "panel", "bigScreen"];
+const SIGNS: KitType[] = ["signH", "signV", "lightbox"];
+/** จอใหญ่ที่สี่แยกชวนไปแต่ละที่ */
+const NEXUS_TARGETS: DistrictId[] = ["projects", "team", "sanctuary", "gate"];
+
+const moodOf = (it: KitItem) => (it.street === "nexus" ? "nexus" : STREETS[it.street].mood);
+
+/** เลือกคำให้ป้ายแต่ละชิ้น (คงที่ตาม variant + ลำดับ) — ป้ายตั้งใช้คำแนวตั้ง ป้ายนอนใช้คำแนวนอน */
+function signFaces(items: KitItem[]): Map<number, SignFace[]> {
+  const atlas = signAtlas();
+  const pages = new Map<number, SignFace[]>();
+  items.forEach((it, i) => {
+    const vertical = it.type === "signV";
+    const words = SIGN_WORDS[moodOf(it)].filter((w) => !!w.vertical === vertical);
+    const word = words[(it.variant * 7 + i * 3) % words.length];
+    const { page, uv } = atlas.lookup(word);
+    pages.set(page, [...(pages.get(page) ?? []), { item: it, uv, flicker: (it.variant + i) % 5 === 0 }]);
+  });
+  return pages;
+}
 
 export function StreetKit() {
   const keys = useVisibleStreets();
+  const flicker = useWorld((s) => s.quality === "high");
   const city = cityLayout();
   const byType = useMemo(() => {
     const map = new Map<KitType, KitItem[]>();
@@ -50,6 +76,8 @@ export function StreetKit() {
     concrete.colorSpace = THREE.SRGBColorSpace;
   }, [concrete, concreteN, metalN, metalR]);
 
+  const faces = useMemo(() => signFaces([...get("signH"), ...get("signV"), ...get("lightbox")]), [byType]); // eslint-disable-line react-hooks/exhaustive-deps
+  const backColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.22), []);
   const glowColor = useMemo(() => (it: KitItem) => neonColor(it.variant, it.type === "bigScreen" ? 2.4 : it.type === "panel" ? 1.1 : 1.8), []);
   const shopColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.55), []);
   const lampColor = useMemo(() => (it: KitItem) => neonColor(it.variant % 2 ? 3 : 0, 2.2), []);
@@ -65,10 +93,25 @@ export function StreetKit() {
       <KitInstances items={get("shopfront")} color={shopColor}>
         <meshBasicMaterial toneMapped={false} />
       </KitInstances>
-      {GLOW.map((t) => (
-        <KitInstances key={t} items={get(t)} color={glowColor}>
+      {/* ป้าย: กล่องเรืองแสงจาง ๆ + ตัวอักษรจาก atlas */}
+      {SIGNS.map((t) => (
+        <KitInstances key={t} items={get(t)} color={backColor}>
           <meshBasicMaterial toneMapped={false} />
         </KitInstances>
+      ))}
+      {[...faces].map(([page, list]) => (
+        <SignFaces key={page} faces={list} map={signAtlas().pages[page]} color={glowColor} flicker={flicker} />
+      ))}
+      {/* จอโฆษณา: แยกตามโปรแกรม */}
+      {SCREEN_PROGRAMS.map((_, p) => (
+        <ScreenGroup key={p} program={p} seed={p * 3 + 1} items={get("screen").filter((it) => it.variant % SCREEN_PROGRAMS.length === p)} />
+      ))}
+      {/* จอใหญ่แสงใต้น้ำ — จอแรกของแต่ละถนนเป็นจอสำคัญ (โลโก้ + ป้ายบอกทาง) */}
+      {get("bigScreen").map((it, i) => (
+        <WaterScreen key={`${it.street}-${i}`} item={it} keyTarget={keyTargetOf(it, get("bigScreen"))} />
+      ))}
+      {get("panel").map((it, i) => (
+        <InfoPanel key={`${it.street}-${i}`} item={it} content={panelContent(it, i)} />
       ))}
       {/* ของโลหะบนผนัง */}
       <KitInstances items={[...get("ac"), ...get("vent"), ...get("balcony"), ...get("crate")]}>
@@ -85,4 +128,12 @@ export function StreetKit() {
       </KitInstances>
     </group>
   );
+}
+
+/** จอใหญ่จอแรกของถนน → ป้ายชวนไปที่ปลายถนน · ที่สี่แยก → แต่ละมุมชวนไปคนละที่ */
+function keyTargetOf(it: KitItem, all: KitItem[]): DistrictId | undefined {
+  const same = all.filter((x) => x.street === it.street);
+  const i = same.indexOf(it);
+  if (it.street === "nexus") return NEXUS_TARGETS[i % NEXUS_TARGETS.length];
+  return i === 0 ? STREETS[it.street].district : undefined;
 }

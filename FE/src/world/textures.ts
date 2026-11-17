@@ -15,7 +15,7 @@ export interface SignOptions {
 /** ป้ายนีออน: ตัวอักษรเรืองแสงบนพื้นโปร่งใส คืน texture และสัดส่วนกว้าง/สูง */
 export function signTexture(text: string, color: string, opts: SignOptions = {}): { texture: THREE.CanvasTexture; aspect: number } {
   const size = opts.size ?? 96;
-  const font = opts.font ?? `700 ${size}px "Orbitron", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif`;
+  const font = opts.font ?? `700 ${size}px "Orbitron", "Noto Sans JP", "Noto Sans SC", "Noto Sans Thai", "Yu Gothic", "Meiryo", sans-serif`;
   const key = `${text}|${color}|${opts.vertical ? "v" : "h"}|${size}|${font}`;
   const hit = cache.get(key);
   if (hit) return { texture: hit, aspect: hit.image.width / hit.image.height };

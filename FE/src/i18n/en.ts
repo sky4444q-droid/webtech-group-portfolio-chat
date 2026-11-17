@@ -117,4 +117,9 @@ export const en: Record<keyof typeof th, string> = {
   voiceDiscover: "You found a data fragment! There are more hidden around.",
   voiceDiscoverAll: "You found them all. Come visit me in the Sanctuary.",
   discoveryLabel: "Data fragments found",
+  // ---------- Street signs / info panels ----------
+  panelHowTo: "HOW TO",
+  panelFollowGuide: "Pick a place at the top and follow the little guide.",
+  panelTechStack: "TECH STACK",
+  panelProject: "PROJECT",
 };
