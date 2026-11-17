@@ -7,6 +7,7 @@ import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import type { DistrictId } from "../../types";
 import { useWorld } from "../../store/useWorld";
+import { fxEnabled } from "../fx/fxEnabled";
 import { signTexture } from "../textures";
 import { wayfindingLabel } from "./wayfinding";
 import type { KitItem } from "./kitLayout";
@@ -42,7 +43,7 @@ void main() {
 
 export function WaterScreen({ item, keyTarget }: { item: KitItem; keyTarget?: DistrictId }) {
   const uniforms = useMemo(() => ({ uTime: { value: 7 + item.variant * 3.1 }, uSeed: { value: item.variant * 1.37 } }), [item.variant]);
-  const frozen = useWorld((s) => s.quality === "low");
+  const frozen = useWorld((s) => !fxEnabled(s.quality).screensAnimated);
   useFrame((_, dt) => {
     if (!frozen) uniforms.uTime.value += Math.min(dt, 0.1);
   });

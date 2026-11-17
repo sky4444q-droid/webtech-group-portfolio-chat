@@ -1,9 +1,11 @@
 // ฉาก 3D ทั้งหมด (Canvas เดียว) — เรนเดอร์เฉพาะพื้นที่ที่อยู่ และพื้นที่ต้นทาง/ปลายทางตอนเดินทาง
 
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useRef, type ReactNode } from "react";
+import type { DepthOfFieldEffect } from "postprocessing";
 import { Canvas } from "@react-three/fiber";
 import { PerformanceMonitor } from "@react-three/drei";
-import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
+import { Bloom, BrightnessContrast, DepthOfField, EffectComposer, Vignette } from "@react-three/postprocessing";
+import { MascotFocus } from "./fx/MascotFocus";
 import * as THREE from "three";
 import type { DistrictId } from "../types";
 import { COLORS } from "../config/theme";
@@ -35,6 +37,8 @@ export function World() {
   const quality = useWorld((s) => s.quality);
   const autoLowerQuality = useWorld((s) => s.autoLowerQuality);
   const high = quality === "high";
+  const fx = fxEnabled(quality);
+  const dof = useRef<DepthOfFieldEffect>(null);
 
   return (
     <Canvas
@@ -61,12 +65,17 @@ export function World() {
       </Suspense>
       <CameraRig />
       {/* multisampling ต้องเป็น 0: MSAA ใน composer ทำให้ภาพดำเป็นช่วง ๆ (กะพริบ) บนการ์ดจอบางรุ่น */}
-      {fxEnabled(quality).bloom && (
+      {fx.bloom && (
         <EffectComposer multisampling={0}>
           <Bloom mipmapBlur intensity={1.15} luminanceThreshold={0.35} luminanceSmoothing={0.25} />
+          {/* ปรับสี: ดำลึก + คอนทราสต์ (ไม่ใช้ HueSaturation: บนฉากนี้ทำให้ผนังตึกขาวโพลน) */}
+          <BrightnessContrast brightness={-0.03} contrast={fx.grading ? 0.16 : 0} />
+          {/* ระยะชัดตื้นเบา ๆ โฟกัสที่ระยะตัวจิ๋ว */}
+          <DepthOfField ref={dof} worldFocusDistance={6} worldFocusRange={14} bokehScale={fx.dof ? 1.6 : 0} />
           <Vignette eskil={false} offset={0.15} darkness={0.85} />
         </EffectComposer>
       )}
+      {fx.dof && <MascotFocus target={dof} />}
     </Canvas>
   );
 }

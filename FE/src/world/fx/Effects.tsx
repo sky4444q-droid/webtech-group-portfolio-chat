@@ -154,12 +154,13 @@ export function GroundFog({ layers, center }: { layers: number; center: [number,
       t.offset.y += dt * 0.004 * (i % 2 ? -1 : 1);
     });
   });
-  const colors = [COLORS.purple, COLORS.blue, COLORS.pink];
+  // หมอกชั้นเดียวบาง ๆ ใต้เข่า สีฟ้าเทาเย็น (ไม่ติดม่วง)
+  const colors = ["#6f8bb0"];
   return (
     <group position={center}>
       {textures.map((t, i) => (
         // ทุกชั้นต่ำกว่าระดับสายตา · ใช้ blending ปกติ (additive บนแผ่นใหญ่ทำให้ภาพดำทั้งจอเมื่อมี Bloom)
-        <mesh key={i} position={[0, 0.12 + i * 0.28, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
+        <mesh key={i} position={[0, 0.1 + i * 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
           <planeGeometry args={[160, 160]} />
           <meshBasicMaterial
             ref={(m) => {
@@ -168,7 +169,7 @@ export function GroundFog({ layers, center }: { layers: number; center: [number,
             map={t}
             color={colors[i % colors.length]}
             transparent
-            opacity={0.14 - i * 0.03}
+            opacity={0.09 - i * 0.02}
             depthWrite={false}
             fog={false}
           />
@@ -271,5 +272,38 @@ export function RainSplashes() {
       <ringGeometry args={[0.8, 1, 16]} />
       <meshBasicMaterial color="#b9c8ff" transparent opacity={0.35} depthWrite={false} />
     </instancedMesh>
+  );
+}
+
+// ---------- ไอน้ำจากร้านอาหาร (ชิ้น steam ของถนน) ----------
+
+const PUFFS = 6;
+
+/** ไอน้ำลอยขึ้นจากจุดที่กำหนด: sprite จาง ๆ ขยายตัวและจางหายขณะลอย */
+export function Steam({ points }: { points: [number, number, number][] }) {
+  const tex = useMemo(() => getFogTexture(), []);
+  const group = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const g = group.current;
+    if (!g) return;
+    const t = clock.elapsedTime;
+    g.children.forEach((s, i) => {
+      const k = (t * 0.35 + (i % PUFFS) / PUFFS + Math.floor(i / PUFFS) * 0.37) % 1;
+      const base = points[Math.floor(i / PUFFS)];
+      s.position.set(base[0] + Math.sin(t + i) * 0.15, base[1] + k * 2.6, base[2]);
+      s.scale.setScalar(0.5 + k * 1.6);
+      ((s as THREE.Sprite).material as THREE.SpriteMaterial).opacity = 0.32 * Math.sin(k * Math.PI);
+    });
+  });
+  return (
+    <group ref={group}>
+      {points.flatMap((_, p) =>
+        Array.from({ length: PUFFS }, (_, i) => (
+          <sprite key={`${p}-${i}`}>
+            <spriteMaterial map={tex} color="#c8d4e6" transparent opacity={0} depthWrite={false} />
+          </sprite>
+        )),
+      )}
+    </group>
   );
 }

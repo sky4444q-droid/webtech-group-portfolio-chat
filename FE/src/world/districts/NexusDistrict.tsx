@@ -39,7 +39,7 @@ export function NexusDistrict() {
           <group key={z}>
             <mesh position={[0, 0.65, z]}>
               <boxGeometry args={[NEXUS_HALF * 2 + 6, 0.06, 0.06]} />
-              <meshBasicMaterial color={COLORS.pink} toneMapped={false} />
+              <meshBasicMaterial color={COLORS.red} toneMapped={false} />
             </mesh>
             <mesh position={[0, 0.35, z]}>
               <boxGeometry args={[NEXUS_HALF * 2 + 6, 0.6, 0.03]} />

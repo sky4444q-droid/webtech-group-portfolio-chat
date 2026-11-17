@@ -1,7 +1,9 @@
 /* ===== โทนสีกลาง (ให้ตรงกับ src/config/theme.ts) ===== */
 :root {
   color-scheme: dark;
-  --bg: #05030c;
+  --bg: #040406;
+  --fog: #05070c;
+  --red: #ff1f3d;
   --surface: rgba(14, 9, 34, 0.72);
   --surface-strong: rgba(18, 12, 44, 0.9);
   --line: rgba(185, 103, 255, 0.35);

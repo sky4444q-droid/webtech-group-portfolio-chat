@@ -44,7 +44,7 @@ const shopAd: Program = (ctx, t, seed) => {
 
 /** อีควอไลเซอร์ */
 const equaliser: Program = (ctx, t, seed) => {
-  ctx.fillStyle = "#05030c";
+  ctx.fillStyle = "#040406";
   ctx.fillRect(0, 0, W, H);
   const bars = 16;
   const bw = W / bars;

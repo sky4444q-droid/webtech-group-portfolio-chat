@@ -15,6 +15,9 @@ import { SCREEN_PROGRAMS } from "./screenPrograms";
 import { WaterScreen } from "./WaterScreen";
 import { InfoPanel, panelContent } from "./InfoPanel";
 import { STREETS } from "./streets";
+import { FakeReflections } from "./FakeReflections";
+import { Steam } from "../fx/Effects";
+import { fxEnabled } from "../fx/fxEnabled";
 import type { DistrictId } from "../../types";
 
 type Key = StreetId | "nexus";
@@ -55,7 +58,8 @@ function signFaces(items: KitItem[]): Map<number, SignFace[]> {
 
 export function StreetKit() {
   const keys = useVisibleStreets();
-  const flicker = useWorld((s) => s.quality === "high");
+  const fx = fxEnabled(useWorld((s) => s.quality));
+  const flicker = fx.signFlicker;
   const city = cityLayout();
   const byType = useMemo(() => {
     const map = new Map<KitType, KitItem[]>();
@@ -110,6 +114,9 @@ export function StreetKit() {
       {get("bigScreen").map((it, i) => (
         <WaterScreen key={`${it.street}-${i}`} item={it} keyTarget={keyTargetOf(it, get("bigScreen"))} />
       ))}
+      {/* พื้นสะท้อนปลอม (โหมดต่ำ) ใต้จอใหญ่และป้ายตั้ง */}
+      {!fx.reflector && <FakeReflections items={[...get("bigScreen"), ...get("signV")]} />}
+      {fx.steam && <Steam points={get("steam").map((it) => it.position)} />}
       {get("panel").map((it, i) => (
         <InfoPanel key={`${it.street}-${i}`} item={it} content={panelContent(it, i)} />
       ))}

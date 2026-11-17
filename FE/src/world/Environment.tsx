@@ -23,9 +23,8 @@ export function Environment() {
   const center = DISTRICTS[district].position;
   return (
     <>
-      <ambientLight intensity={0.35} color="#6b4cff" />
-      <hemisphereLight args={["#3a1d7a", "#05030c", 0.6]} />
-      <directionalLight position={[-40, 60, 30]} intensity={0.4} color="#9b7bff" />
+      {/* แสงรวมกลาง ๆ จางมาก — แสงหลักมาจากป้าย จอ และไฟถนนเอง (ไม่มีแสงม่วงรวมแล้ว) */}
+      <ambientLight intensity={0.08} color="#d8dce6" />
       <Sky />
       <Suspense fallback={<FloorPlain />}>
         <Floor high={fx.reflector} />
@@ -47,7 +46,7 @@ function FloorPlain() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[420, 420]} />
-      <meshStandardMaterial color="#0a0714" metalness={0.7} roughness={0.45} />
+      <meshStandardMaterial color="#050507" metalness={0.7} roughness={0.45} />
     </mesh>
   );
 }
@@ -69,20 +68,20 @@ function Floor({ high }: { high: boolean }) {
           normalMap={normalMap}
           normalScale={new THREE.Vector2(0.6, 0.6)}
           roughnessMap={roughnessMap}
-          resolution={512}
-          blur={[300, 80]}
-          mixBlur={0.9}
-          mixStrength={2.2}
-          roughness={0.75}
+          resolution={1024}
+          blur={[60, 20]}
+          mixBlur={0.35}
+          mixStrength={2.6}
+          roughness={0.6}
           depthScale={0.6}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.2}
-          color="#0a0714"
+          color="#050507"
           metalness={0.6}
-          mirror={0.5}
+          mirror={0.9}
         />
       ) : (
-        <meshStandardMaterial color="#0a0714" metalness={0.7} roughness={0.45} normalMap={normalMap} roughnessMap={roughnessMap} />
+        <meshStandardMaterial color="#050507" metalness={0.7} roughness={0.45} normalMap={normalMap} roughnessMap={roughnessMap} />
       )}
     </mesh>
   );

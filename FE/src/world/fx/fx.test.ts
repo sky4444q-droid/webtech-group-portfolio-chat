@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fxEnabled } from "./fxEnabled";
+import { COLORS } from "../../config/theme";
 
 const ROOT = join(import.meta.dirname, "../../..");
 const ASSETS = join(ROOT, "public/assets");
@@ -15,11 +16,30 @@ function walk(dir: string): string[] {
 
 describe("fxEnabled", () => {
   it("turns everything on in high quality", () => {
-    expect(fxEnabled("high")).toEqual({ cones: true, flare: true, traffic: true, rain: true, reflector: true, bloom: true, fogLayers: 3 });
+    expect(fxEnabled("high")).toEqual({
+      cones: true, flare: true, traffic: true, rain: true, reflector: true, bloom: true,
+      grading: true, dof: true, steam: true, signFlicker: true, screensAnimated: true, fogLayers: 1,
+    });
   });
 
   it("turns every heavy effect off in low quality", () => {
-    expect(fxEnabled("low")).toEqual({ cones: false, flare: false, traffic: false, rain: false, reflector: false, bloom: false, fogLayers: 1 });
+    expect(fxEnabled("low")).toEqual({
+      cones: false, flare: false, traffic: false, rain: false, reflector: false, bloom: false,
+      grading: false, dof: false, steam: false, signFlicker: false, screensAnimated: false, fogLayers: 1,
+    });
+  });
+});
+
+describe("palette", () => {
+  it("uses a near-black background with no purple cast", () => {
+    const n = parseInt(COLORS.bg.slice(1), 16);
+    const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    for (const c of [r, g, b]) expect(c).toBeLessThanOrEqual(0x0a);
+    expect(b - r).toBeLessThanOrEqual(4);
+  });
+
+  it("has a saturated red for the HUD", () => {
+    expect((COLORS as Record<string, string>).red).toBe("#ff1f3d");
   });
 });
 
