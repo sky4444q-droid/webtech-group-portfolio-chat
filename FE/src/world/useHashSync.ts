@@ -17,12 +17,11 @@ export function useHashSync() {
 
     const unsubscribe = useWorld.subscribe((s, prev) => {
       if (s.introDone && s.district !== prev.district) {
+        // มาถึงระหว่างที่มีคิวจากปุ่ม Back/Forward: URL ชี้ไปที่ปลายทางในคิวอยู่แล้ว — ไม่แตะประวัติ
+        // (ถ้าแทนที่/เพิ่มตรงนี้ ประวัติจะเพี้ยน และ Back ครั้งต่อไปพากลับไปที่ที่ผู้ชมเพิ่งหนีออกมา)
+        if (prev.queuedTarget) return;
         const h = hashFor(s.district);
-        // มาถึงแล้วแต่ URL ไม่ตรง (เช่นกด Back ระหว่างเดินทาง แล้วไปต่อจากคิว) → แทนที่ ไม่เพิ่มประวัติซ้ำ
-        if (window.location.hash !== h) {
-          if (s.queuedTarget || prev.queuedTarget) window.history.replaceState(null, "", h);
-          else window.history.pushState(null, "", h);
-        }
+        if (window.location.hash !== h) window.history.pushState(null, "", h);
       }
     });
 
