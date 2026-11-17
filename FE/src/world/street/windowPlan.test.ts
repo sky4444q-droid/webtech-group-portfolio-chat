@@ -4,29 +4,34 @@ import { planWindows, windowToggle, WINDOW_COLS, WINDOW_ROWS } from "./windowPla
 const SEEDS = [11, 12, 13];
 
 describe("planWindows", () => {
-  it("lights 30–40% of bays", () => {
+  it("lights 12–18% of bays", () => {
     for (const s of SEEDS) {
       const lit = planWindows(s).flat().filter((b) => b.lit).length;
       const f = lit / (WINDOW_COLS * WINDOW_ROWS);
-      expect(f).toBeGreaterThanOrEqual(0.3);
-      expect(f).toBeLessThanOrEqual(0.4);
+      expect(f).toBeGreaterThanOrEqual(0.12);
+      expect(f).toBeLessThanOrEqual(0.18);
     }
   });
-  it("clusters by floor", () => {
+  it("groups lit bays into small runs and never fills a row", () => {
     for (const s of SEEDS) {
-      const counts = planWindows(s).map((row) => row.filter((b) => b.lit).length);
-      expect(counts.filter((c) => c >= 6).length).toBeGreaterThanOrEqual(3);
-      expect(counts.filter((c) => c <= 1).length).toBeGreaterThanOrEqual(3);
-      // จับกลุ่มจริง: ความแปรปรวนจำนวนไฟต่อชั้นสูงกว่าการสุ่มอิสระ (binomial 8×p×(1-p) ≤ 2) อย่างชัดเจน
-      const mean = counts.reduce((a, b) => a + b, 0) / counts.length;
-      const variance = counts.reduce((a, c) => a + (c - mean) ** 2, 0) / counts.length;
-      expect(variance).toBeGreaterThan(4);
+      const plan = planWindows(s);
+      let runs = 0, litCount = 0;
+      for (const row of plan) {
+        const n = row.filter((b) => b.lit).length;
+        expect(n).toBeLessThan(7);
+        litCount += n;
+        row.forEach((b, i) => { if (b.lit && !(i > 0 && row[i - 1].lit)) runs++; });
+      }
+      expect(litCount / runs).toBeGreaterThanOrEqual(1.5);
     }
   });
-  it("keeps coloured bays rare", () => {
+  it("uses mostly warm tones, rare brand, and low levels", () => {
     for (const s of SEEDS) {
       const lit = planWindows(s).flat().filter((b) => b.lit);
-      expect(lit.filter((b) => b.tone === "brand").length / lit.length).toBeLessThanOrEqual(0.06);
+      expect(lit.filter((b) => b.tone === "brand").length / lit.length).toBeLessThanOrEqual(0.03);
+      expect(lit.filter((b) => b.tone === "warm").length / lit.length).toBeGreaterThanOrEqual(0.55);
+      const lv = lit.map((b) => b.level).sort((x, y) => x - y);
+      expect(lv[Math.floor(lv.length / 2)]).toBeLessThanOrEqual(0.55);
     }
   });
   it("is deterministic", () => {

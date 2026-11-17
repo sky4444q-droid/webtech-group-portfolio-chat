@@ -105,7 +105,7 @@ export function buildingWindowsTexture(): THREE.CanvasTexture {
 
 let curtainTexture: THREE.CanvasTexture | null = null;
 
-/** ผนังกระจกตึก: แผ่นต่อ 8×16 ช่อง (กว้าง 1.3 ม. × สูง 3.3 ม. ต่อช่อง) มีแถบพื้นชั้นและเสาค้ำ · เปิดไฟราว 35% */
+/** ผนังกระจกตึก: แผ่นต่อ 8×16 ช่อง (กว้าง 1.3 ม. × สูง 3.3 ม. ต่อช่อง) มีแถบพื้นชั้นและเสาค้ำ · เปิดไฟราว 15% เป็นกลุ่มเล็ก */
 export function curtainWallTexture(): THREE.CanvasTexture {
   if (curtainTexture) return curtainTexture;
   const W = 256, H = 1024, COLS = 8, ROWS = 16;
@@ -132,28 +132,52 @@ export function curtainWallTexture(): THREE.CanvasTexture {
         const bay = plan[r][c];
         const x = c * bw + 2, y = r * bh + 2, w = bw - 4, h = bh - 12; // เสาค้ำ 4px · แถบพื้นชั้น 10px ด้านล่าง
         if (!bay.lit) {
-          // กระจกดับ: น้ำเงินเข้ม ไล่เฉดจาง ๆ
+          // กระจกดับ: น้ำเงินเข้ม มีแสงเมืองสะท้อนจาง ๆ ไล่จากบนลงล่าง
           const g = ctx.createLinearGradient(0, y, 0, y + h);
-          g.addColorStop(0, "#0d1428");
+          g.addColorStop(0, "#141c36");
+          g.addColorStop(0.5, "#0a1020");
           g.addColorStop(1, "#060a16");
           ctx.fillStyle = g;
           ctx.fillRect(x, y, w, h);
           continue;
         }
-        const col = bay.tone === "warm" ? "#ffd9a8" : bay.tone === "cool" ? "#cfe0ff" : c % 2 ? BRAND.magenta : BRAND.purple;
-        // ไล่แสง: สว่างที่เพดาน จางลงด้านล่าง
+        // ห้องที่เปิดไฟ: สีอำพันอบอุ่น หรือขาวออฟฟิศ
+        const col = bay.tone === "warm" ? "#ffb25e" : "#dbe8ff";
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+        // พื้นห้องมืดก่อน แล้วไล่แสงจากเพดาน ครึ่งล่างมืดกว่า
+        ctx.fillStyle = "#0b0a0c";
+        ctx.fillRect(x, y, w, h);
         const g = ctx.createLinearGradient(0, y, 0, y + h);
         g.addColorStop(0, col);
-        g.addColorStop(1, "#1a1410");
-        ctx.globalAlpha = bay.level;
+        g.addColorStop(0.5, col);
+        g.addColorStop(1, "#120d0a");
+        ctx.globalAlpha = bay.level * 0.8;
         ctx.fillStyle = g;
         ctx.fillRect(x, y, w, h);
-        // ม่าน/เงา: แถบแนวนอนเข้ม
+        // โคมไฟตั้งโต๊ะ: จุดสว่างเป็นบางช่อง (ใช้ level กำหนดแบบคงที่ ไม่เพิ่มการสุ่ม)
+        if (bay.level > 0.5) {
+          const hx = x + w * (0.3 + 0.4 * ((r * 7 + c * 3) % 5) / 4), hy = y + h * 0.68;
+          const rg = ctx.createRadialGradient(hx, hy, 0, hx, hy, w * 0.5);
+          rg.addColorStop(0, col);
+          rg.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.globalAlpha = Math.min(1, bay.level + 0.2);
+          ctx.fillStyle = rg;
+          ctx.fillRect(x, y, w, h);
+        }
+        // ม่านที่ขอบซ้าย-ขวา ทำให้แสงไม่สม่ำเสมอ
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x, y, w * 0.14, h);
+        ctx.fillRect(x + w * 0.86, y, w * 0.14, h);
+        // ม่านปรับแสง: แถบแนวนอนเข้ม
         if (bay.blinds) {
-          ctx.fillStyle = "#000000";
           ctx.globalAlpha = 0.45;
           for (let sy = y + 3; sy < y + h; sy += 5) ctx.fillRect(x, sy, w, 2);
         }
+        ctx.restore();
         // กรอบหน้าต่าง
         ctx.globalAlpha = 1;
         ctx.strokeStyle = "#05060a";

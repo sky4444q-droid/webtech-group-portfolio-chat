@@ -6,11 +6,12 @@ import { mulberry32 } from "../../lib/rng";
 export type BayLight = { lit: boolean; tone: "warm" | "cool" | "brand"; level: number /* 0..1 */; blinds: boolean };
 export const WINDOW_COLS = 8, WINDOW_ROWS = 16;
 
-/** จำนวนชั้นแต่ละสถานะ (รวม 16) และช่วงจำนวนช่องที่เปิดไฟในชั้นนั้น [min, max] */
+/** จำนวนชั้นแต่ละสถานะ (รวม 16) และช่วงจำนวนช่องที่เปิดไฟ [min, max] · ไฟติดเป็นกลุ่มเล็กติดกัน รวมราว 13–16% */
 const FLOOR_KINDS: { count: number; lit: [number, number] }[] = [
-  { count: 4, lit: [6, 8] }, // เปิดทั้งชั้น
-  { count: 5, lit: [2, 4] }, // ครึ่งชั้น
-  { count: 7, lit: [0, 1] }, // เกือบมืด
+  { count: 3, lit: [3, 4] }, // กลุ่มกลาง
+  { count: 3, lit: [2, 2] }, // กลุ่มเล็ก
+  { count: 2, lit: [1, 1] }, // ช่องเดียว
+  { count: 8, lit: [0, 0] }, // มืด
 ];
 
 function shuffle<T>(a: T[], rand: () => number): T[] {
@@ -25,18 +26,15 @@ function shuffle<T>(a: T[], rand: () => number): T[] {
 export function planWindows(seed: number): BayLight[][] {
   const rand = mulberry32(seed ^ 0x5eed);
   // จำนวนชั้นแต่ละแบบคงที่ แต่ลำดับชั้นสุ่ม
-  let brandLeft = 2; // สีแบรนด์ไม่เกิน 2 ช่องต่อแผ่น (หายาก)
   const kinds = shuffle(FLOOR_KINDS.flatMap((k) => Array.from({ length: k.count }, () => k.lit)), rand);
   return kinds.slice(0, WINDOW_ROWS).map(([lo, hi]) => {
     const n = lo + Math.floor(rand() * (hi - lo + 1));
-    const on = shuffle(Array.from({ length: WINDOW_COLS }, (_, i) => i < n), rand);
-    const floorTone = rand() < 0.6 ? "warm" : "cool"; // ชั้นเดียวกันมักใช้หลอดแบบเดียวกัน
-    return on.map((lit): BayLight => {
-      const k = rand();
-      const brand = lit && k < 0.03 && brandLeft > 0;
-      if (brand) brandLeft--;
-      const tone = brand ? "brand" : k < 0.85 ? floorTone : floorTone === "warm" ? "cool" : "warm";
-      return { lit, tone, level: 0.55 + rand() * 0.45, blinds: rand() < 0.3 };
+    const start = Math.floor(rand() * (WINDOW_COLS - n + 1)); // ช่องที่เปิดไฟอยู่ติดกันเป็นแถบเดียว
+    return Array.from({ length: WINDOW_COLS }, (_, i): BayLight => {
+      const lit = i >= start && i < start + n;
+      // อบอุ่น (ส้มอำพัน) เป็นหลัก · ขาวออฟฟิศเย็นบางช่อง · ไม่ใช้สีแบรนด์
+      const tone = rand() < 0.75 ? "warm" : "cool";
+      return { lit, tone, level: 0.25 + rand() * 0.4, blinds: rand() < 0.3 };
     });
   });
 }
