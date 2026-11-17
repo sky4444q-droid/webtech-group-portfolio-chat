@@ -45,7 +45,8 @@ export function World() {
   return (
     <Canvas
       className="world-canvas"
-      dpr={high ? [1, 2] : [1, 1.25]}
+      // ฉากนี้ติดที่ fill-rate: ล็อก dpr = 1 ทั้งสองโหมด (วัดแล้ว projects 42 -> 62 fps)
+      dpr={[1, 1]}
       camera={{ fov: 55, near: 0.1, far: 500, position: DISTRICTS.gate.camera.position }}
       gl={{ antialias: !high, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {

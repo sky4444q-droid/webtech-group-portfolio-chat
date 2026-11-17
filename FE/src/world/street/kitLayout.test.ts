@@ -233,6 +233,14 @@ describe("giant screen support", () => {
 });
 
 describe("ticker strips", () => {
+  it("fits between the shopfront top (3.2) and the sign start (3.4)", () => {
+    for (const s of streets)
+      for (const t of layoutStreet(s, CITY_SEED).filter((i) => i.type === "ticker")) {
+        expect(t.position[1] - t.size[1] / 2).toBeGreaterThanOrEqual(3.22 - 1e-9);
+        expect(t.position[1] + t.size[1] / 2).toBeLessThanOrEqual(3.4 + 1e-9);
+      }
+  });
+
   it("puts a ticker above at least 30% of shopfronts on every street", () => {
     for (const s of streets) {
       const items = layoutStreet(s, CITY_SEED);

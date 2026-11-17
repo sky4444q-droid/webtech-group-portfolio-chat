@@ -37,11 +37,11 @@ const fragment = /* glsl */ `
   varying float vSeed;
   void main() {
     // ขอบเรือง: สว่างที่ขอบบน/ล่างของริบบอน
-    float edge = pow(abs(vUv.y - 0.5) * 2.0, 3.0);
+    float edge = pow(abs(vUv.y - 0.5) * 2.0, 3.0) * 2.2; // เกิน 1 ให้ bloom จับได้
     float scan = 0.55 + 0.45 * sin(vUv.y * 60.0 - uTime * 6.0);
     float flicker = 0.85 + 0.15 * sin(uTime * 13.0 + vSeed * 40.0);
     vec3 col = mix(uMagenta, uPurple, vUv.x);
-    float a = (0.18 * scan + edge * 0.9) * flicker * smoothstep(0.0, 0.08, vUv.x);
+    float a = (0.4 * scan + edge * 0.9) * flicker * smoothstep(0.0, 0.08, vUv.x);
     gl_FragColor = vec4(col * a, 1.0);
   }
 `;

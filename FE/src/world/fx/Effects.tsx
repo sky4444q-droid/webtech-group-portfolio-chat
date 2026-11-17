@@ -117,17 +117,17 @@ export function Traffic() {
       const z = l.from[2] + (l.to[2] - l.from[2]) * u;
       dummy.position.set(x, y, z);
       dummy.rotation.set(0, yaw, 0);
-      dummy.scale.set(0.9, 0.35, 2.2);
+      dummy.scale.set(1.4, 0.5, 3.4);
       dummy.updateMatrix();
       body.current.setMatrixAt(i, dummy.matrix);
       // ไฟหน้า/ท้ายเป็นแท่งบางที่ปลายตัวถัง (แกน z ของรถคือทิศวิ่ง)
       const s = Math.sin(yaw);
       const c = Math.cos(yaw);
-      dummy.scale.set(0.8, 0.14, 0.08);
-      dummy.position.set(x + s * 1.1, y, z + c * 1.1);
+      dummy.scale.set(1.25, 0.22, 0.12);
+      dummy.position.set(x + s * 1.7, y, z + c * 1.7);
       dummy.updateMatrix();
       head.current.setMatrixAt(i, dummy.matrix);
-      dummy.position.set(x - s * 1.1, y, z - c * 1.1);
+      dummy.position.set(x - s * 1.7, y, z - c * 1.7);
       dummy.updateMatrix();
       tail.current.setMatrixAt(i, dummy.matrix);
     }

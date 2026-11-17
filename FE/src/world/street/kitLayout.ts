@@ -179,9 +179,9 @@ function tickerFor(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -1 
   c.out.push({
     type: "ticker",
     street: s.id,
-    position: [base.x + nx * off, 3.1 + c.tick() * 0.2, base.z + nz * off],
+    position: [base.x + nx * off, 3.3 + c.tick() * 0.02, base.z + nz * off],
     rotationY: Math.atan2(-nx, -nz),
-    size: [w * 0.8, 0.35, 0.08],
+    size: [w * 0.8, 0.16, 0.08],
     variant: TICKER_VARIANTS[Math.floor(c.tick() * TICKER_VARIANTS.length)],
     side,
   });
