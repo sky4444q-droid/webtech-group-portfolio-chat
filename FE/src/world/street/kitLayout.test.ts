@@ -300,3 +300,92 @@ describe("TEAM_TOWER", () => {
     expect(TEAM_TOWER.center[1] + TEAM_TOWER.size[1] / 2).toBeCloseTo(42);
   });
 });
+
+describe("lower-facade screens and holograms", () => {
+  const NEW = new Set(["monitor", "videoWall", "holo"]);
+  const OBST = new Set(["signH", "signV", "lightbox", "screen", "panel", "bigScreen", "giantScreen"]);
+
+  it("leaves the legacy layout byte-identical", async () => {
+    const { createHash } = await import("node:crypto");
+    const fixture = (await import("./__fixtures__/kitLayout.legacy.json")).default as { sha256: string };
+    const { cityLayout } = await import("./kitLayout");
+    const all = Object.entries(cityLayout())
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+      .map(([k, v]) => [k, v.filter((i) => !NEW.has(i.type))]);
+    expect(createHash("sha256").update(JSON.stringify(all)).digest("hex")).toBe(fixture.sha256);
+  });
+
+  // กรอบท้องถิ่นของหน้าตึก: ระยะตามแนวถนน (เทียบศูนย์กลางตึก) และความสูง
+  const local = (f: KitItem, i: KitItem) => {
+    const ux = Math.cos(f.rotationY);
+    const uz = -Math.sin(f.rotationY);
+    const a = (i.position[0] - f.position[0]) * ux + (i.position[2] - f.position[2]) * uz;
+    return { x0: a - i.size[0] / 2, x1: a + i.size[0] / 2, y0: i.position[1] - i.size[1] / 2, y1: i.position[1] + i.size[1] / 2 };
+  };
+  const onFacade = (f: KitItem, i: KitItem) => {
+    if (i.side !== f.side || i.street !== f.street) return false;
+    const l = local(f, i);
+    const c = (l.x0 + l.x1) / 2;
+    return Math.abs(c) <= f.size[0] / 2 + 1e-6;
+  };
+
+  it("covers 35-50% of the lower facade area per street", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const facades = items.filter((i) => i.type === "facade");
+      let area = 0;
+      let cover = 0;
+      for (const f of facades) {
+        area += f.size[0] * Math.max(0, Math.min(25, f.size[1]) - 4);
+      }
+      for (const n of items.filter((i) => NEW.has(i.type))) cover += n.size[0] * n.size[1];
+      expect(cover / area, s.id).toBeGreaterThanOrEqual(0.35);
+      expect(cover / area, s.id).toBeLessThanOrEqual(0.5);
+    }
+  });
+
+  it("keeps new items in y 4-25, below facade top - 1, and off existing signs", () => {
+    let n = 0;
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const facades = items.filter((i) => i.type === "facade");
+      const news = items.filter((i) => NEW.has(i.type));
+      const obst = items.filter((i) => OBST.has(i.type));
+      for (const it of news) {
+        const f = facades.find((f) => onFacade(f, it))!;
+        expect(f, `${s.id} ${it.type} has a facade`).toBeDefined();
+        const l = local(f, it);
+        expect(l.y0).toBeGreaterThanOrEqual(4 - 1e-6);
+        expect(l.y1).toBeLessThanOrEqual(Math.min(25, f.size[1] - 1) + 1e-6);
+        expect(l.x0).toBeGreaterThanOrEqual(-f.size[0] / 2 - 1e-6);
+        expect(l.x1).toBeLessThanOrEqual(f.size[0] / 2 + 1e-6);
+        for (const o of obst) {
+          if (o.side !== it.side || o.street !== it.street) continue;
+          if (Math.hypot(o.position[0] - it.position[0], o.position[2] - it.position[2]) > 20) continue;
+          const b = local(f, o);
+          const hit = l.x0 < b.x1 && l.x1 > b.x0 && l.y0 < b.y1 && l.y1 > b.y0;
+          expect(hit, `${s.id} ${it.type} overlaps ${o.type}`).toBe(false);
+        }
+        n++;
+      }
+    }
+    expect(n).toBeGreaterThan(50);
+  });
+
+  it("keeps monitor/videoWall faces >= 0.02 in front of the facade and holos 0.6-1.2 off it", () => {
+    for (const s of streets) {
+      const off = (p: [number, number, number]) => distanceToPolyline([p[0], p[2]], s.points);
+      const items = layoutStreet(s, CITY_SEED);
+      for (const it of items.filter((i) => i.type === "monitor" || i.type === "videoWall")) {
+        expect(s.halfWidth - (off(it.position) - it.size[2] / 2), `${s.id} ${it.type}`).toBeGreaterThanOrEqual(0.02 - 1e-9);
+      }
+      const holos = items.filter((i) => i.type === "holo");
+      expect(holos.length, s.id).toBeGreaterThan(0);
+      for (const h of holos) {
+        const gap = s.halfWidth - off(h.position);
+        expect(gap).toBeGreaterThanOrEqual(0.6 - 1e-9);
+        expect(gap).toBeLessThanOrEqual(1.2 + 1e-9);
+      }
+    }
+  });
+});

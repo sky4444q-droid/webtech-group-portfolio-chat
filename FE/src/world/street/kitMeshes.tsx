@@ -143,7 +143,7 @@ export function SignFaces({ faces, map, color, flicker }: { faces: SignFace[]; m
 // ---------- จอโฆษณา (canvas วาดตามจังหวะ) ----------
 
 /** จอโฆษณาโปรแกรมเดียวกันใช้ texture ร่วมกัน วาดใหม่ตาม screenInterval ของจอที่ใกล้กล้องที่สุด */
-export function ScreenGroup({ items, program, seed }: { items: KitItem[]; program: number; seed: number }) {
+export function ScreenGroup({ items, program, seed, brightness = 1.5 }: { items: KitItem[]; program: number; seed: number; brightness?: number }) {
   const quality = useWorld((s) => s.quality);
   const { canvas, texture } = useMemo(() => {
     const c = document.createElement("canvas");
@@ -169,7 +169,7 @@ export function ScreenGroup({ items, program, seed }: { items: KitItem[]; progra
   });
   return (
     <KitInstances items={items}>
-      <meshBasicMaterial map={texture} toneMapped={false} color={[1.5, 1.5, 1.5]} />
+      <meshBasicMaterial map={texture} toneMapped={false} color={[brightness, brightness, brightness]} />
     </KitInstances>
   );
 }

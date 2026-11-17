@@ -4,7 +4,7 @@
 import type { Vec3 } from "../../config/districts";
 import { mulberry32 } from "../../lib/rng";
 import { cableSag } from "./cables";
-import { NEXUS_HALF, STREETS, TEAM_TOWER, polylineLength, type Street, type StreetId } from "./streets";
+import { NEXUS_HALF, STREETS, TEAM_TOWER, distanceToPolyline, polylineLength, type Street, type StreetId } from "./streets";
 
 export type KitType =
   | "facade"
@@ -31,7 +31,10 @@ export type KitType =
   | "edgeStrip"
   | "beacon"
   | "giantScreen"
-  | "ticker";
+  | "ticker"
+  | "monitor"
+  | "videoWall"
+  | "holo";
 
 export interface KitItem {
   type: KitType;
@@ -319,6 +322,7 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
   }
   // จอยักษ์โค้งรอบมุมตึก (ใช้ตัวสุ่ม crown ต่อท้าย ตำแหน่งชิ้นอื่นไม่เลื่อน)
   giantForStreet(c, s, lots, c.out[bigAt], rowLen);
+  dressScreens(c, s, mulberry32(seed ^ hash(s.id) ^ 0x5c4ee7));
   return c.out;
 }
 
@@ -354,6 +358,94 @@ function giantForStreet(c: Ctx, s: Street, lots: { base: ReturnType<typeof sampl
     // แกน x ท้องถิ่น = -side * ทิศถนน
     corner: (-l.side * a) as -1 | 1,
   });
+}
+
+/** ชิ้นที่จอ/โฮโลใหม่ห้ามทับ (มองในกรอบหน้าตึก) */
+const SCREEN_BLOCKERS = new Set<KitType>(["signH", "signV", "lightbox", "screen", "panel", "bigScreen", "giantScreen", "balcony"]);
+/** สัดส่วนพื้นที่หน้าตึกช่วง y 4–25 ที่อยากให้จอ/โฮโลปกคลุม */
+const SCREEN_COVER = 0.43;
+/** โปรแกรมจอที่ไม่มีตัวหนังสือ (variant % 5 ∈ {1,3,4}: อีควอไลเซอร์ ลายสแกน จอเสีย) */
+const TEXTLESS_VARIANTS = [1, 3, 4, 6, 8, 9, 11, 13, 14];
+/** ระยะชิดผนัง: หน้าจอยื่นพ้นหน้าตึก 3 ซม. (กันระนาบซ้อน z-fight) */
+const SCREEN_DEPTH = 0.1;
+
+type Rect = { x0: number; x1: number; y0: number; y1: number };
+
+/** จอแบน/วิดีโอวอลล์/โฮโลแกรม บนผนังชั้นล่าง (ตัวสุ่มแยกของตัวเอง ชิ้นเดิมไม่เลื่อน) */
+function dressScreens(c: Ctx, s: Street, r: () => number) {
+  const facades = c.out.filter((i) => i.type === "facade");
+  const blockers = c.out.filter((i) => SCREEN_BLOCKERS.has(i.type));
+  for (const f of facades) {
+    const ux = Math.cos(f.rotationY);
+    const uz = -Math.sin(f.rotationY);
+    // ทิศจากผนังเข้าหาถนน = ด้าน +z ท้องถิ่นของตึก
+    const fx = Math.sin(f.rotationY);
+    const fz = Math.cos(f.rotationY);
+    // จุดบนระนาบหน้าตึก (กึ่งกลางตามแนวถนน)
+    const wx = f.position[0] + fx * (FACADE_DEPTH / 2);
+    const wz = f.position[2] + fz * (FACADE_DEPTH / 2);
+    const rectOf = (i: KitItem): Rect => {
+      const a = (i.position[0] - f.position[0]) * ux + (i.position[2] - f.position[2]) * uz;
+      return { x0: a - i.size[0] / 2, x1: a + i.size[0] / 2, y0: i.position[1] - i.size[1] / 2, y1: i.position[1] + i.size[1] / 2 };
+    };
+    const w = f.size[0];
+    const top = Math.min(25, f.size[1] - 1);
+    if (top - 4 < 1.5) continue;
+    const taken: Rect[] = blockers
+      .filter((b) => b.side === f.side && Math.hypot(b.position[0] - f.position[0], b.position[2] - f.position[2]) < 20)
+      .map(rectOf);
+    const free = (q: Rect) => !taken.some((t) => q.x0 < t.x1 + 0.05 && q.x1 > t.x0 - 0.05 && q.y0 < t.y1 + 0.05 && q.y1 > t.y0 - 0.05);
+    const goal = SCREEN_COVER * w * (Math.min(25, f.size[1]) - 4);
+    let cover = 0;
+    // วางชิ้นที่ระยะ a ตามแนวตึก: หน้าจอต้องพ้นทั้งกล่องตึกจริงและระนาบหน้าตึกตามเส้นถนน (ถนนโค้งสองระนาบนี้ไม่ตรงกัน)
+    const push = (type: KitType, a: number, y: number, size: Vec3, front: number, variant: number) => {
+      const px = wx + ux * a;
+      const pz = wz + uz * a;
+      const dPoly = distanceToPolyline([px, pz], s.points);
+      // front = ระยะหน้าชิ้นที่ยื่นพ้นผนัง (จอ 3 ซม., โฮโล 0.75–1.05 ม.)
+      const centre = Math.min(dPoly, s.halfWidth) - front + (type === "holo" ? 0 : size[2] / 2);
+      const gap = dPoly - centre;
+      c.out.push({ type, street: s.id, position: [px + fx * gap, y, pz + fz * gap], rotationY: f.rotationY, size, variant, side: f.side });
+    };
+    // ไล่จุดเริ่มเป็นตาราง 0.25 ม. จากล่างซ้ายขึ้นบน แล้วลองขนาดจากใหญ่ไปเล็ก (อัดแน่นกว่าสุ่มตำแหน่ง)
+    const spots: [number, number][] = [];
+    for (let y = 4; y < top - 0.9; y += 0.25) for (let x = -w / 2 + 0.1; x < w / 2 - 1; x += 0.25) spots.push([x, y]);
+    for (const [x0, y0] of spots) {
+      if (cover >= goal) break;
+      const roll = r();
+      const kind: KitType = roll < 0.55 ? "monitor" : roll < 0.8 ? "videoWall" : "holo";
+      const cols = r() < 0.5 ? 2 : 3;
+      const mw = pick(r, 2, 5);
+      const mh = pick(r, 1.2, 2.8);
+      const hwid = pick(r, 1.5, 3.5);
+      const hh = pick(r, 1, 2.2);
+      // ลดขนาดทีละขั้นจนถึงขั้นต่ำของชนิดนั้น
+      const steps = [1, 0.8, 0.6, 0.4, 0];
+      const sizes: [number, number][] =
+        kind === "monitor"
+          ? steps.map((k) => [2 + (mw - 2) * k, 1.2 + (mh - 1.2) * k])
+          : kind === "videoWall"
+            ? [[cols * 1.4, 1.8], [2.8, 1.8]]
+            : steps.map((k) => [1.5 + (hwid - 1.5) * k, 1 + (hh - 1) * k]);
+      const variant = kind === "holo" ? Math.floor(r() * VARIANTS) : TEXTLESS_VARIANTS[Math.floor(r() * TEXTLESS_VARIANTS.length)];
+      const holoOff = pick(r, 0.75, 1.05);
+      for (const [bw, bh] of sizes) {
+        const q = { x0, x1: x0 + bw, y0, y1: y0 + bh };
+        if (q.x1 > w / 2 - 0.1 || q.y1 > top || !free(q)) continue;
+        taken.push(q);
+        cover += bw * bh;
+        const a = x0 + bw / 2;
+        const y = y0 + bh / 2;
+        if (kind === "monitor") push("monitor", a, y, [bw, bh, SCREEN_DEPTH], 0.03, variant);
+        else if (kind === "holo") push("holo", a, y, [bw, bh, 0.02], holoOff, variant);
+        else {
+          const n = Math.round(bw / 1.4);
+          for (let i = 0; i < n; i++) for (let j = 0; j < 2; j++) push("videoWall", x0 + 0.7 + i * 1.4, y0 + 0.45 + j * 0.9, [1.38, 0.88, SCREEN_DEPTH], 0.03, variant);
+        }
+        break;
+      }
+    }
+  }
 }
 
 /** สี่แยก: ตึกสูงสี่มุม แต่ละมุมมีจอใหญ่และป้าย */

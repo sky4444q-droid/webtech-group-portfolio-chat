@@ -15,6 +15,7 @@ import { SIGN_WORDS } from "../../config/signWords";
 import { signAtlas } from "./signAtlas";
 import { SCREEN_PROGRAMS } from "./screenPrograms";
 import { WaterScreen } from "./WaterScreen";
+import { HoloSigns } from "./HoloSigns";
 import { GiantScreen } from "./GiantScreen";
 import { InfoPanel, panelContent } from "./InfoPanel";
 import { STREETS } from "./streets";
@@ -43,6 +44,8 @@ function useVisibleStreets(): Key[] {
 }
 
 const SIGNS: KitType[] = ["signH", "signV", "lightbox"];
+/** โปรแกรมจอที่ไม่มีตัวอักษร (อีควอไลเซอร์ ลายสแกน จอเสีย) ใช้กับจอแบน/วิดีโอวอลล์ชั้นล่าง */
+const TEXTLESS_PROGRAMS = [1, 3, 4];
 /** จอใหญ่ที่สี่แยกชวนไปที่ที่ไปได้ (มุมที่สี่เป็นจอน้ำเปล่า ๆ เพราะ Gate ไม่ใช่ปลายทาง) */
 const NEXUS_TARGETS: DistrictId[] = ["projects", "team", "sanctuary"];
 
@@ -66,6 +69,7 @@ export function StreetKit() {
   const keys = useVisibleStreets();
   const fx = fxEnabled(useWorld((s) => s.quality));
   const flicker = fx.signFlicker;
+  const lowQuality = useWorld((s) => s.quality) === "low";
   const city = cityLayout();
   const byType = useMemo(() => {
     const map = new Map<KitType, KitItem[]>();
@@ -108,6 +112,19 @@ export function StreetKit() {
   const shopColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.09), []);
   const stripColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 1.4), []);
   const lampColor = useMemo(() => (it: KitItem) => neonColor(it.variant % 2 ? 3 : 0, 2.2), []);
+  // กรอบจอแบน/วิดีโอวอลล์: กล่องมืดใหญ่กว่าจอเล็กน้อย หน้ากรอบอยู่หลังหน้าจอ 2 ซม. แต่ยังพ้นผนัง 1 ซม.
+  const bezels = useMemo(
+    () =>
+      [...get("monitor"), ...get("videoWall")].map((it) => {
+        const back = 0.02;
+        return {
+          ...it,
+          position: [it.position[0] - Math.sin(it.rotationY) * back, it.position[1], it.position[2] - Math.cos(it.rotationY) * back] as KitItem["position"],
+          size: [it.size[0] + 0.12, it.size[1] + 0.12, 0.06] as KitItem["size"],
+        };
+      }),
+    [byType], // eslint-disable-line react-hooks/exhaustive-deps
+  );
   const facadeTint = useMemo(() => (it: KitItem) => new THREE.Color().setScalar(0.1 + (it.variant % 4) * 0.025), []);
 
   return (
@@ -135,6 +152,12 @@ export function StreetKit() {
       {SCREEN_PROGRAMS.map((_, p) => (
         <ScreenGroup key={p} program={p} seed={p * 3 + 1} items={[...get("screen"), ...get("ticker")].filter((it) => it.variant % SCREEN_PROGRAMS.length === p)} />
       ))}
+      {/* จอแบน/วิดีโอวอลล์ชั้นล่าง: โปรแกรมไม่มีตัวอักษร หรี่กว่าป้ายนีออน · โหมดต่ำหยุดนิ่ง (screenInterval) */}
+      {TEXTLESS_PROGRAMS.map((p) => (
+        <ScreenGroup key={`m${p}`} program={p} seed={p * 5 + 2} brightness={1.15} items={[...get("monitor"), ...get("videoWall")].filter((it) => it.variant % SCREEN_PROGRAMS.length === p)} />
+      ))}
+      {/* โฮโลแกรมลอยหน้าผนัง (โหมดต่ำไม่วาด) */}
+      {!lowQuality && <HoloSigns items={get("holo")} />}
       {/* จอใหญ่แสงใต้น้ำ — จอแรกของแต่ละถนนเป็นจอสำคัญ (โลโก้ + ป้ายบอกทาง) */}
       {get("bigScreen").map((it, i) => (
         <WaterScreen key={`${it.street}-${i}`} item={it} keyTarget={keyTargetOf(it, get("bigScreen"))} />
@@ -152,7 +175,8 @@ export function StreetKit() {
       <KitInstances items={[...get("ac"), ...get("vent"), ...get("balcony"), ...get("crate"), ...get("roof"), ...get("antenna")]}>
         <meshStandardMaterial color="#1a1b22" normalMap={metalN} roughnessMap={metalR} metalness={0.7} roughness={0.6} />
       </KitInstances>
-      <KitInstances items={[...get("pipe"), ...get("cable").filter((it) => it.size[0] <= it.size[1])]}>
+      {/* ท่อ สายตั้ง และกรอบจอแบน ใช้กล่องมืดชุดเดียวกัน */}
+      <KitInstances items={[...get("pipe"), ...get("cable").filter((it) => it.size[0] <= it.size[1]), ...bezels]}>
         <meshStandardMaterial color="#0c0c10" metalness={0.6} roughness={0.5} />
       </KitInstances>
       {/* สายไฟข้ามถนนแบบหย่อน (สายตั้งของโคมยังเป็นกล่องด้านบน) */}
