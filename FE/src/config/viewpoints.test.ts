@@ -6,6 +6,7 @@ import { NEXUS_HALF, distanceToPolyline, streetOf } from "../world/street/street
 import { cityLayout } from "../world/street/kitLayout";
 import { CAMERA_FOV } from "./camera";
 import * as THREE from "three";
+import { BRIDGE } from "./bridge";
 
 describe("VIEWPOINTS", () => {
   it("gives every district 2–4 viewpoints with unique ids", () => {
@@ -47,11 +48,13 @@ describe("VIEWPOINTS", () => {
     }
   });
 
-  it("puts the nexus wide view on the footbridge", () => {
+  it("stands the nexus bridge view on the deck at eye level", () => {
     const bridge = VIEWPOINTS.nexus.find((v) => v.id === "bridge")!;
-    expect(bridge.mode).toBe("wide");
-    expect(bridge.position[1]).toBeGreaterThanOrEqual(5);
-    expect(bridge.position[1]).toBeLessThanOrEqual(8);
+    expect(bridge.mode).toBe("eye");
+    expect(bridge.lookRange).toBeCloseTo(0.43);
+    expect(bridge.position[1]).toBeGreaterThanOrEqual(BRIDGE.y + 1.6);
+    expect(bridge.position[1]).toBeLessThanOrEqual(BRIDGE.y + 1.9);
+    expect(Math.abs(bridge.position[2] - BRIDGE.z)).toBeLessThanOrEqual(0.6);
   });
 
   it("viewpointWorld offsets by the district position", () => {
@@ -108,8 +111,11 @@ describe("viewpoint framing", () => {
 
   it("eye viewpoints sit between 1.8 and 2.6 m", () => {
     for (const d of DISTRICT_ORDER) for (const v of VIEWPOINTS[d]) if (v.mode === "eye") {
-      expect(v.position[1]).toBeGreaterThanOrEqual(1.8);
-      expect(v.position[1]).toBeLessThanOrEqual(2.6);
+      // จุดชมบนสะพานวัดจากพื้นสะพาน
+      const onBridge = d === "nexus" && v.id === "bridge";
+      const floor = onBridge ? BRIDGE.y : 0;
+      expect(v.position[1] - floor).toBeGreaterThanOrEqual(onBridge ? 1.6 : 1.8);
+      expect(v.position[1] - floor).toBeLessThanOrEqual(2.6);
     }
   });
 });

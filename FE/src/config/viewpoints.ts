@@ -6,6 +6,7 @@ import type { DistrictId } from "../types";
 import type { DictKey } from "../i18n";
 import { DISTRICTS, type Vec3 } from "./districts";
 import { TEAM_LOBBY_OFFSET } from "../world/street/streets";
+import { BRIDGE } from "./bridge";
 
 export interface Viewpoint {
   id: string;
@@ -35,8 +36,8 @@ export const VIEWPOINTS: Record<DistrictId, Viewpoint[]> = {
   ],
   nexus: [
     { id: "center", label: "vpNexusCenter", mode: "eye", position: [0, EYE_Y, 9], target: [0, 2.2, -8], lookRange: EYE, marker: [0, 0.05, 4] },
-    // สะพานลอยถอยได้แค่ถึงขอบลาน (NEXUS_HALF = 9) จึงยกสูงขึ้นแทน
-    { id: "bridge", label: "vpNexusBridge", mode: "wide", position: [0, 7.2, 9], target: [0, 2.6, -14], lookRange: WIDE, marker: [3, 0.05, -1] },
+    // ยืนบนพื้นสะพานลอย (สูงระดับสายตาเหนือพื้นสะพาน) มองข้ามแยก
+    { id: "bridge", label: "vpNexusBridge", mode: "eye", position: [0, BRIDGE.y + 1.75, BRIDGE.z + 0.3], target: [0, 2.6, -14], lookRange: EYE, marker: [3, 0.05, -1] },
   ],
   projects: [
     { id: "hall", label: "vpProjectsHall", mode: "eye", position: [0, EYE_Y, 15], target: [0, 2.6, 0], lookRange: EYE, marker: [0, 0.05, 10] },

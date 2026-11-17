@@ -13,3 +13,10 @@ export const COLORS = {
   /** แดงสดของ HUD */
   red: "#ff1f3d",
 } as const;
+
+/** สีแบรนด์ — ตรงกับ --brand-purple / --brand-magenta ใน styles.css */
+export const BRAND = {
+  purple: "#8B5CF6",
+  magenta: "#D946EF",
+  silver: "#C0C4D0",
+} as const;
