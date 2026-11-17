@@ -10,6 +10,8 @@ import { DISTRICT_ORDER, DISTRICTS } from "../config/districts";
 import { useWorld } from "../store/useWorld";
 import { buildingWindowsTexture } from "./textures";
 import { fxEnabled } from "./fx/fxEnabled";
+import { Skyline } from "./street/Skyline";
+import { EnergyCoreTower } from "./street/EnergyCoreTower";
 import { GroundFog, RainSplashes, Traffic } from "./fx/Effects";
 
 export function Environment() {
@@ -23,6 +25,8 @@ export function Environment() {
       {/* แสงรวมกลาง ๆ จางมาก — แสงหลักมาจากป้าย จอ และไฟถนนเอง (ไม่มีแสงม่วงรวมแล้ว) */}
       <ambientLight intensity={0.08} color="#d8dce6" />
       <Sky />
+      <Skyline />
+      <EnergyCoreTower />
       <Suspense fallback={<FloorPlain />}>
         <Floor high={fx.reflector} />
         {/* แสงสะท้อนจาก HDRI กลางคืน (CC0) — ไม่ใช้เป็นพื้นหลัง */}
