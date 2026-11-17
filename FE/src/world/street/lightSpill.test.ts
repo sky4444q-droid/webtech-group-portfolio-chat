@@ -9,19 +9,27 @@ const streets = Object.values(STREETS);
 const item = (y: number, variant = 3): KitItem => ({ type: "signH", street: "nexus", position: [10, y, 0], rotationY: Math.PI / 2, size: [2, 1, 0.12], variant, side: 1 });
 
 describe("spillsFor", () => {
-  it("gives every signH, signV, lightbox, screen and bigScreen one floor spill and one wall spill", () => {
+  it("gives every source a wall spill; only sources at y<=9 (and bigScreens) get a floor spill", () => {
     const items = [...streets.flatMap((s) => layoutStreet(s, CITY_SEED)), ...layoutNexus(CITY_SEED)];
-    const n = items.filter((i) => SOURCES.has(i.type)).length;
+    const src = items.filter((i) => SOURCES.has(i.type));
+    const lowN = src.filter((i) => i.position[1] <= 9 || i.type === "bigScreen").length;
     const spills = spillsFor(items);
-    expect(n).toBeGreaterThan(0);
-    expect(spills.filter((s) => s.kind === "floor").length).toBe(n);
-    expect(spills.filter((s) => s.kind === "wall").length).toBe(n);
-    expect(spills.length).toBe(2 * n);
+    expect(src.length).toBeGreaterThan(0);
+    expect(lowN).toBeLessThan(src.length);
+    expect(spills.filter((s) => s.kind === "wall").length).toBe(src.length);
+    expect(spills.filter((s) => s.kind === "floor").length).toBe(lowN);
+  });
+
+  it("emits no floor spill from a non-bigScreen source above y 9", () => {
+    expect(spillsFor([item(9.5), item(20)]).filter((s) => s.kind === "floor")).toEqual([]);
+    expect(spillsFor([item(9)]).filter((s) => s.kind === "floor").length).toBe(1);
+    const big = { ...item(12), type: "bigScreen" as const };
+    expect(spillsFor([big]).filter((s) => s.kind === "floor").length).toBe(1);
   });
 
   it("puts the floor spill on the street side of its source, on the ground", () => {
     for (const s of streets) {
-      const items = layoutStreet(s, CITY_SEED).filter((i) => SOURCES.has(i.type));
+      const items = layoutStreet(s, CITY_SEED).filter((i) => SOURCES.has(i.type) && (i.position[1] <= 9 || i.type === "bigScreen"));
       const floors = spillsFor(items).filter((f) => f.kind === "floor");
       floors.forEach((f, i) => {
         const src = items[i];
@@ -35,7 +43,7 @@ describe("spillsFor", () => {
 
   it("scales floor spill length with source height", () => {
     const [low] = spillsFor([item(4)]).filter((s) => s.kind === "floor");
-    const [high] = spillsFor([item(10)]).filter((s) => s.kind === "floor");
+    const [high] = spillsFor([item(9)]).filter((s) => s.kind === "floor");
     expect(high.size[1]).toBeGreaterThan(low.size[1]);
   });
 

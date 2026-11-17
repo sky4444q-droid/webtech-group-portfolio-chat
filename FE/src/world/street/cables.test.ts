@@ -35,6 +35,7 @@ describe("cableSpans", () => {
       for (const sp of cableSpans(layoutStreet(s, CITY_SEED))) {
         const low = Math.min(...catenary(sp.a, sp.b, sp.sag, 10).map((p) => p[1]));
         expect(low).toBeGreaterThanOrEqual(3.2);
+        expect(low).toBeCloseTo(sp.a[1] - sp.sag, 6); // จุดต่ำสุดจริง = ความสูงปลาย - sag
       }
     }
   });

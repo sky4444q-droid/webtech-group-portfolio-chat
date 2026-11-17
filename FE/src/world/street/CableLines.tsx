@@ -1,5 +1,5 @@
 // สายไฟหย่อนทุกเส้นรวมเป็น LineSegments เดียว
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { catenary } from "./cables";
 import type { Vec3 } from "../../config/districts";
@@ -17,6 +17,7 @@ export function Cables({ spans }: { spans: { a: Vec3; b: Vec3; sag: number }[] }
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     return g;
   }, [spans]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
   if (spans.length === 0) return null;
   return (
     <lineSegments geometry={geometry} frustumCulled={false}>

@@ -17,6 +17,9 @@ export interface Spill {
 /** ความแรงแสงต่อชนิดแหล่งกำเนิด (จอใหญ่ไม่แรงเกินจอสำคัญ WaterScreen) */
 const STRENGTH: Partial<Record<KitType, number>> = { signH: 0.6, signV: 0.55, lightbox: 0.45, screen: 0.55, bigScreen: 0.5 };
 
+/** แสงลงพื้นเฉพาะแหล่งที่ระดับถนน (y <= นี้) ป้ายสูงไม่ทำให้พื้นท่วม; จอใหญ่ได้เสมอ */
+export const FLOOR_SPILL_MAX_Y = 9;
+
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
 export function spillsFor(items: KitItem[]): Spill[] {
@@ -32,7 +35,7 @@ export function spillsFor(items: KitItem[]): Spill[] {
     const reach = it.street === "nexus" ? 10 : Math.max(1.5, STREETS[it.street].halfWidth * 0.9);
     const length = Math.min(clamp(y * 0.9, 2, 10), reach);
     // พื้น: เริ่มที่ฐานตึกใต้ป้าย ยื่นเข้าหากลางถนน
-    out.push({
+    if (y <= FLOOR_SPILL_MAX_Y || it.type === "bigScreen") out.push({
       kind: "floor",
       position: [x + fx * (length / 2), 0.02, z + fz * (length / 2)],
       rotationY: it.rotationY,
