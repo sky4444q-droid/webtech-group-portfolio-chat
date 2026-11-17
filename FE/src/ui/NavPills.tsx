@@ -1,6 +1,6 @@
-// แถบเมนูแคปซูลด้านบน (แทน Mini Map): ห้าที่เรียงตามลำดับ · ที่อยู่ปัจจุบัน/ปลายทางเป็นแคปซูลแดงทึบ
+// แถบเมนูแคปซูลด้านบน (แทน Mini Map): ที่ที่ไปได้ทั้งสี่ (Gate เป็นแค่ฉาก Intro) · ที่อยู่ปัจจุบัน/ปลายทางเป็นแคปซูลแดงทึบ
 
-import { DISTRICT_ORDER, DISTRICTS } from "../config/districts";
+import { DISTRICTS, NAV_ORDER } from "../config/districts";
 import { useWorld } from "../store/useWorld";
 import { usePick, useT } from "../i18n";
 
@@ -14,7 +14,7 @@ export function NavPills() {
 
   return (
     <nav className="nav-pills" aria-label={tr("map")}>
-      {DISTRICT_ORDER.map((id) => {
+      {NAV_ORDER.map((id) => {
         const on = id === active;
         return (
           <button

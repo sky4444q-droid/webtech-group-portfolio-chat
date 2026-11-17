@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FRAGMENTS, initialDiscoveryState, useDiscovery } from "./useDiscovery";
-import { DISTRICT_ORDER } from "../config/districts";
+import { NAV_ORDER } from "../config/districts";
 
 describe("useDiscovery", () => {
   beforeEach(() => {
@@ -9,10 +9,12 @@ describe("useDiscovery", () => {
     useDiscovery.setState(initialDiscoveryState());
   });
 
-  it("has exactly one fragment in each of the five districts", () => {
+  it("keeps five fragments, all in places a visitor can go to (the Gate is intro-only)", () => {
     expect(FRAGMENTS).toHaveLength(5);
-    expect(new Set(FRAGMENTS.map((f) => f.district))).toEqual(new Set(DISTRICT_ORDER));
+    expect(FRAGMENTS.some((f) => f.district === "gate")).toBe(false);
+    expect(new Set(FRAGMENTS.map((f) => f.district))).toEqual(new Set(NAV_ORDER));
     expect(new Set(FRAGMENTS.map((f) => f.id)).size).toBe(5);
+    expect(new Set(FRAGMENTS.map((f) => `${f.district}:${f.viewpoint}`)).size).toBe(5);
   });
 
   it("counts a new fragment once", () => {

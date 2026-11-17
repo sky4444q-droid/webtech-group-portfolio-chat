@@ -97,7 +97,9 @@ export const useWorld = create<WorldState>((set, get) => ({
     save("lang", lang);
   },
 
-  travelTo: (id, opts) => {
+  travelTo: (target, opts) => {
+    // Arrival Gate ใช้เฉพาะใน Intro: ขอไป Gate (เช่น #/gate) = ไปสี่แยก Nexus แทน
+    const id: DistrictId = target === "gate" ? "nexus" : target;
     const s = get();
     if (!s.introDone) {
       set({ pendingTarget: id });

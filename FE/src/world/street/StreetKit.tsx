@@ -37,8 +37,8 @@ function useVisibleStreets(): Key[] {
 }
 
 const SIGNS: KitType[] = ["signH", "signV", "lightbox"];
-/** จอใหญ่ที่สี่แยกชวนไปแต่ละที่ */
-const NEXUS_TARGETS: DistrictId[] = ["projects", "team", "sanctuary", "gate"];
+/** จอใหญ่ที่สี่แยกชวนไปที่ที่ไปได้ (มุมที่สี่เป็นจอน้ำเปล่า ๆ เพราะ Gate ไม่ใช่ปลายทาง) */
+const NEXUS_TARGETS: DistrictId[] = ["projects", "team", "sanctuary"];
 
 const moodOf = (it: KitItem) => (it.street === "nexus" ? "nexus" : STREETS[it.street].mood);
 
@@ -141,6 +141,6 @@ export function StreetKit() {
 function keyTargetOf(it: KitItem, all: KitItem[]): DistrictId | undefined {
   const same = all.filter((x) => x.street === it.street);
   const i = same.indexOf(it);
-  if (it.street === "nexus") return NEXUS_TARGETS[i % NEXUS_TARGETS.length];
+  if (it.street === "nexus") return NEXUS_TARGETS[i];
   return i === 0 ? STREETS[it.street].district : undefined;
 }

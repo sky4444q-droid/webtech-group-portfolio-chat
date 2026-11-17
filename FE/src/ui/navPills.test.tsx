@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { NavPills } from "./NavPills";
 import { initialWorldState, useWorld } from "../store/useWorld";
-import { DISTRICT_ORDER, DISTRICTS } from "../config/districts";
+import { DISTRICTS, NAV_ORDER } from "../config/districts";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -26,8 +26,9 @@ describe("NavPills", () => {
     host.remove();
   });
 
-  it("renders the five places in order in the selected language", () => {
-    expect(buttons().map((b) => b.textContent)).toEqual(DISTRICT_ORDER.map((id) => DISTRICTS[id].name.en));
+  it("renders the four visitable places in order in the selected language (no Gate)", () => {
+    expect(NAV_ORDER).not.toContain("gate");
+    expect(buttons().map((b) => b.textContent)).toEqual(NAV_ORDER.map((id) => DISTRICTS[id].name.en));
   });
 
   it("marks the current place", () => {
@@ -45,13 +46,13 @@ describe("NavPills", () => {
   });
 
   it("travels on click", () => {
-    const projects = buttons()[DISTRICT_ORDER.indexOf("projects")];
+    const projects = buttons()[NAV_ORDER.indexOf("projects")];
     act(() => projects.click());
     expect(useWorld.getState().travel?.to).toBe("projects");
   });
 
   it("does nothing when clicking the current place", () => {
-    const here = buttons()[DISTRICT_ORDER.indexOf("nexus")];
+    const here = buttons()[NAV_ORDER.indexOf("nexus")];
     act(() => here.click());
     expect(useWorld.getState().travel).toBeNull();
   });

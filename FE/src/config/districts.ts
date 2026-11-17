@@ -51,6 +51,9 @@ export const DISTRICTS: Record<DistrictId, DistrictConfig> = {
 
 export const DISTRICT_ORDER: DistrictId[] = ["gate", "nexus", "projects", "team", "sanctuary"];
 
+/** ที่ที่ผู้ชมเลือกไปได้ — Arrival Gate เป็นฉากเปิดของ Intro เท่านั้น (ไม่ใช่ปลายทาง) */
+export const NAV_ORDER: DistrictId[] = DISTRICT_ORDER.filter((d) => d !== "gate");
+
 /** โครงแบบ Hub: Nexus เชื่อมกับทุกพื้นที่ */
 export function isLinked(a: DistrictId, b: DistrictId): boolean {
   return a !== b && (a === "nexus" || b === "nexus");

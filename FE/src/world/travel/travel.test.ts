@@ -55,10 +55,25 @@ describe("travel in the store", () => {
 
   it("queues a history destination pressed during a guide trip and runs it on arrival", () => {
     useWorld.getState().travelTo("team");
-    useWorld.getState().travelTo("gate", { fromHistory: true });
+    useWorld.getState().travelTo("sanctuary", { fromHistory: true });
     expect(useWorld.getState().travel?.to).toBe("team");
     useWorld.getState().finishTravel();
-    expect(useWorld.getState().travel).toEqual({ from: "team", to: "gate" });
+    expect(useWorld.getState().travel).toEqual({ from: "team", to: "sanctuary" });
+  });
+
+  it("treats the Gate as intro-only: a trip to it goes to Nexus instead", () => {
+    useWorld.getState().travelTo("team");
+    useWorld.getState().finishTravel();
+    useWorld.getState().travelTo("gate");
+    expect(useWorld.getState().travel).toEqual({ from: "team", to: "nexus" });
+  });
+
+  it("lands a #/gate deep link at Nexus after the intro", () => {
+    useWorld.setState({ introDone: false, district: "gate", pendingTarget: "nexus" });
+    useWorld.getState().travelTo("gate");
+    useWorld.getState().finishIntro();
+    expect(useWorld.getState().travel).toEqual({ from: "gate", to: "nexus" });
+    expect(useWorld.getState().travelKind).toBe("guide");
   });
 
   it("ignores a non-history travel request during a trip", () => {

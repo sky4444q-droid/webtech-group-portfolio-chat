@@ -1,4 +1,4 @@
-// Discovery (ไม่บังคับ): เศษข้อมูล 5 ชิ้น ซ่อนพื้นที่ละชิ้น เห็นได้เมื่อไปยืนที่จุดชมบางจุด
+// Discovery (ไม่บังคับ): เศษข้อมูล 5 ชิ้น ซ่อนตามที่ต่าง ๆ เห็นได้เมื่อไปยืนที่จุดชมบางจุด
 
 import { create } from "zustand";
 import type { DistrictId } from "../types";
@@ -15,7 +15,8 @@ export interface Fragment {
 }
 
 export const FRAGMENTS: Fragment[] = [
-  { id: "frag-gate", district: "gate", viewpoint: 1, position: [-9, 1.2, 2.2] },
+  // ชิ้นนี้เคยอยู่ที่ Gate (ตอนนี้เป็นฉาก Intro อย่างเดียว) ย้ายมาปากซอยทางเข้าที่สี่แยก — คง id เดิมไว้เพื่อไม่ให้ของที่ผู้ชมเก็บไว้หาย
+  { id: "frag-gate", district: "nexus", viewpoint: 0, position: [-4.5, 1.2, -2.5] },
   { id: "frag-nexus", district: "nexus", viewpoint: 1, position: [7.5, 1.5, -7.5] },
   { id: "frag-projects", district: "projects", viewpoint: 1, position: [-4.5, 1.1, -2] },
   { id: "frag-team", district: "team", viewpoint: 2, position: [6.6 + 8, 1.2, -3.6] },
