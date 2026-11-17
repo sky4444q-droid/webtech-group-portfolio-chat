@@ -88,7 +88,8 @@ function HazePatches({ patches }: { patches: HazePatch[] }) {
         transparent
         opacity={0.12 + strength * 0.1}
         depthWrite={false}
-        fog={false}
+        // เปิด fog ของฉาก: แผ่นหมอกไกล ๆ จะกลืนไปกับหมอกฉาก ไม่เป็นจานสีแบนลอยอยู่ (ใกล้กล้องดูเหมือนเดิม)
+        fog
         toneMapped={false}
         onBeforeCompile={(sh) => {
           sh.uniforms.uFog = { value: fog };

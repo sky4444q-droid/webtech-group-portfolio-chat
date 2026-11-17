@@ -82,6 +82,16 @@ describe("hazePatches", () => {
     const spills = spillsFor(items);
     const patches = hazePatches(spills);
     expect(patches).toHaveLength(spills.filter((s) => s.kind === "floor").length);
-    for (const p of patches) expect(p.position[1]).toBeCloseTo(0.25);
+    // ต้องมีหมอกอย่างน้อยหนึ่งดวง ไม่งั้นการวนเช็คด้านล่างจะผ่านเปล่า ๆ
+    expect(patches.length).toBeGreaterThan(0);
+    const floors = spills.filter((s) => s.kind === "floor");
+    patches.forEach((p, i) => {
+      const s = floors[i];
+      expect(p.position[1]).toBeCloseTo(0.25);
+      // รัศมี = ด้านใหญ่ของ spill × 0.8 และต้องคงสี/ความแรงของ spill ต้นทาง (จับคู่ตาม index)
+      expect(p.radius).toBeCloseTo(Math.max(s.size[0], s.size[1]) * 0.8);
+      expect(p.variant).toBe(s.variant);
+      expect(p.strength).toBe(s.strength);
+    });
   });
 });

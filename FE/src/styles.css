@@ -836,6 +836,23 @@ button {
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.45));
 }
+/* เบราว์เซอร์ที่ไม่รองรับ background-clip: text → ใช้สีทึบแทน ไม่ให้ตัวอักษรโปร่งใสจนมองไม่เห็น */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .brand-wordmark {
+    color: var(--brand-magenta);
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}
+/* โหมดสีบังคับ (forced-colors): ใช้สีระบบเพื่อให้อ่านออก */
+@media (forced-colors: active) {
+  .brand-wordmark {
+    color: CanvasText;
+    -webkit-text-fill-color: CanvasText;
+    background: none;
+    filter: none;
+  }
+}
 .intro-title {
   position: relative;
   margin: 0;
