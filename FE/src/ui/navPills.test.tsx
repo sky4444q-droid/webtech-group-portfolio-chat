@@ -45,6 +45,14 @@ describe("NavPills", () => {
     expect(active.getAttribute("aria-current")).toBe("location");
   });
 
+  it("shows the other places as unavailable during a trip", () => {
+    act(() => useWorld.setState({ travel: { from: "nexus", to: "team" } }));
+    const disabled = buttons().filter((b) => b.getAttribute("aria-disabled") === "true");
+    expect(disabled.map((b) => b.textContent)).toEqual(NAV_ORDER.filter((id) => id !== "team").map((id) => DISTRICTS[id].name.en));
+    act(() => useWorld.setState({ travel: null }));
+    expect(buttons().some((b) => b.getAttribute("aria-disabled") === "true")).toBe(false);
+  });
+
   it("travels on click", () => {
     const projects = buttons()[NAV_ORDER.indexOf("projects")];
     act(() => projects.click());

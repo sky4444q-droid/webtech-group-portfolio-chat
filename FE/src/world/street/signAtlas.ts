@@ -69,10 +69,16 @@ export function signAtlas(): SignAtlas {
   if (fonts?.load) {
     const sample = (l: SignLang) => words.filter((w) => w.lang === l).map((w) => w.text).join("");
     const loads = (Object.keys(FAMILY) as SignLang[]).map((l) => fonts.load(`${l === "en" ? 800 : 700} ${SIZE}px ${FAMILY[l]}`, sample(l)).catch(() => []));
-    void whenFontsReady(4000, { ready: Promise.all(loads) }).then((r) => {
+    const all = Promise.all(loads);
+    void whenFontsReady(4000, { ready: all }).then((r) => {
       if (r === "ready") draw();
+      // ฟอนต์มาช้ากว่า 4 วิ: ยังใช้ฟอนต์สำรองไปก่อน แล้ววาดใหม่ครั้งเดียวเมื่อมาถึงจริง
+      else if (r === "timeout") void all.then(draw);
     });
   }
+
+  // โหมดพัฒนา: Vite โหลดโมดูลนี้ใหม่ → คืนหน่วยความจำ texture ชุดเก่า
+  if (import.meta.hot) import.meta.hot.dispose(() => pages.forEach((p) => p.dispose()));
 
   const index = new Map(words.map((w, i) => [keyOf(w), i]));
   atlas = {

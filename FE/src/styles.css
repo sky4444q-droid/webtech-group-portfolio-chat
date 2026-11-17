@@ -208,6 +208,13 @@ button {
 .nav-pill:hover:not(.is-active) {
   border-color: var(--red);
 }
+.nav-pill[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: wait;
+}
+.nav-pill[aria-disabled="true"]:hover {
+  border-color: transparent;
+}
 .nav-pill.is-active {
   background: var(--red);
   color: #fff;
