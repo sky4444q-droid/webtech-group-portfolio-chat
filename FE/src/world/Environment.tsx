@@ -14,6 +14,7 @@ import { Skyline } from "./street/Skyline";
 import { EnergyCoreTower } from "./street/EnergyCoreTower";
 import { DustMotes, GroundFog, RainSplashes, Traffic } from "./fx/Effects";
 import { HoloFish } from "./fx/HoloFish";
+import { SteamPlumes } from "./fx/SteamPlumes";
 import { mulberry32 } from "../lib/rng";
 
 export function Environment() {
@@ -39,6 +40,7 @@ export function Environment() {
       {fx.traffic && <Traffic />}
       {fx.dust && <DustMotes />}
       {fx.fish && <HoloFish />}
+      {fx.steam && <SteamPlumes />}
       <GroundFog layers={fx.fogLayers} center={[center[0], 0, center[2]]} />
     </>
   );

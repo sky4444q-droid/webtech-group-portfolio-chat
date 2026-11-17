@@ -23,7 +23,6 @@ import { LightSpill } from "./SpillMeshes";
 import { Cables } from "./CableLines";
 import { cableSpans } from "./cables";
 import { spillsFor } from "./lightSpill";
-import { Steam } from "../fx/Effects";
 import { fxEnabled } from "../fx/fxEnabled";
 import type { DistrictId } from "../../types";
 
@@ -146,7 +145,6 @@ export function StreetKit() {
       ))}
       {/* พื้นสะท้อนปลอม (โหมดต่ำ) ใต้จอใหญ่และป้ายตั้ง */}
       {!fx.reflector && <FakeReflections items={[...get("bigScreen"), ...get("giantScreen"), ...get("signV")]} />}
-      {fx.steam && <Steam points={get("steam").map((it) => it.position)} />}
       {get("panel").map((it, i) => (
         <InfoPanel key={`${it.street}-${i}`} item={it} content={panelContent(it, i)} />
       ))}

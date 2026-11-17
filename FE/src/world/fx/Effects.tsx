@@ -243,36 +243,3 @@ export function RainSplashes() {
     </instancedMesh>
   );
 }
-
-// ---------- ไอน้ำจากร้านอาหาร (ชิ้น steam ของถนน) ----------
-
-const PUFFS = 6;
-
-/** ไอน้ำลอยขึ้นจากจุดที่กำหนด: sprite จาง ๆ ขยายตัวและจางหายขณะลอย */
-export function Steam({ points }: { points: [number, number, number][] }) {
-  const tex = useMemo(() => getFogTexture(), []);
-  const group = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
-    const g = group.current;
-    if (!g) return;
-    const t = clock.elapsedTime;
-    g.children.forEach((s, i) => {
-      const k = (t * 0.35 + (i % PUFFS) / PUFFS + Math.floor(i / PUFFS) * 0.37) % 1;
-      const base = points[Math.floor(i / PUFFS)];
-      s.position.set(base[0] + Math.sin(t + i) * 0.15, base[1] + k * 2.6, base[2]);
-      s.scale.setScalar(0.5 + k * 1.6);
-      ((s as THREE.Sprite).material as THREE.SpriteMaterial).opacity = 0.32 * Math.sin(k * Math.PI);
-    });
-  });
-  return (
-    <group ref={group}>
-      {points.flatMap((_, p) =>
-        Array.from({ length: PUFFS }, (_, i) => (
-          <sprite key={`${p}-${i}`}>
-            <spriteMaterial map={tex} color="#c8d4e6" transparent opacity={0} depthWrite={false} />
-          </sprite>
-        )),
-      )}
-    </group>
-  );
-}
