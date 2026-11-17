@@ -3,6 +3,7 @@
 
 import type { Vec3 } from "../../config/districts";
 import { mulberry32 } from "../../lib/rng";
+import { cableSag } from "./cables";
 import { NEXUS_HALF, STREETS, TEAM_TOWER, polylineLength, type Street, type StreetId } from "./streets";
 
 export type KitType =
@@ -109,7 +110,11 @@ function dressFacade(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -
   const mood = s.mood;
   // ชั้นล่าง: หน้าร้าน + ป้ายเหนือร้าน
   put(c, s, base, side, "shopfront", 0, hw + 0.15, 1.6, [w * 0.88, 3.2, 0.3]);
-  put(c, s, base, side, "signH", pick(r, -0.2, 0.2) * w, hw - 0.05, pick(r, 3.4, 3.9), [w * pick(r, 0.5, 0.8), pick(r, 0.7, 1.1), 0.12]);
+  {
+    const along = pick(r, -0.2, 0.2) * w;
+    const sw = w * pick(r, 0.5, 0.8);
+    put(c, s, base, side, "signH", fitAlong(along, sw, w), hw - 0.05, pick(r, 3.4, 3.9), [sw, pick(r, 0.7, 1.1), 0.12]);
+  }
   // ป้ายแนวตั้งยื่นออกจากตึก (แบบป้ายญี่ปุ่น)
   if (w > 4.5 || r() < 0.6) {
     const ph = pick(r, 3, 5.5);
@@ -118,10 +123,20 @@ function dressFacade(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -
   // กล่องไฟเล็กกระจาย
   const boxes = mood === "office" ? 3 : 2;
   for (let i = 0; i < boxes; i++) {
-    put(c, s, base, side, "lightbox", pick(r, -0.45, 0.45) * w, hw - 0.2, pick(r, 2.9, 7), [pick(r, 0.6, 1.4), pick(r, 0.4, 0.9), 0.25]);
+    const along = pick(r, -0.45, 0.45) * w;
+    const bw = pick(r, 0.6, 1.4);
+    put(c, s, base, side, "lightbox", fitAlong(along, bw, w), hw - 0.2, pick(r, 2.9, 7), [bw, pick(r, 0.4, 0.9), 0.25]);
   }
-  if (r() < 0.55) put(c, s, base, side, "screen", pick(r, -0.25, 0.25) * w, hw + 0.05, pick(r, 6, 12), [pick(r, 2, 3.6), pick(r, 1.4, 2.6), 0.15]);
-  if (r() < 0.4) put(c, s, base, side, "panel", pick(r, -0.2, 0.2) * w, hw + 0.08, pick(r, 9, Math.min(h - 3, 17)), [pick(r, 3, 5.5), pick(r, 2.8, 5), 0.1]);
+  if (r() < 0.55) {
+    const along = pick(r, -0.25, 0.25) * w;
+    const sw = Math.min(pick(r, 2, 3.6), w * 0.95);
+    put(c, s, base, side, "screen", fitAlong(along, sw, w), hw + 0.05, pick(r, 6, 12), [sw, pick(r, 1.4, 2.6), 0.15]);
+  }
+  if (r() < 0.4) {
+    const along = pick(r, -0.2, 0.2) * w;
+    const pw = Math.min(pick(r, 3, 5.5), w * 0.95);
+    put(c, s, base, side, "panel", fitAlong(along, pw, w), hw + 0.08, pick(r, 9, Math.min(h - 3, 17)), [pw, pick(r, 2.8, 5), 0.1]);
+  }
   // ของประกอบบนผนัง
   const acs = mood === "office" ? 1 : 3;
   for (let i = 0; i < acs; i++) put(c, s, base, side, "ac", pick(r, -0.42, 0.42) * w, hw + 0.35, pick(r, 4.2, Math.min(h - 2, 16)), [0.9, 0.6, 0.6]);
@@ -146,6 +161,38 @@ function crownFacade(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -
   }
 }
 
+/** ไม่ให้ชิ้นล้ำออกนอกความกว้างตึก (ตึกท้ายถนน Team ติดตัวตึกสำนักงาน) */
+const fitAlong = (x: number, width: number, w: number) => Math.max(-(w / 2 - width / 2), Math.min(w / 2 - width / 2, x));
+
+/** ป้ายไต่สูง: ป้ายตั้งซ้อนเป็นแท่งตามขอบตึก + ป้ายนอน/กล่องไฟระดับกลาง (ใช้ตัวสุ่ม crown ผ่าน crownFacade) */
+function highSigns(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -1 | 1, w: number, h: number) {
+  const r = c.rand;
+  const hw = s.halfWidth;
+  // แท่งป้ายตั้ง: เริ่มที่ y 8 ซ้อนขึ้นไปจนใกล้ยอดตึก (ต้องได้อย่างน้อย 3 ป้าย)
+  if (h >= 26 && r() < 0.45) {
+    const along = (r() < 0.5 ? -1 : 1) * w * 0.4;
+    let y = 8;
+    const stack: number[] = [];
+    for (let k = 0; k < 6; k++) {
+      const ph = pick(r, 4, 5.5);
+      if (y + ph > h - 1) break;
+      stack.push(y + ph / 2, ph);
+      y += ph + 0.3;
+    }
+    if (stack.length >= 6) for (let k = 0; k < stack.length; k += 2) put(c, s, base, side, "signV", along, hw - 0.6, stack[k], [0.8, stack[k + 1], 0.14]);
+  }
+  // ป้ายนอนและกล่องไฟกลางตึก
+  const fit = (x: number, width: number) => fitAlong(x, width, w);
+  if (r() < 0.8) {
+    const sw = w * pick(r, 0.4, 0.6);
+    put(c, s, base, side, "signH", fit(pick(r, -0.25, 0.25) * w, sw), hw - 0.05, pick(r, 10, Math.min(h - 3, 22)), [sw, pick(r, 0.8, 1.2), 0.12]);
+  }
+  if (r() < 0.8) {
+    const bw = pick(r, 0.6, 1.4);
+    put(c, s, base, side, "lightbox", fit(pick(r, -0.4, 0.4) * w, bw), hw - 0.2, pick(r, 9.5, Math.min(h - 2, 20)), [bw, pick(r, 0.5, 1), 0.25]);
+  }
+}
+
 function crownBody(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -1 | 1, w: number, h: number) {
   const r = c.rand;
   const hw = s.halfWidth;
@@ -158,6 +205,7 @@ function crownBody(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -1 
     put(c, s, base, side, "tier", 0, hw + inset + depth / 2, h + th / 2, [w * pick(r, 0.7, 0.9), th, depth]);
     top = h + th;
   }
+  highSigns(c, s, base, side, w, h);
   const depthMid = hw + FACADE_DEPTH * 0.6;
   // ของบนหลังคา: ถังน้ำ / ห้องเครื่อง / กรอบป้ายหลังคา (variant % 3 ใช้เลือกแบบ)
   if (r() < 0.7) {
@@ -206,17 +254,20 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
   }
 
   // สายไฟข้ามถนน / โคมแขวน
-  const cables = s.mood === "shrine" ? 9 : 4;
+  const cables = s.mood === "shrine" ? 10 : 8;
   for (let i = 0; i < cables; i++) {
     const at = sample(s.points, ((i + 0.5) / cables) * len);
-    const cableY = pick(r, 4.5, 8);
-    put(c, s, at, 1, "cable", 0, 0, cableY, [s.halfWidth * 2 + 2, 0.05, 0.05]);
+    // กระจายความสูงเป็นช่วง ๆ (ขั้นบันไดสลับลำดับ) ให้สายซ้อนหลายระดับ ต่ำสุดยังพ้นทางเดิน
+    const band = (i * 3) % 4;
+    const cableY = 6 + (band + r()) * 2.4;
+    const width = s.halfWidth * 2 + 2;
+    put(c, s, at, 1, "cable", 0, 0, cableY, [width, 0.05, 0.05]);
     if (s.mood === "shrine" || r() < 0.3) {
       put(c, s, at, 1, "lamp", pick(r, -1, 1), pick(r, -0.6, 0.6), pick(r, 3.2, 4.2), [0.4, 0.6, 0.4]);
-      // สายแขวนโคม: เส้นตั้งจากยอดโคมขึ้นไปถึงสายไฟข้ามถนน (ไม่ใช้ rand เพิ่ม ผังเดิมจึงไม่เลื่อน)
+      // สายแขวนโคม: เส้นตั้งจากยอดโคมขึ้นไปถึงจุดต่ำสุดของสายหย่อนข้ามถนน (ไม่ใช้ rand เพิ่ม)
       const lamp = c.out[c.out.length - 1];
       const top = lamp.position[1] + lamp.size[1] / 2;
-      const h = cableY - top;
+      const h = cableY - cableSag(width) - top;
       c.out.push({ type: "cable", street: s.id, position: [lamp.position[0], top + h / 2, lamp.position[2]], rotationY: 0, size: [0.03, h, 0.03], variant: 0, side: 1 });
     }
   }

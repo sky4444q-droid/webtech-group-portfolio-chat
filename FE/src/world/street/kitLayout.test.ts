@@ -157,3 +157,30 @@ describe("canyon buildings", () => {
     }
   });
 });
+
+describe("high signs", () => {
+  it("stacks vertical signs up building edges", () => {
+    for (const s of streets) {
+      const vs = layoutStreet(s, CITY_SEED).filter((i) => i.type === "signV");
+      const groups = new Map<string, KitItem[]>();
+      for (const v of vs) {
+        const key = `${Math.round(v.position[0] / 0.1)},${Math.round(v.position[2] / 0.1)}`;
+        groups.set(key, [...(groups.get(key) ?? []), v]);
+      }
+      const stacks = [...groups.values()].filter((g) => {
+        if (g.length < 3) return false;
+        const ys = g.map((i) => i.position[1]);
+        const top = g.reduce((a, b) => (a.position[1] > b.position[1] ? a : b));
+        return ys.every((y, i) => i === 0 || y > ys[i - 1]) && top.position[1] > 20;
+      });
+      expect(stacks.length, s.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("places mid-height signs", () => {
+    for (const s of streets) {
+      const hs = layoutStreet(s, CITY_SEED).filter((i) => i.type === "signH" || i.type === "lightbox");
+      expect(hs.filter((i) => i.position[1] > 9).length / hs.length, s.id).toBeGreaterThanOrEqual(0.25);
+    }
+  });
+});

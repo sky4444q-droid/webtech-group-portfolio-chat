@@ -19,6 +19,8 @@ import { InfoPanel, panelContent } from "./InfoPanel";
 import { STREETS } from "./streets";
 import { FakeReflections } from "./FakeReflections";
 import { LightSpill } from "./SpillMeshes";
+import { Cables } from "./CableLines";
+import { cableSpans } from "./cables";
 import { spillsFor } from "./lightSpill";
 import { Steam } from "../fx/Effects";
 import { fxEnabled } from "../fx/fxEnabled";
@@ -141,9 +143,11 @@ export function StreetKit() {
       <KitInstances items={[...get("ac"), ...get("vent"), ...get("balcony"), ...get("crate"), ...get("roof"), ...get("antenna")]}>
         <meshStandardMaterial color="#1a1b22" normalMap={metalN} roughnessMap={metalR} metalness={0.7} roughness={0.6} />
       </KitInstances>
-      <KitInstances items={[...get("pipe"), ...get("cable")]}>
+      <KitInstances items={[...get("pipe"), ...get("cable").filter((it) => it.size[0] <= it.size[1])]}>
         <meshStandardMaterial color="#0c0c10" metalness={0.6} roughness={0.5} />
       </KitInstances>
+      {/* สายไฟข้ามถนนแบบหย่อน (สายตั้งของโคมยังเป็นกล่องด้านบน) */}
+      <Cables spans={cableSpans(get("cable"))} />
       {/* เส้นนีออนตั้งที่มุมตึก */}
       <KitInstances items={get("edgeStrip")} color={stripColor}>
         <meshBasicMaterial toneMapped={false} />
