@@ -267,3 +267,36 @@ describe("ticker strips", () => {
     for (const s of streets) for (const t of layoutStreet(s, CITY_SEED).filter((i) => i.type === "ticker")) expect(t.variant % 5).toBe(2);
   });
 });
+
+describe("no coplanar faces on street walls", () => {
+  // หน้าร้าน/แผ่นแสงบนผนังที่อยู่ระนาบเดียวกับหน้าตึกพอดีจะ z-fight (ภาพกะพริบข้างทางตอนเดิน)
+  it("keeps shopfronts and wall light spills off the facade plane", async () => {
+    const { spillsFor } = await import("./lightSpill");
+    let checked = 0;
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const off = (p: [number, number, number]) => distanceToPolyline([p[0], p[2]], s.points);
+      for (const it of items.filter((i) => i.type === "shopfront")) {
+        const front = off(it.position) - it.size[2] / 2;
+        expect(Math.abs(front - s.halfWidth), `${s.id} shopfront front face`).toBeGreaterThan(0.01);
+        expect(front).toBeLessThan(s.halfWidth);
+        checked++;
+      }
+      for (const sp of spillsFor(items).filter((x) => x.kind === "wall")) {
+        const d = off(sp.position);
+        expect(Math.abs(d - s.halfWidth), `${s.id} wall spill`).toBeGreaterThan(0.01);
+        expect(d, `${s.id} wall spill must sit in front of the wall`).toBeLessThan(s.halfWidth);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
+  });
+});
+
+describe("TEAM_TOWER", () => {
+  // พื้นสะท้อนตัดภาพที่ y=0 พอดี: ก้นตึกที่อยู่บน y=0 จะโผล่-หายในเงาสะท้อน (พื้นล็อบบี้กะพริบ)
+  it("sinks its base below the reflective floor and keeps its top", () => {
+    expect(TEAM_TOWER.center[1] - TEAM_TOWER.size[1] / 2).toBeLessThan(-0.05);
+    expect(TEAM_TOWER.center[1] + TEAM_TOWER.size[1] / 2).toBeCloseTo(42);
+  });
+});

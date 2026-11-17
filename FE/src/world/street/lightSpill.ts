@@ -2,7 +2,7 @@
 
 import type { Vec3 } from "../../config/districts";
 import type { KitItem, KitType } from "./kitLayout";
-import { STREETS } from "./streets";
+import { STREETS, distanceToPolyline } from "./streets";
 
 export interface Spill {
   kind: "floor" | "wall";
@@ -19,6 +19,9 @@ const STRENGTH: Partial<Record<KitType, number>> = { signH: 0.6, signV: 0.55, li
 
 /** แสงลงพื้นเฉพาะแหล่งที่ระดับถนน (y <= นี้) ป้ายสูงไม่ทำให้พื้นท่วม; จอใหญ่ได้เสมอ */
 export const FLOOR_SPILL_MAX_Y = 9;
+
+/** ระยะที่แผ่นแสงบนผนังยื่นออกจากหน้าตึก (เมตร) */
+const WALL_GAP = 0.02;
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
@@ -43,10 +46,12 @@ export function spillsFor(items: KitItem[]): Spill[] {
       variant: it.variant,
       strength,
     });
-    // ผนัง: แสงฟุ้งหลังป้าย ใหญ่กว่าป้าย 1.8 เท่า
+    // ผนัง: แสงฟุ้งหลังป้าย ใหญ่กว่าป้าย 1.8 เท่า · บนถนนวางห่างหน้าตึก 2 ซม. เสมอ
+    // (ระนาบเดียวกับหน้าตึกจะ z-fight · ลึกกว่าหน้าตึกจะถูกผนังบังหมด)
+    const back = it.street === "nexus" ? 0.05 : STREETS[it.street].halfWidth - WALL_GAP - distanceToPolyline([x, z], STREETS[it.street].points);
     out.push({
       kind: "wall",
-      position: [x - fx * 0.05, y, z - fz * 0.05],
+      position: [x - fx * back, y, z - fz * back],
       rotationY: it.rotationY,
       size: [it.size[0] * 1.8, it.size[1] * 1.8],
       variant: it.variant,

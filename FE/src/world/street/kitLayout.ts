@@ -115,7 +115,8 @@ function dressFacade(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -
   const hw = s.halfWidth;
   const mood = s.mood;
   // ชั้นล่าง: หน้าร้าน + ป้ายเหนือร้าน
-  put(c, s, base, side, "shopfront", 0, hw + 0.15, 1.6, [w * 0.88, 3.2, 0.3]);
+  // หน้าร้านยื่นจากผนัง 3 ซม. (ระนาบเดียวกับหน้าตึกพอดีจะ z-fight)
+  put(c, s, base, side, "shopfront", 0, hw + 0.12, 1.6, [w * 0.88, 3.2, 0.3]);
   {
     const along = pick(r, -0.2, 0.2) * w;
     const sw = w * pick(r, 0.5, 0.8);

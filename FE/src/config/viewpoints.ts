@@ -49,7 +49,7 @@ export const VIEWPOINTS: Record<DistrictId, Viewpoint[]> = {
     { id: "contactScreen", label: "vpTeamContact", mode: "eye", position: lobby([3.6, EYE_Y, 5.5]), target: lobby([3.6, 1.9, -2]), lookRange: EYE, marker: lobby([3.6, 0.05, 0.6]) },
   ],
   sanctuary: [
-    { id: "edge", label: "vpSanctuaryEdge", mode: "eye", position: [0, 1.9, -4.5], target: [0, 4.5, 10], lookRange: EYE, marker: [0, 0.05, 3] },
+    { id: "edge", label: "vpSanctuaryEdge", mode: "eye", position: [0, 1.9, -4.5], target: [0, 4.5, 10], lookRange: EYE, marker: [2, 0.05, 2.5] },
     { id: "presence", label: "vpSanctuaryFace", mode: "eye", position: [0, 2.2, -1], target: [0, 5.2, 10], lookRange: EYE, marker: [0, 0.05, 7] },
   ],
 };

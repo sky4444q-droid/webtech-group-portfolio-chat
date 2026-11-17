@@ -81,4 +81,5 @@ export const GATE_ARCH: Vec3 = [DISTRICTS.gate.position[0] - 12, 0, DISTRICTS.ga
 export const TEAM_LOBBY_OFFSET: Vec3 = [8, 0, 0];
 
 /** ตึกสำนักงาน Team HQ (พิกัดสัมพัทธ์กับที่ Team) — หน้าตึกอยู่ที่ x = center − size/2 หันไปทางถนน */
-export const TEAM_TOWER: { center: Vec3; size: Vec3 } = { center: [8.5, 21, 2.5], size: [20, 42, 22] };
+// ฐานตึกจมลงใต้พื้น 1 ม.: ก้นตึกที่ y=0 พอดีจะโผล่-หายในเงาพื้นสะท้อน (พื้นล็อบบี้กะพริบ) · ยอดยังอยู่ที่ 42
+export const TEAM_TOWER: { center: Vec3; size: Vec3 } = { center: [8.5, 20.5, 2.5], size: [20, 43, 22] };

@@ -135,3 +135,28 @@ describe("teamHoloCamera", () => {
     expect(pose.position[0]).toBeCloseTo(TEAM_HOLO_CARD_WORLD[0]);
   });
 });
+
+describe("data fragments vs viewpoint markers", () => {
+  // พื้นที่คลิกของวงแหวน (ทรงกระบอกล่องหน รัศมี 1 สูง 2 กลางที่ y 0.9) ต้องไม่บังเส้นสายตาจากกล้องไปยังเศษข้อมูล
+  it("never hides a fragment behind another viewpoint's click volume", async () => {
+    const { FRAGMENTS } = await import("../store/useDiscovery");
+    let checked = 0;
+    for (const f of FRAGMENTS) {
+      const base = DISTRICTS[f.district].position;
+      const cam = viewpointWorld(f.district, f.viewpoint).position;
+      const target = [base[0] + f.position[0], f.position[1], base[2] + f.position[2]];
+      VIEWPOINTS[f.district].forEach((vp, i) => {
+        if (i === f.viewpoint) return; // วงของจุดที่ยืนอยู่ถูกซ่อน
+        const m = [base[0] + vp.marker[0], vp.marker[1], base[2] + vp.marker[2]];
+        for (let k = 0; k <= 200; k++) {
+          const t = k / 200;
+          const p = [0, 1, 2].map((a) => cam[a] + (target[a] - cam[a]) * t);
+          const inside = Math.hypot(p[0] - m[0], p[2] - m[2]) < 1 && p[1] > m[1] - 0.1 && p[1] < m[1] + 1.9;
+          expect(inside, `${f.id} blocked by ${vp.id} marker at t=${t}`).toBe(false);
+        }
+        checked++;
+      });
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+});

@@ -40,7 +40,7 @@ export function TeamDistrict() {
         <boxGeometry args={TEAM_TOWER.size} />
         <meshStandardMaterial color="#0a0c14" metalness={0.85} roughness={0.15} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.9} />
       </mesh>
-      <mesh position={[TEAM_TOWER.center[0], TEAM_TOWER.size[1] + 0.2, TEAM_TOWER.center[2]]}>
+      <mesh position={[TEAM_TOWER.center[0], TEAM_TOWER.center[1] + TEAM_TOWER.size[1] / 2 + 0.2, TEAM_TOWER.center[2]]}>
         <boxGeometry args={[TEAM_TOWER.size[0] + 0.4, 0.3, TEAM_TOWER.size[2] + 0.4]} />
         <meshBasicMaterial color={cfg.color} toneMapped={false} />
       </mesh>
