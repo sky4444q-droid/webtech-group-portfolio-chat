@@ -133,7 +133,7 @@ function PerfProbe() {
       probe.current = null;
     };
   }, [gl]);
-  // priority 1 = รันท้ายเฟรม (หลังเรนเดอร์ของ composer) แล้วรีเซ็ต gl.info
-  useFrame((_, dt) => probe.current?.tick(dt), 1);
+  // ใช้ priority ปริยาย (0) เพื่อไม่ปิด auto-render ของ R3F; อ่านค่า gl.info ของเฟรมก่อนหน้าแล้วรีเซ็ต (ตัวเลขช้าไปหนึ่งเฟรม)
+  useFrame((_, dt) => probe.current?.tick(dt));
   return null;
 }
