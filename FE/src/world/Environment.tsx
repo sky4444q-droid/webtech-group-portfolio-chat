@@ -66,19 +66,22 @@ function Floor({ high }: { high: boolean }) {
       {high ? (
         <MeshReflectorMaterial
           normalMap={normalMap}
-          normalScale={new THREE.Vector2(0.6, 0.6)}
+          // พื้นกระเบื้องดำเงาเกือบกระจก (แบบรูปตัวอย่าง): สะท้อนแรง เบลอน้อย ไม่จางตามระยะ — รอยต่อกระเบื้องมาจาก normal/roughness
+          normalScale={new THREE.Vector2(0.25, 0.25)}
           roughnessMap={roughnessMap}
           resolution={1024}
-          blur={[60, 20]}
-          mixBlur={0.35}
-          mixStrength={2.6}
-          roughness={0.6}
-          depthScale={0.6}
-          minDepthThreshold={0.4}
-          maxDepthThreshold={1.2}
-          color="#050507"
-          metalness={0.6}
-          mirror={0.9}
+          blur={[40, 12]}
+          mixBlur={0.15}
+          mixStrength={3}
+          mixContrast={1.15}
+          roughness={0.35}
+          depthScale={0}
+          // สีของวัสดุนี้ "คูณ" กับภาพสะท้อน (สูตรของ drei) — ถ้าดำ ภาพสะท้อนจะหายเกือบหมด
+          // จึงใช้เทาอ่อน + mirror 1 + ไม่เป็นโลหะ: ความมืดของพื้นมาจากฉากที่สะท้อนเอง
+          color="#8a90a0"
+          metalness={0}
+          envMapIntensity={0.15}
+          mirror={1}
         />
       ) : (
         <meshStandardMaterial color="#050507" metalness={0.7} roughness={0.45} normalMap={normalMap} roughnessMap={roughnessMap} />

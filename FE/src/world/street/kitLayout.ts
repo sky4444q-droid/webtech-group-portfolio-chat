@@ -150,6 +150,12 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
   const mid = sample(s.points, len * pick(r, 0.4, 0.6));
   put(c, s, mid, r() < 0.5 ? -1 : 1, "bigScreen", 0, s.halfWidth + 0.2, pick(r, 9, 13), [Math.min(9, len * 0.2), 5, 0.3]);
 
+  // แผงข้อความใหญ่ลอยหน้าตึกระดับสายตา (แบบแผงลอยในรูปตัวอย่าง) — สลับฝั่ง ไม่ขวางทางเดิน
+  for (let k = 0; k < 3; k++) {
+    const at = sample(s.points, len * (0.2 + k * 0.28));
+    put(c, s, at, k % 2 ? 1 : -1, "panel", 0, s.halfWidth - 0.3, pick(r, 3.4, 3.9), [pick(r, 3.6, 5), pick(r, 2.6, 3.2), 0.1]);
+  }
+
   // สายไฟข้ามถนน / โคมแขวน
   const cables = s.mood === "shrine" ? 9 : 4;
   for (let i = 0; i < cables; i++) {
