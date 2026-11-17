@@ -15,6 +15,7 @@ const DECK_T = 0.35;
 const RAIL_Z = W / 2 - 0.05;
 const ROOF_Z = W / 2 + 0.05; // เสาหลังคาอยู่นอกแนวกระจก ไม่ทับกัน
 const ROOF_Y = 2.62;
+const SCREEN_H = 0.75; // ความสูงจอแขวน
 const STEPS = 16;
 const RISE = BRIDGE.y / STEPS;
 const TREAD = STAIR_RUN / STEPS;
@@ -114,18 +115,20 @@ export function Bridge() {
     for (let x = -L / 2 + 0.4; x <= L / 2 - 0.4 + 1e-6; x += 2) xs.push(x);
     return xs;
   }, []);
-  const roofXs = [-L / 2 + 0.4, -4, 0, 4, L / 2 - 0.4];
+  // เสาหลังคาเลี่ยงแนวสายตากลางสะพาน (จุดชมยืนที่ x = 0)
+  const roofXs = [-L / 2 + 0.4, -5.6, 5.6, L / 2 - 0.4];
   const stairLen = Math.hypot(STAIR_RUN, BRIDGE.y);
   const stairAngle = Math.atan2(BRIDGE.y, STAIR_RUN);
-  // จอยาวใต้หลังคา หันลงหาคนเดิน (ใช้โปรแกรมเดียวกับจอโฆษณาในถนน)
+  // จอยาวแขวนตั้งใต้คานหลังคาฝั่ง −z หันหน้าเข้าหาจุดชม (ใช้โปรแกรมเดียวกับจอโฆษณาในถนน)
+  // ขอบบนฝังเข้าคาน 0.02 ม. (คานล่างสุดอยู่ที่ ROOF_Y − 0.01) จึงไม่มีช่องว่าง
   const screenItems = useMemo<KitItem[]>(
     () => [
       {
         type: "screen",
         street: "nexus",
-        position: [base[0], base[1] + BRIDGE.y + 2.5, base[2] + BRIDGE.z],
+        position: [base[0], base[1] + BRIDGE.y + ROOF_Y - 0.01 + 0.02 - SCREEN_H / 2, base[2] + BRIDGE.z - ROOF_Z],
         rotationY: 0,
-        size: [L * 0.7, 0.04, 0.9],
+        size: [L * 0.6, SCREEN_H, 0.05],
         variant: 2,
         side: 1,
       },

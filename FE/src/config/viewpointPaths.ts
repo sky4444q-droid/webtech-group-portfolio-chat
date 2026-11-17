@@ -10,7 +10,9 @@ const EYE = 1.75; // ความสูงสายตาเหนือขั�
 const bottomZ = STAIR_TOP_Z - STAIR_RUN;
 const stairY = (z: number) => BRIDGE.y * ((z - bottomZ) / STAIR_RUN);
 const UP_LOCAL: Vec3[] = [
-  [STAIR_X, 2.1, bottomZ - 0.6],
+  // เข้าหาตีนบันไดตามแนวแกนบันได (จาก −z) ไม่ตัดผ่านตัวบันได
+  [STAIR_X, 2.1, bottomZ - 1.5],
+  [STAIR_X, 2.1, bottomZ],
   [STAIR_X, stairY(bottomZ + STAIR_RUN * 0.35) + EYE, bottomZ + STAIR_RUN * 0.35],
   [STAIR_X, stairY(bottomZ + STAIR_RUN * 0.7) + EYE, bottomZ + STAIR_RUN * 0.7],
   [STAIR_X, BRIDGE.y + EYE, BRIDGE.z],
