@@ -10,7 +10,6 @@ import { usePortfolio } from "../store/usePortfolio";
 import { useWorld } from "../store/useWorld";
 import { showcaseCamera } from "./layout";
 import { teamHoloCamera, viewpointWorld } from "../config/viewpoints";
-import { viewpointPath } from "../config/viewpointPaths";
 import { guideAt, planGuideTrip, type GuidePlan } from "./travel/guideTrip";
 import { guideState } from "./travel/guideState";
 import { mascotAt } from "./intro/introPath";
@@ -40,16 +39,6 @@ interface Trip {
   cues: Set<string>;
 }
 
-/** เดินตามทางพิเศษระหว่างจุดชม (เช่นขึ้นบันไดสะพาน) — สร้างครั้งเดียวตอนเปลี่ยนจุดชม */
-interface Walk {
-  start: number;
-  points: THREE.Vector3[];
-  /** ระยะสะสมถึงจุดที่ i */
-  cum: number[];
-  total: number;
-}
-
-const WALK_SPEED = 2.4; // ม./วินาที
 
 /** หลังถึงที่หมาย: ตัวจิ๋วยืนรอเฉพาะที่ Gate (ที่อื่นแปลงร่างเป็น AI แล้ว) */
 function settleGuide(at: DistrictId) {
@@ -73,8 +62,6 @@ export function CameraRig() {
   const look = useRef(new THREE.Vector3()).current;
   const dir = useRef(new THREE.Vector3()).current;
   const tmp = useRef(new THREE.Vector3()).current;
-  const walk = useRef<Walk | null>(null);
-  const lastVp = useRef<{ district: DistrictId; index: number } | null>(null);
 
   useFrame(({ camera, pointer }, delta) => {
     const s = useWorld.getState();
@@ -97,8 +84,6 @@ export function CameraRig() {
 
     // 2) เดินทาง
     if (s.travel) {
-      walk.current = null;
-      lastVp.current = null;
       if (!trip.current) {
         const kind = s.travelKind ?? "guide";
         const plan = kind === "guide" ? planGuideTrip(s.travel.from, s.travel.to) : null;
@@ -213,42 +198,6 @@ export function CameraRig() {
     // 3) อยู่กับที่: จุดชม หรือท่าซูมดูผลงาน
     const vp = viewpointWorld(s.district, s.viewpoint);
 
-    // เปลี่ยนจุดชมในพื้นที่เดิม: ถ้ามีทางพิเศษ (บันได) ให้เดินตามจุดผ่านก่อน แล้วค่อยส่งต่อให้ lerp ปกติ
-    const prev = lastVp.current;
-    if (!prev || prev.district !== s.district || prev.index !== s.viewpoint) {
-      walk.current = null;
-      if (prev && prev.district === s.district && !prefersReducedMotion()) {
-        const path = viewpointPath(s.district, prev.index, s.viewpoint);
-        if (path.length > 0) {
-          const points = [camera.position.clone(), ...path.map(v), v(vp.position)];
-          const cum = [0];
-          for (let i = 1; i < points.length; i++) cum.push(cum[i - 1] + points[i].distanceTo(points[i - 1]));
-          walk.current = { start: now, points, cum, total: cum[cum.length - 1] };
-        }
-      }
-      lastVp.current = { district: s.district, index: s.viewpoint };
-    }
-    const w = walk.current;
-    if (w) {
-      const d = ((now - w.start) / 1000) * WALK_SPEED;
-      if (d < w.total) {
-        let j = 0;
-        while (j < w.points.length - 2 && w.cum[j + 1] <= d) j++;
-        const seg = w.cum[j + 1] - w.cum[j];
-        const f = seg > 0 ? (d - w.cum[j]) / seg : 1;
-        pos.lerpVectors(w.points[j], w.points[j + 1], f);
-        // มองไปข้างหน้าตามทิศเดิน · ช่วงท้ายค่อย ๆ หันไปหาเป้าของจุดชม
-        dir.subVectors(w.points[j + 1], w.points[j]).normalize().multiplyScalar(5).add(pos);
-        look.set(...vp.target);
-        dir.lerp(look, clamp01((d - (w.total - 3)) / 3));
-        pos.y += Math.abs(Math.sin(d * Math.PI * 1.1)) * 0.04; // โยกตามก้าว
-        camera.position.copy(pos);
-        lookAt.current.lerp(dir, 1 - Math.exp(-Math.min(delta, 0.1) * 6));
-        camera.lookAt(lookAt.current);
-        return;
-      }
-      walk.current = null;
-    }
     let pose: { position: Vec3; target: Vec3 } = vp;
     let parallax = 1;
     let eye = vp.mode === "eye";

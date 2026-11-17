@@ -1,24 +1,16 @@
-// สะพานลอยกลางแยก Nexus: พื้นแผ่นกันลื่น ราวกระจก + เสาทุก 2 ม. + แถบไฟสีแบรนด์ หลังคาโครงบางพร้อมจอยาว และบันไดสองฝั่ง
+// สะพานลอยกลางแยก Nexus: สะพานเชื่อมตึกแบบบาง — พื้นแผ่นกันลื่น ราวกระจก และแถบไฟสีแบรนด์ ไม่มีหลังคาบังวิว
 // พิกัดในกลุ่ม: ผิวพื้นสะพาน y = 0 · แนวกลางสะพาน z = 0
 
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { BRIDGE, STAIR_RUN, STAIR_WIDTH, STAIR_X } from "../../config/bridge";
-import { DISTRICTS } from "../../config/districts";
+import { BRIDGE } from "../../config/bridge";
 import { BRAND } from "../../config/theme";
-import { ScreenGroup } from "../street/kitMeshes";
-import type { KitItem } from "../street/kitLayout";
 
 const L = BRIDGE.length;
 const W = BRIDGE.width;
-const DECK_T = 0.35;
-const RAIL_Z = W / 2 - 0.05;
-const ROOF_Z = W / 2 + 0.05; // เสาหลังคาอยู่นอกแนวกระจก ไม่ทับกัน
-const ROOF_Y = 2.62;
-const SCREEN_H = 0.75; // ความสูงจอแขวน
-const STEPS = 16;
-const RISE = BRIDGE.y / STEPS;
-const TREAD = STAIR_RUN / STEPS;
+const DECK_T = 0.18;
+const RAIL_Z = W / 2 - 0.04;
+const RAIL_H = 0.95;
 
 /** ลายแผ่นเหล็กกันลื่น (วาดบน canvas) */
 function useAntiSlipTexture() {
@@ -73,165 +65,36 @@ function useGradientBar(length: number, h: number, d: number) {
   return geo;
 }
 
-const tmp = new THREE.Object3D();
-
-/** ขั้นบันไดทั้งสองฝั่ง (instanced) — ขั้นล่างสุดคือพื้นลาน จึงไม่มีแผ่นทับพื้น */
-function StairTreads() {
-  const mesh = useRef<THREE.InstancedMesh>(null);
-  const count = (STEPS - 1) * 2;
-  useLayoutEffect(() => {
-    const m = mesh.current;
-    if (!m) return;
-    let n = 0;
-    for (const s of [-1, 1])
-      for (let i = 0; i < STEPS - 1; i++) {
-        tmp.position.set(s * STAIR_X, -(i + 1) * RISE - 0.06, -W / 2 - (i + 0.5) * TREAD);
-        tmp.updateMatrix();
-        m.setMatrixAt(n++, tmp.matrix);
-      }
-    m.instanceMatrix.needsUpdate = true;
-    m.computeBoundingSphere();
-  }, []);
-  return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, count]}>
-      <boxGeometry args={[STAIR_WIDTH, 0.12, TREAD + 0.04]} />
-      <meshStandardMaterial color="#1a1a24" metalness={0.6} roughness={0.55} />
-    </instancedMesh>
-  );
-}
-
-const glass = <meshStandardMaterial color="#1a2030" metalness={0.9} roughness={0.1} transparent opacity={0.28} depthWrite={false} />;
-const frame = <meshStandardMaterial color="#202030" metalness={0.8} roughness={0.35} />;
+const glass = <meshStandardMaterial color="#1a2030" metalness={0.9} roughness={0.1} transparent opacity={0.22} depthWrite={false} />;
 
 export function Bridge() {
-  const base = DISTRICTS.nexus.position;
   const deckMap = useAntiSlipTexture();
-  const ledFront = useGradientBar(L, 0.04, 0.08);
-  // ราวฝั่ง −z เว้นช่องปลายสะพานไว้ให้บันได
-  const backLen = L - STAIR_WIDTH * 2;
-  const ledBack = useGradientBar(backLen, 0.04, 0.08);
-  const posts = useMemo(() => {
-    const xs: number[] = [];
-    for (let x = -L / 2 + 0.4; x <= L / 2 - 0.4 + 1e-6; x += 2) xs.push(x);
-    return xs;
-  }, []);
-  // เสาหลังคาเลี่ยงแนวสายตากลางสะพาน (จุดชมยืนที่ x = 0)
-  const roofXs = [-L / 2 + 0.4, -5.6, 5.6, L / 2 - 0.4];
-  const stairLen = Math.hypot(STAIR_RUN, BRIDGE.y);
-  const stairAngle = Math.atan2(BRIDGE.y, STAIR_RUN);
-  // จอยาวแขวนตั้งใต้คานหลังคาฝั่ง −z หันหน้าเข้าหาจุดชม (ใช้โปรแกรมเดียวกับจอโฆษณาในถนน)
-  // ขอบบนฝังเข้าคาน 0.02 ม. (คานล่างสุดอยู่ที่ ROOF_Y − 0.01) จึงไม่มีช่องว่าง
-  const screenItems = useMemo<KitItem[]>(
-    () => [
-      {
-        type: "screen",
-        street: "nexus",
-        position: [base[0], base[1] + BRIDGE.y + ROOF_Y - 0.01 + 0.02 - SCREEN_H / 2, base[2] + BRIDGE.z - ROOF_Z],
-        rotationY: 0,
-        size: [L * 0.6, SCREEN_H, 0.05],
-        variant: 2,
-        side: 1,
-      },
-    ],
-    [base],
-  );
-
+  const led = useGradientBar(L, 0.03, 0.05);
   return (
-    <>
-      <group position={[0, BRIDGE.y, BRIDGE.z]}>
-        {/* พื้นสะพาน ผิวบนอยู่ที่ y = 0 */}
-        <mesh position={[0, -DECK_T / 2, 0]}>
-          <boxGeometry args={[L, DECK_T, W]} />
-          <meshStandardMaterial map={deckMap} color="#9a9ab0" metalness={0.7} roughness={0.5} />
+    <group position={[0, BRIDGE.y, BRIDGE.z]}>
+      {/* พื้นสะพานบาง ผิวบนอยู่ที่ y = 0 */}
+      <mesh position={[0, -DECK_T / 2, 0]}>
+        <boxGeometry args={[L, DECK_T, W]} />
+        <meshStandardMaterial map={deckMap} color="#9a9ab0" metalness={0.7} roughness={0.5} />
+      </mesh>
+      {/* แถบไฟใต้ขอบพื้น (ต่ำกว่าผิวบน 0.06 ม. ยื่นออกนอกขอบ 0.02 ม.) */}
+      {[-1, 1].map((s) => (
+        <mesh key={s} geometry={led} position={[0, -DECK_T + 0.02, s * (W / 2 + 0.02)]}>
+          <meshBasicMaterial vertexColors toneMapped={false} />
         </mesh>
-
-        {/* ราวกระจก (ยกเหนือพื้น 0.05 ม.) */}
-        <mesh position={[0, 0.5, RAIL_Z]}>
-          <boxGeometry args={[L, 0.9, 0.03]} />
-          {glass}
-        </mesh>
-        <mesh position={[0, 0.5, -RAIL_Z]}>
-          <boxGeometry args={[backLen, 0.9, 0.03]} />
-          {glass}
-        </mesh>
-        {[-1, 1].map((s) => (
-          <mesh key={s} position={[s * (L / 2 - 0.06), 0.5, 0]}>
-            <boxGeometry args={[0.03, 0.9, W - 0.2]} />
+      ))}
+      {/* ราวกระจกใสสองฝั่ง ยกเหนือพื้น 0.03 ม. + แถบไฟบนราว */}
+      {[-1, 1].map((s) => (
+        <group key={s}>
+          <mesh position={[0, 0.03 + RAIL_H / 2, s * RAIL_Z]}>
+            <boxGeometry args={[L, RAIL_H, 0.02]} />
             {glass}
           </mesh>
-        ))}
-
-        {/* เสาราวทุก 2 ม. */}
-        {posts.map((x) => (
-          <group key={x}>
-            <mesh position={[x, 0.53, RAIL_Z]}>
-              <boxGeometry args={[0.06, 1.1, 0.06]} />
-              {frame}
-            </mesh>
-            {Math.abs(x) <= backLen / 2 && (
-              <mesh position={[x, 0.53, -RAIL_Z]}>
-                <boxGeometry args={[0.06, 1.1, 0.06]} />
-                {frame}
-              </mesh>
-            )}
-          </group>
-        ))}
-
-        {/* แถบไฟ LED ไล่สีแบรนด์บนราว (ลอยเหนือหัวเสา 0.03 ม.) */}
-        <mesh geometry={ledFront} position={[0, 1.13, RAIL_Z]}>
-          <meshBasicMaterial vertexColors toneMapped={false} />
-        </mesh>
-        <mesh geometry={ledBack} position={[0, 1.13, -RAIL_Z]}>
-          <meshBasicMaterial vertexColors toneMapped={false} />
-        </mesh>
-
-        {/* โครงหลังคาบาง */}
-        {roofXs.map((x) =>
-          [-1, 1].map((s) => (
-            <mesh key={`${x}:${s}`} position={[x, (ROOF_Y - 0.2) / 2, s * ROOF_Z]}>
-              {/* ยึดข้างแผ่นพื้น: เริ่มต่ำกว่าผิวพื้น 0.2 ม. */}
-              <boxGeometry args={[0.07, ROOF_Y + 0.2, 0.07]} />
-              {frame}
-            </mesh>
-          )),
-        )}
-        {[-1, 1].map((s) => (
-          <mesh key={s} position={[0, ROOF_Y + 0.03, s * ROOF_Z]}>
-            <boxGeometry args={[L - 0.6, 0.08, 0.08]} />
-            {frame}
+          <mesh geometry={led} position={[0, 0.03 + RAIL_H + 0.02, s * RAIL_Z]}>
+            <meshBasicMaterial vertexColors toneMapped={false} />
           </mesh>
-        ))}
-        {roofXs.map((x) => (
-          <mesh key={x} position={[x, ROOF_Y + 0.08, 0]}>
-            <boxGeometry args={[0.08, 0.06, ROOF_Z * 2 + 0.1]} />
-            {frame}
-          </mesh>
-        ))}
-
-        {/* บันไดสองปลายสะพาน ลงไปทาง −z */}
-        <StairTreads />
-        {[-1, 1].map((s) =>
-          [-1, 1].map((side) => (
-            <mesh
-              key={`${s}:${side}`}
-              position={[s * STAIR_X + side * (STAIR_WIDTH / 2 + 0.05), -BRIDGE.y / 2 - 0.1, -W / 2 - STAIR_RUN / 2]}
-              rotation={[-stairAngle, 0, 0]}
-            >
-              <boxGeometry args={[0.08, 0.3, stairLen + 0.2]} />
-              <meshStandardMaterial color="#0f0f16" metalness={0.75} roughness={0.4} />
-            </mesh>
-          )),
-        )}
-
-        {/* เสาค้ำใต้สะพาน: จมดิน 0.05 ม. และฝังเข้าใต้พื้นสะพาน 0.02 ม. (ไม่ให้หน้าซ้อนกัน) */}
-        {[-4, 4].map((x) => (
-          <mesh key={x} position={[x, -(BRIDGE.y + DECK_T) / 2 - 0.015, 0]}>
-            <boxGeometry args={[0.5, BRIDGE.y - DECK_T + 0.07, 0.5]} />
-            <meshStandardMaterial color="#0c0c12" metalness={0.7} roughness={0.4} />
-          </mesh>
-        ))}
-      </group>
-      <ScreenGroup items={screenItems} program={2} seed={11} />
-    </>
+        </group>
+      ))}
+    </group>
   );
 }
