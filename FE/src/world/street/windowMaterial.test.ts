@@ -28,6 +28,9 @@ describe("patchWindowUv", () => {
     expect(shader.vertexShader).toContain("vWinUv = uv");
     expect(shader.fragmentShader).toContain("texture2D(emissiveMap, vWinUv)");
     expect(shader.fragmentShader).not.toContain("#include <emissivemap_fragment>");
+    expect(shader.fragmentShader).toContain("winToggle(");
+    expect(shader.vertexShader).toContain("instanceMatrix[3]");
+    expect(mat.userData.winTime).toEqual({ value: 0 });
   });
   it("ตึก 13×33 ม. = 10 ช่อง × 10 ชั้น = 1.25 × 0.625 แผ่น", () => {
     const [u, v] = windowUvScale(13, 33);

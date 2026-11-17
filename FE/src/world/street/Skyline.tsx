@@ -20,8 +20,8 @@ export function Skyline() {
   // แพตช์ก่อน compile ครั้งแรก · ไม่มี normal map และไม่รับแสงสะท้อน env · หน้าต่างสว่างพอทะลุหมอก
   const mat = useMemo(() => {
     if (!detail) return new THREE.MeshBasicMaterial({ color: "#1a1626" });
-    const m = new THREE.MeshStandardMaterial({ color: "#0c0a16", roughness: 0.9, metalness: 0.2, envMapIntensity: 0, emissive: new THREE.Color("#ffffff"), emissiveMap: windows, emissiveIntensity: 0.9 });
-    patchWindowUv(m);
+    const m = new THREE.MeshStandardMaterial({ color: "#0c0a16", roughness: 0.9, metalness: 0.2, envMapIntensity: 0, emissive: new THREE.Color("#ffffff"), emissiveMap: windows, emissiveIntensity: 0.5 });
+    patchWindowUv(m, { animate: false });
     return m;
   }, [detail, windows]);
   useEffect(() => () => mat.dispose(), [mat]);

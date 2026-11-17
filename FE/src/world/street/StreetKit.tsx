@@ -93,11 +93,15 @@ export function StreetKit() {
 
   // สร้าง material แล้วแพตช์ก่อน compile ครั้งแรก (แพตช์ผ่าน ref ช้าเกินไป หน้าต่างยืดเต็มหน้าตึก)
   const facadeMat = useMemo(() => {
-    const m = new THREE.MeshStandardMaterial({ map: concrete, normalMap: concreteN, roughness: 0.85, metalness: 0.1, emissive: new THREE.Color("#ffffff"), emissiveMap: windows, emissiveIntensity: 0.75 });
+    const m = new THREE.MeshStandardMaterial({ map: concrete, normalMap: concreteN, roughness: 0.85, metalness: 0.1, emissive: new THREE.Color("#ffffff"), emissiveMap: windows, emissiveIntensity: 0.32 });
     patchWindowUv(m);
     return m;
   }, [concrete, concreteN, windows]);
   useEffect(() => () => facadeMat.dispose(), [facadeMat]);
+  // เวลาไฟหน้าต่างเปิด-ปิดช้า ๆ
+  useFrame(({ clock }) => {
+    facadeMat.userData.winTime.value = clock.elapsedTime;
+  });
 
   const faces = useMemo(() => signFaces([...get("signH"), ...get("signV"), ...get("lightbox")]), [byType]); // eslint-disable-line react-hooks/exhaustive-deps
   const backColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.22), []);

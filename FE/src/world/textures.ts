@@ -1,6 +1,9 @@
 // สร้าง texture จาก <canvas> — ใช้ฟอนต์ของระบบ จึงแสดงภาษาญี่ปุ่น/อังกฤษได้โดยไม่ต้องโหลดฟอนต์ 3D
 
 import * as THREE from "three";
+import { BRAND } from "../config/brand";
+import { mulberry32 } from "../lib/rng";
+import { planWindows } from "./street/windowPlan";
 
 const cache = new Map<string, THREE.CanvasTexture>();
 
@@ -115,22 +118,47 @@ export function curtainWallTexture(): THREE.CanvasTexture {
     // พื้นดำ = แถบพื้นชั้น + เสาค้ำ (ไม่เรืองแสง)
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, W, H);
-    let seed = 11;
-    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const plan = planWindows(11);
+    const ledRand = mulberry32(77);
     for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const x = c * bw + 2, y = r * bh + 2, w = bw - 4, h = bh - 12; // เสาค้ำ 4px · แถบพื้นชั้น 10px ด้านล่าง
-        // กระจกดับ: สะท้อนฟ้าจาง ๆ
-        ctx.fillStyle = "#0a1020";
+      // แถบไฟ LED บาง ๆ ใต้พื้นชั้นบางชั้น
+      if (ledRand() < 0.18) {
+        ctx.fillStyle = ledRand() < 0.5 ? BRAND.purple : "#7fd6ff";
+        ctx.globalAlpha = 0.55;
+        ctx.fillRect(0, r * bh + bh - 6, W, 2);
         ctx.globalAlpha = 1;
-        ctx.fillRect(x, y, w, h);
-        if (rand() < 0.35) {
-          // ไฟเปิด = จุดแสงเล็กกลางช่อง (ไม่ใช่แผงเต็มช่อง) ตึกจึงยังมืด ป้ายเด่นกว่า
-          const k = rand();
-          ctx.fillStyle = k < 0.55 ? "#ffd9a8" : k < 0.85 ? "#9fc4ff" : "#D946EF";
-          ctx.globalAlpha = 0.35 + rand() * 0.4;
-          ctx.fillRect(x + 6, y + 10, w - 12, h - 22);
+      }
+      for (let c = 0; c < COLS; c++) {
+        const bay = plan[r][c];
+        const x = c * bw + 2, y = r * bh + 2, w = bw - 4, h = bh - 12; // เสาค้ำ 4px · แถบพื้นชั้น 10px ด้านล่าง
+        if (!bay.lit) {
+          // กระจกดับ: น้ำเงินเข้ม ไล่เฉดจาง ๆ
+          const g = ctx.createLinearGradient(0, y, 0, y + h);
+          g.addColorStop(0, "#0d1428");
+          g.addColorStop(1, "#060a16");
+          ctx.fillStyle = g;
+          ctx.fillRect(x, y, w, h);
+          continue;
         }
+        const col = bay.tone === "warm" ? "#ffd9a8" : bay.tone === "cool" ? "#cfe0ff" : c % 2 ? BRAND.magenta : BRAND.purple;
+        // ไล่แสง: สว่างที่เพดาน จางลงด้านล่าง
+        const g = ctx.createLinearGradient(0, y, 0, y + h);
+        g.addColorStop(0, col);
+        g.addColorStop(1, "#1a1410");
+        ctx.globalAlpha = bay.level;
+        ctx.fillStyle = g;
+        ctx.fillRect(x, y, w, h);
+        // ม่าน/เงา: แถบแนวนอนเข้ม
+        if (bay.blinds) {
+          ctx.fillStyle = "#000000";
+          ctx.globalAlpha = 0.45;
+          for (let sy = y + 3; sy < y + h; sy += 5) ctx.fillRect(x, sy, w, 2);
+        }
+        // กรอบหน้าต่าง
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = "#05060a";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
       }
     }
     ctx.globalAlpha = 1;
