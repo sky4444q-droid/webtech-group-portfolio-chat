@@ -23,7 +23,12 @@ export type KitType =
   | "vending"
   | "lamp"
   | "steam"
-  | "endCap";
+  | "endCap"
+  | "tier"
+  | "roof"
+  | "antenna"
+  | "edgeStrip"
+  | "beacon";
 
 export interface KitItem {
   type: KitType;
@@ -65,6 +70,8 @@ function sample(points: [number, number][], d: number) {
 
 interface Ctx {
   rand: () => number;
+  /** ตัวสุ่มแยกสำหรับยอดตึก */
+  crown: () => number;
   out: KitItem[];
   street: StreetId | "nexus";
   last: Map<string, number>;
@@ -127,8 +134,49 @@ function dressFacade(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -
   if (mood === "food" && r() < 0.5) put(c, s, base, side, "vent", pick(r, -0.3, 0.3) * w, hw + 0.2, pick(r, 3, 5), [0.7, 0.7, 0.4]);
 }
 
+/** ยอดตึก: ชั้นร่นถอย ของบนหลังคา เสาอากาศ+ไฟเตือน และเส้นนีออนที่มุมตึก (ตึกหนึ่งหลัง) */
+function crownFacade(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -1 | 1, w: number, h: number) {
+  // ใช้ตัวสุ่มแยก (c.crown) ไม่แตะสายสุ่มหลัก ป้าย/ของประกอบอื่นจึงไม่เลื่อน
+  const main = c.rand;
+  c.rand = c.crown;
+  try {
+    crownBody(c, s, base, side, w, h);
+  } finally {
+    c.rand = main;
+  }
+}
+
+function crownBody(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -1 | 1, w: number, h: number) {
+  const r = c.rand;
+  const hw = s.halfWidth;
+  let top = h;
+  // ชั้นร่นถอยบนตัวตึก ~60%: ร่นเข้าจากหน้าตึกด้านถนน 0.6–1.5 ม. สูง 25–45% ของฐาน
+  if (r() < 0.6) {
+    const inset = pick(r, 0.6, 1.5);
+    const th = h * pick(r, 0.25, 0.45);
+    const depth = FACADE_DEPTH - inset - 0.3;
+    put(c, s, base, side, "tier", 0, hw + inset + depth / 2, h + th / 2, [w * pick(r, 0.7, 0.9), th, depth]);
+    top = h + th;
+  }
+  const depthMid = hw + FACADE_DEPTH * 0.6;
+  // ของบนหลังคา: ถังน้ำ / ห้องเครื่อง / กรอบป้ายหลังคา (variant % 3 ใช้เลือกแบบ)
+  if (r() < 0.7) {
+    const rh = pick(r, 1.2, 3);
+    put(c, s, base, side, "roof", pick(r, -0.25, 0.25) * w, depthMid, top + rh / 2, [Math.min(pick(r, 1.5, 3), w * 0.5), rh, pick(r, 1.5, 3)]);
+  }
+  // เสาอากาศ + ไฟเตือนที่ปลายเสา
+  if (r() < 0.5) {
+    const ah = pick(r, 4, 10);
+    const along = pick(r, -0.3, 0.3) * w;
+    put(c, s, base, side, "antenna", along, depthMid, top + ah / 2, [0.12, ah, 0.12]);
+    put(c, s, base, side, "beacon", along, depthMid, top + ah, [0.45, 0.45, 0.45]);
+  }
+  // เส้นนีออนตั้งที่มุมตึก ~30%
+  if (r() < 0.3) put(c, s, base, side, "edgeStrip", (r() < 0.5 ? -1 : 1) * (w / 2 - 0.08), hw + 0.04, h / 2, [0.12, h, 0.12]);
+}
+
 export function layoutStreet(s: Street, seed: number): KitItem[] {
-  const c: Ctx = { rand: mulberry32(seed ^ hash(s.id)), out: [], street: s.id, last: new Map() };
+  const c: Ctx = { rand: mulberry32(seed ^ hash(s.id)), crown: mulberry32(seed ^ hash(s.id) ^ 0xc0ffee), out: [], street: s.id, last: new Map() };
   const r = c.rand;
   const len = polylineLength(s.points);
   // ถนน Team จบที่ตัวตึกสำนักงาน: ตึกริมถนนต้องหยุดก่อนหน้าตึก ไม่งั้นทะลุเข้าไปในล็อบบี้
@@ -138,10 +186,11 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
     let d = 0;
     while (d < rowLen - 0.01) {
       const w = Math.min(pick(r, 4, 9), rowLen - d);
-      const h = pick(r, 12, 40);
+      const h = pick(r, 18, 60);
       const base = sample(s.points, d + w / 2);
       put(c, s, base, side, "facade", 0, s.halfWidth + FACADE_DEPTH / 2, h / 2, [w, h, FACADE_DEPTH]);
       dressFacade(c, s, base, side, w, h);
+      crownFacade(c, s, base, side, w, h);
       d += w;
     }
   }
@@ -190,7 +239,7 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
 
 /** สี่แยก: ตึกสูงสี่มุม แต่ละมุมมีจอใหญ่และป้าย */
 export function layoutNexus(seed: number): KitItem[] {
-  const c: Ctx = { rand: mulberry32(seed ^ 0x5eed), out: [], street: "nexus", last: new Map() };
+  const c: Ctx = { rand: mulberry32(seed ^ 0x5eed), crown: mulberry32(seed ^ 0x5eed ^ 0xc0ffee), out: [], street: "nexus", last: new Map() };
   const r = c.rand;
   const corner = NEXUS_HALF + 7;
   for (const [sx, sz] of [[1, 1], [-1, 1], [1, -1], [-1, -1]] as const) {
@@ -198,6 +247,13 @@ export function layoutNexus(seed: number): KitItem[] {
     const x = sx * corner;
     const z = sz * corner;
     c.out.push({ type: "facade", street: "nexus", position: [x, h / 2, z], rotationY: 0, size: [14, h, 14], variant: Math.floor(r() * VARIANTS), side: 1 });
+    // ชั้นร่นถอย + เสาอากาศ + ไฟเตือน บนยอดตึกมุม
+    const th = h * pick(r, 0.25, 0.45);
+    c.out.push({ type: "tier", street: "nexus", position: [x, h + th / 2, z], rotationY: 0, size: [10.5, th, 10.5], variant: Math.floor(r() * VARIANTS), side: 1 });
+    const ah = pick(r, 6, 12);
+    const topY = h + th;
+    c.out.push({ type: "antenna", street: "nexus", position: [x, topY + ah / 2, z], rotationY: 0, size: [0.2, ah, 0.2], variant: 0, side: 1 });
+    c.out.push({ type: "beacon", street: "nexus", position: [x, topY + ah, z], rotationY: 0, size: [0.6, 0.6, 0.6], variant: 0, side: 1 });
     // จอใหญ่บนมุมตึก หันเข้าหากลางแยก
     const face = Math.atan2(-sx, -sz);
     const ox = x - sx * 7.2;

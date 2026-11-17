@@ -70,6 +70,7 @@ describe("layoutStreet", () => {
     for (const s of streets)
       for (const it of layoutStreet(s, CITY_SEED)) {
         if (it.type === "cable") continue; // สายไฟลอยสูงข้ามถนน ไม่ชนตึก
+        // ตึกชั้นบน/ของบนหลังคา/เสาอากาศ/ไฟเตือน/เส้นขอบ ต้องอยู่นอกตึก Team เช่นกัน (ไม่ข้ามด้วย continue)
         const c = Math.abs(Math.cos(it.rotationY));
         const sn = Math.abs(Math.sin(it.rotationY));
         const hx = (c * it.size[0] + sn * it.size[2]) / 2;
@@ -104,6 +105,55 @@ describe("lamp cords", () => {
         expect(cord.size).toEqual([0.03, expect.any(Number), 0.03]);
         expect(cord.position[1] - cord.size[1] / 2).toBeCloseTo(l.position[1] + l.size[1] / 2, 5);
       }
+    }
+  });
+});
+
+describe("canyon buildings", () => {
+  it("builds streets as canyons", () => {
+    const hs = streets.flatMap((s) => layoutStreet(s, CITY_SEED).filter((i) => i.type === "facade").map((i) => i.size[1]));
+    expect(Math.min(...hs)).toBeGreaterThanOrEqual(18);
+    expect(Math.max(...hs)).toBeLessThanOrEqual(60);
+    expect(hs.reduce((a, b) => a + b, 0) / hs.length).toBeGreaterThanOrEqual(32);
+  });
+
+  it("stacks a setback tier on at least 40% of facades, never overhanging the street face", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const facades = items.filter((i) => i.type === "facade");
+      const tiers = items.filter((i) => i.type === "tier");
+      expect(tiers.length / facades.length).toBeGreaterThanOrEqual(0.4);
+      // ระยะหน้าที่ใกล้ถนนที่สุดของชิ้น (กึ่งกลางถึงเส้นกลางถนน ลบครึ่งความลึก)
+      const near = (i: KitItem) => distanceToPolyline([i.position[0], i.position[2]], s.points) - i.size[2] / 2;
+      for (const t of tiers) {
+        const f = facades.find((f) => f.side === t.side && Math.abs(f.position[0] - t.position[0]) < f.size[0] && Math.abs(f.position[2] - t.position[2]) < f.size[0] && Math.abs(f.position[1] * 2 - (t.position[1] - t.size[1] / 2)) < 1e-6)!;
+        expect(f, `${s.id} tier has a facade`).toBeDefined();
+        expect(near(t)).toBeGreaterThanOrEqual(near(f) + 0.5 - 1e-6);
+        expect(t.size[1] / (f.size[1])).toBeGreaterThanOrEqual(0.25 - 1e-6);
+        expect(t.size[1] / (f.size[1])).toBeLessThanOrEqual(0.45 + 1e-6);
+      }
+    }
+  });
+
+  it("tops every antenna with a beacon", () => {
+    for (const s of [...streets, null]) {
+      const items = s ? layoutStreet(s, CITY_SEED) : layoutNexus(CITY_SEED);
+      const antennas = items.filter((i) => i.type === "antenna");
+      const beacons = items.filter((i) => i.type === "beacon");
+      expect(antennas.length).toBeGreaterThan(0);
+      expect(beacons.length).toBe(antennas.length);
+      for (const a of antennas) {
+        const tip = a.position[1] + a.size[1] / 2;
+        expect(beacons.some((b) => b.position[0] === a.position[0] && b.position[2] === a.position[2] && Math.abs(b.position[1] - tip) < 0.5)).toBe(true);
+      }
+    }
+  });
+
+  it("puts roof clutter and edge strips on the buildings", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      expect(items.some((i) => i.type === "roof")).toBe(true);
+      expect(items.some((i) => i.type === "edgeStrip")).toBe(true);
     }
   });
 });

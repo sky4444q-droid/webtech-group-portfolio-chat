@@ -1,7 +1,7 @@
 // เมืองจากชุดตัวต่อ: วาดเฉพาะถนนที่อยู่ + ถนนที่กำลังเดินผ่าน + สี่แยก
 // ป้าย = กล่องเรืองแสงจาง ๆ + ตัวอักษรจาก atlas · จอ = canvas วาดตามจังหวะ · จอใหญ่ = แสงใต้น้ำ · แผง = แผงข้อมูล
 
-import { useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as sfx from "../../audio/sfx";
 import { useTexture } from "@react-three/drei";
@@ -90,13 +90,14 @@ export function StreetKit() {
   const backColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.22), []);
   const glowColor = useMemo(() => (it: KitItem) => neonColor(it.variant, it.type === "bigScreen" ? 2.4 : it.type === "panel" ? 1.1 : 1.8), []);
   const shopColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.09), []);
+  const stripColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 1.4), []);
   const lampColor = useMemo(() => (it: KitItem) => neonColor(it.variant % 2 ? 3 : 0, 2.2), []);
   const facadeTint = useMemo(() => (it: KitItem) => new THREE.Color().setScalar(0.1 + (it.variant % 4) * 0.025), []);
 
   return (
     <group>
       {/* ตึก: คอนกรีตเก่าสีเข้ม + หน้าต่างเปิดไฟสุ่ม */}
-      <KitInstances items={[...get("facade"), ...get("endCap")]} color={facadeTint}>
+      <KitInstances items={[...get("facade"), ...get("endCap"), ...get("tier")]} color={facadeTint}>
         <meshStandardMaterial map={concrete} normalMap={concreteN} roughness={0.85} metalness={0.1} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.55} />
       </KitInstances>
       {/* หน้าร้าน: กระจกมืดเงา ๆ มีแสงสีร้านจาง ๆ (ไม่ใช่บล็อกนีออนทึบ) */}
@@ -129,12 +130,17 @@ export function StreetKit() {
         <InfoPanel key={`${it.street}-${i}`} item={it} content={panelContent(it, i)} />
       ))}
       {/* ของโลหะบนผนัง */}
-      <KitInstances items={[...get("ac"), ...get("vent"), ...get("balcony"), ...get("crate")]}>
+      <KitInstances items={[...get("ac"), ...get("vent"), ...get("balcony"), ...get("crate"), ...get("roof"), ...get("antenna")]}>
         <meshStandardMaterial color="#1a1b22" normalMap={metalN} roughnessMap={metalR} metalness={0.7} roughness={0.6} />
       </KitInstances>
       <KitInstances items={[...get("pipe"), ...get("cable")]}>
         <meshStandardMaterial color="#0c0c10" metalness={0.6} roughness={0.5} />
       </KitInstances>
+      {/* เส้นนีออนตั้งที่มุมตึก */}
+      <KitInstances items={get("edgeStrip")} color={stripColor}>
+        <meshBasicMaterial toneMapped={false} />
+      </KitInstances>
+      <Beacons items={get("beacon")} blink={flicker} />
       <KitInstances items={get("vending")} color={glowColor}>
         <meshBasicMaterial toneMapped={false} />
       </KitInstances>
@@ -152,6 +158,49 @@ function keyTargetOf(it: KitItem, all: KitItem[]): DistrictId | undefined {
   if (it.street === "nexus") return NEXUS_TARGETS[i];
   return i === 0 ? STREETS[it.street].district : undefined;
 }
+
+const BEACON_RED = new THREE.Color("#ff2a2a").multiplyScalar(3);
+const BEACON_PERIOD = 1.6;
+
+/** ไฟเตือนแดงบนปลายเสาอากาศ: กะพริบด้วยการคูณสีต่อชิ้น รอบ 1.6 วินาที เฟสต่างกันต่อชิ้น (ปิดกะพริบเมื่อ blink=false) */
+function Beacons({ items, blink }: { items: KitItem[]; blink: boolean }) {
+  const mesh = useRef<THREE.InstancedMesh>(null);
+  const col = useMemo(() => new THREE.Color(), []);
+  const phases = useMemo(() => items.map((_, i) => ((i * 0.618) % 1) * BEACON_PERIOD), [items]);
+  const paint = (t: number) => {
+    const m = mesh.current;
+    if (!m) return;
+    items.forEach((_, i) => {
+      const k = blink ? (((t + phases[i]) % BEACON_PERIOD) / BEACON_PERIOD < 0.3 ? 1 : 0.08) : 1;
+      m.setColorAt(i, col.copy(BEACON_RED).multiplyScalar(k));
+    });
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  };
+  useLayoutEffect(() => {
+    const m = mesh.current;
+    if (!m) return;
+    items.forEach((it, i) => {
+      tmpObj.position.set(...it.position);
+      tmpObj.scale.set(...it.size);
+      tmpObj.rotation.set(0, 0, 0);
+      tmpObj.updateMatrix();
+      m.setMatrixAt(i, tmpObj.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    paint(0);
+  }, [items, blink]); // eslint-disable-line react-hooks/exhaustive-deps
+  useFrame(({ clock }) => {
+    if (blink) paint(clock.elapsedTime);
+  });
+  if (items.length === 0) return null;
+  return (
+    <instancedMesh ref={mesh} args={[undefined, undefined, items.length]} frustumCulled={false}>
+      <sphereGeometry args={[0.5, 8, 6]} />
+      <meshBasicMaterial toneMapped={false} />
+    </instancedMesh>
+  );
+}
+const tmpObj = new THREE.Object3D();
 
 const BUZZ_RANGE = 6;
 const BUZZ_COOLDOWN = 5;
