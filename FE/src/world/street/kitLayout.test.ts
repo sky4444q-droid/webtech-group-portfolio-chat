@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CITY_SEED, layoutNexus, layoutStreet, type KitItem } from "./kitLayout";
-import { STREETS, distanceToPolyline, polylineLength } from "./streets";
+import { STREETS, TEAM_TOWER, distanceToPolyline, polylineLength } from "./streets";
 import { DISTRICTS } from "../../config/districts";
 
 const SIGNS = new Set(["signH", "signV", "lightbox", "screen", "panel"]);
@@ -61,6 +61,22 @@ describe("layoutStreet", () => {
         expect(capLen).toBeGreaterThan(len);
       }
     }
+  });
+
+  it("keeps every street piece out of the Team HQ tower (no buildings poking into the lobby)", () => {
+    const [tx, , tz] = DISTRICTS.team.position;
+    const t = TEAM_TOWER;
+    const box = { x0: tx + t.center[0] - t.size[0] / 2, x1: tx + t.center[0] + t.size[0] / 2, z0: tz + t.center[2] - t.size[2] / 2, z1: tz + t.center[2] + t.size[2] / 2 };
+    for (const s of streets)
+      for (const it of layoutStreet(s, CITY_SEED)) {
+        if (it.type === "cable") continue; // สายไฟลอยสูงข้ามถนน ไม่ชนตึก
+        const c = Math.abs(Math.cos(it.rotationY));
+        const sn = Math.abs(Math.sin(it.rotationY));
+        const hx = (c * it.size[0] + sn * it.size[2]) / 2;
+        const hz = (sn * it.size[0] + c * it.size[2]) / 2;
+        const overlaps = it.position[0] + hx > box.x0 + 1e-6 && it.position[0] - hx < box.x1 && it.position[2] + hz > box.z0 && it.position[2] - hz < box.z1;
+        expect(overlaps, `${s.id} ${it.type} at ${it.position.map((v) => v.toFixed(2))}`).toBe(false);
+      }
   });
 
   it("varies sign variants so neighbours differ", () => {

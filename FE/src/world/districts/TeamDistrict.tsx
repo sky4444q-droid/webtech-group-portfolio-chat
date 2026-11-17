@@ -13,7 +13,7 @@ import { useT } from "../../i18n";
 import { NeonSign } from "../NeonSign";
 import { AiPresence } from "../ai/AiPresence";
 import { buildingWindowsTexture, screenTexture } from "../textures";
-import { TEAM_LOBBY_OFFSET } from "../street/streets";
+import { TEAM_LOBBY_OFFSET, TEAM_TOWER } from "../street/streets";
 import { HoloCard } from "../HoloCard";
 import { usePortfolio } from "../../store/usePortfolio";
 import { usePick } from "../../i18n";
@@ -32,12 +32,12 @@ export function TeamDistrict() {
   return (
     <group position={cfg.position}>
       {/* ตึกสำนักงานกระจกปิดปลายถนน (หน้าตึกหันไปทาง −x หาถนน) — ล็อบบี้อยู่ข้างใน ไปได้ทางลิฟต์ */}
-      <mesh position={[8.5, 21, 2.5]}>
-        <boxGeometry args={[20, 42, 22]} />
+      <mesh position={TEAM_TOWER.center}>
+        <boxGeometry args={TEAM_TOWER.size} />
         <meshStandardMaterial color="#0a0c14" metalness={0.85} roughness={0.15} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.9} />
       </mesh>
-      <mesh position={[8.5, 42.2, 2.5]}>
-        <boxGeometry args={[20.4, 0.3, 22.4]} />
+      <mesh position={[TEAM_TOWER.center[0], TEAM_TOWER.size[1] + 0.2, TEAM_TOWER.center[2]]}>
+        <boxGeometry args={[TEAM_TOWER.size[0] + 0.4, 0.3, TEAM_TOWER.size[2] + 0.4]} />
         <meshBasicMaterial color={cfg.color} toneMapped={false} />
       </mesh>
       {/* ประตูกระจกเรืองแสง */}
@@ -191,30 +191,31 @@ function TeamHolo() {
   const expandPanel = useWorld((s) => s.expandPanel);
   const openPanel = useWorld((s) => s.openPanel);
   if (!open) return null;
-  const n = members.length;
+  // การ์ดเดียวรวมทุกคน: ให้ CSS จัดเรียง แทนการวางการ์ดแยกตามพิกัดฉาก (ซึ่งซ้อนกันบนจอเตี้ย)
   return (
     <group position={[-3.6, 2.1, -1.2]}>
-      {members.map((m, i) => (
-        <HoloCard key={m.id} position={[(i - (n - 1) / 2) * 1.55, 0.1 + Math.abs(i - (n - 1) / 2) * -0.12, 0.4]} color={COLORS.green}>
-          <button
-            type="button"
-            className="holo-member"
-            style={{ animationDelay: `${i * 0.08}s` }}
-            onClick={(e) => {
-              e.stopPropagation();
-              sfx.play("panelOpen");
-              openPanel({ kind: "member", id: m.id });
-            }}
-          >
-            <span className="member-silhouette" aria-hidden="true" />
-            <strong>{p(m.name)}</strong>
-            <small>
-              <Text value={m.role} placeholder={m.placeholder} />
-            </small>
-          </button>
-        </HoloCard>
-      ))}
-      <HoloCard position={[0, -1.35, 0.4]} color={COLORS.green}>
+      <HoloCard position={[0, -0.2, 0.4]} color={COLORS.green} className="holo-card-team">
+        <div className="holo-team-grid">
+          {members.map((m, i) => (
+            <button
+              key={m.id}
+              type="button"
+              className="holo-member"
+              style={{ animationDelay: `${i * 0.08}s` }}
+              onClick={(e) => {
+                e.stopPropagation();
+                sfx.play("panelOpen");
+                openPanel({ kind: "member", id: m.id });
+              }}
+            >
+              <span className="member-silhouette" aria-hidden="true" />
+              <strong>{p(m.name)}</strong>
+              <small>
+                <Text value={m.role} placeholder={m.placeholder} />
+              </small>
+            </button>
+          ))}
+        </div>
         <p className="holo-hint">{tr("holoTeamHint")}</p>
         <button
           type="button"

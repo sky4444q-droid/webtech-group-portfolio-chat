@@ -79,3 +79,6 @@ export const GATE_ARCH: Vec3 = [DISTRICTS.gate.position[0] - 12, 0, DISTRICTS.ga
 
 /** ล็อบบี้ Team HQ อยู่ในตึกปลายถนน เลยประตูเข้าไป */
 export const TEAM_LOBBY_OFFSET: Vec3 = [8, 0, 0];
+
+/** ตึกสำนักงาน Team HQ (พิกัดสัมพัทธ์กับที่ Team) — หน้าตึกอยู่ที่ x = center − size/2 หันไปทางถนน */
+export const TEAM_TOWER: { center: Vec3; size: Vec3 } = { center: [8.5, 21, 2.5], size: [20, 42, 22] };

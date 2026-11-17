@@ -1175,6 +1175,18 @@ button {
   user-select: none;
 }
 .holo-card-wide { width: 300px; }
+/* การ์ดทีม: สมาชิกทุกคนอยู่ในการ์ดเดียว จัดด้วย grid — ขนาด px ของ Html ไม่ขึ้นกับระยะห่างในฉาก จึงไม่ซ้อนกันไม่ว่าจอสูงเท่าไร */
+.holo-card-team { width: 480px; }
+.holo-team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.holo-team-grid .holo-member {
+  padding: 8px 6px;
+  border: 1px solid color-mix(in srgb, var(--holo) 35%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--holo) 8%, transparent);
+  pointer-events: auto;
+}
+.holo-team-grid .holo-member:hover,
+.holo-team-grid .holo-member:focus-visible { border-color: var(--holo); }
 .holo-scan {
   position: absolute;
   inset: 0;

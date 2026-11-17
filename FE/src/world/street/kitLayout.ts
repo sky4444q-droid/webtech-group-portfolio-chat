@@ -3,7 +3,7 @@
 
 import type { Vec3 } from "../../config/districts";
 import { mulberry32 } from "../../lib/rng";
-import { NEXUS_HALF, STREETS, polylineLength, type Street, type StreetId } from "./streets";
+import { NEXUS_HALF, STREETS, TEAM_TOWER, polylineLength, type Street, type StreetId } from "./streets";
 
 export type KitType =
   | "facade"
@@ -131,11 +131,13 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
   const c: Ctx = { rand: mulberry32(seed ^ hash(s.id)), out: [], street: s.id, last: new Map() };
   const r = c.rand;
   const len = polylineLength(s.points);
+  // ถนน Team จบที่ตัวตึกสำนักงาน: ตึกริมถนนต้องหยุดก่อนหน้าตึก ไม่งั้นทะลุเข้าไปในล็อบบี้
+  const rowLen = s.id === "officeRow" ? len - (TEAM_TOWER.size[0] / 2 - TEAM_TOWER.center[0]) - 0.2 : len;
 
   for (const side of [-1, 1] as const) {
     let d = 0;
-    while (d < len - 0.01) {
-      const w = Math.min(pick(r, 4, 9), len - d);
+    while (d < rowLen - 0.01) {
+      const w = Math.min(pick(r, 4, 9), rowLen - d);
       const h = pick(r, 12, 40);
       const base = sample(s.points, d + w / 2);
       put(c, s, base, side, "facade", 0, s.halfWidth + FACADE_DEPTH / 2, h / 2, [w, h, FACADE_DEPTH]);
