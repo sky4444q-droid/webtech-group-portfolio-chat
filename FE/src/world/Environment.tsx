@@ -104,7 +104,7 @@ function LowFloorMaterial({ normalMap }: { normalMap: THREE.Texture }) {
     roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping;
     roughnessMap.repeat.set(105, 105);
   }, [roughnessMap]);
-  return <meshStandardMaterial color="#14151a" metalness={0.7} roughness={0.45} normalMap={normalMap} normalScale={new THREE.Vector2(0.7, 0.7)} roughnessMap={roughnessMap} />;
+  return <meshStandardMaterial color="#1d1f25" metalness={0.7} roughness={0.45} normalMap={normalMap} normalScale={new THREE.Vector2(0.7, 0.7)} roughnessMap={roughnessMap} />;
 }
 
 function Floor({ high }: { high: boolean }) {
@@ -134,7 +134,7 @@ function Floor({ high }: { high: boolean }) {
           depthScale={0}
           // สีของวัสดุนี้ "คูณ" กับภาพสะท้อน (สูตรของ drei) — ถ้าดำ ภาพสะท้อนจะหายเกือบหมด
           // จึงใช้เทาอ่อน + mirror 1 + ไม่เป็นโลหะ: ความมืดของพื้นมาจากฉากที่สะท้อนเอง
-          color="#5a606e"
+          color="#4a4e58"
           metalness={0}
           envMapIntensity={0.15}
           mirror={1}
