@@ -71,7 +71,7 @@ export function World() {
       {/* multisampling ต้องเป็น 0: MSAA ใน composer ทำให้ภาพดำเป็นช่วง ๆ (กะพริบ) บนการ์ดจอบางรุ่น */}
       {fx.bloom && (
         <EffectComposer multisampling={0}>
-          <Bloom mipmapBlur intensity={1.15} luminanceThreshold={0.35} luminanceSmoothing={0.25} />
+          <Bloom mipmapBlur intensity={1.05} luminanceThreshold={0.42} luminanceSmoothing={0.25} />
           {/* ปรับสี: ดำลึก + คอนทราสต์ (ไม่ใช้ HueSaturation: บนฉากนี้ทำให้ผนังตึกขาวโพลน) */}
           <BrightnessContrast brightness={-0.03} contrast={fx.grading ? 0.16 : 0} />
           {/* ระยะชัดตื้นเบา ๆ โฟกัสที่ระยะตัวจิ๋ว */}

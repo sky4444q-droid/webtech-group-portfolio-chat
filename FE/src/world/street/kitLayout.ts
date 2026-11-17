@@ -30,7 +30,8 @@ export type KitType =
   | "antenna"
   | "edgeStrip"
   | "beacon"
-  | "giantScreen";
+  | "giantScreen"
+  | "ticker";
 
 export interface KitItem {
   type: KitType;
@@ -76,6 +77,8 @@ interface Ctx {
   rand: () => number;
   /** ตัวสุ่มแยกสำหรับยอดตึก */
   crown: () => number;
+  /** ตัวสุ่มแยกสำหรับแถบไฟวิ่ง (ไม่แตะ rand/crown เดิม ตำแหน่งชิ้นอื่นจึงไม่เลื่อน) */
+  tick: () => number;
   out: KitItem[];
   street: StreetId | "nexus";
   last: Map<string, number>;
@@ -164,6 +167,26 @@ function crownFacade(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -
   }
 }
 
+/** โปรแกรมจอที่ 2 (ticker) เลือกด้วย variant % 5 === 2 → 2, 7, 12 */
+const TICKER_VARIANTS = [2, 7, 12];
+
+/** แถบไฟ LED วิ่งเหนือหน้าร้าน ~40% (เลือกแบบเว้นระยะคงที่ ไม่สุ่ม จึงได้สัดส่วนแน่นอนทุกถนน) */
+function tickerFor(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -1 | 1, w: number, index: number) {
+  if (Math.floor((index + 1) * 0.4 + 0.6) === Math.floor(index * 0.4 + 0.6)) return;
+  const nx = -base.uz * side;
+  const nz = base.ux * side;
+  const off = s.halfWidth - 0.02;
+  c.out.push({
+    type: "ticker",
+    street: s.id,
+    position: [base.x + nx * off, 3.1 + c.tick() * 0.2, base.z + nz * off],
+    rotationY: Math.atan2(-nx, -nz),
+    size: [w * 0.8, 0.35, 0.08],
+    variant: TICKER_VARIANTS[Math.floor(c.tick() * TICKER_VARIANTS.length)],
+    side,
+  });
+}
+
 /** ไม่ให้ชิ้นล้ำออกนอกความกว้างตึก (ตึกท้ายถนน Team ติดตัวตึกสำนักงาน) */
 const fitAlong = (x: number, width: number, w: number) => Math.max(-(w / 2 - width / 2), Math.min(w / 2 - width / 2, x));
 
@@ -227,7 +250,7 @@ function crownBody(c: Ctx, s: Street, base: ReturnType<typeof sample>, side: -1 
 }
 
 export function layoutStreet(s: Street, seed: number): KitItem[] {
-  const c: Ctx = { rand: mulberry32(seed ^ hash(s.id)), crown: mulberry32(seed ^ hash(s.id) ^ 0xc0ffee), out: [], street: s.id, last: new Map() };
+  const c: Ctx = { rand: mulberry32(seed ^ hash(s.id)), crown: mulberry32(seed ^ hash(s.id) ^ 0xc0ffee), tick: mulberry32(seed ^ hash(s.id) ^ 0x71c4e7), out: [], street: s.id, last: new Map() };
   const r = c.rand;
   const len = polylineLength(s.points);
   // ถนน Team จบที่ตัวตึกสำนักงาน: ตึกริมถนนต้องหยุดก่อนหน้าตึก ไม่งั้นทะลุเข้าไปในล็อบบี้
@@ -236,6 +259,7 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
   const lots: { base: ReturnType<typeof sample>; side: -1 | 1; w: number; h: number; d: number }[] = [];
   for (const side of [-1, 1] as const) {
     let d = 0;
+    let shopIndex = 0;
     while (d < rowLen - 0.01) {
       const w = Math.min(pick(r, 4, 9), rowLen - d);
       const h = pick(r, 18, 60);
@@ -243,6 +267,7 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
       put(c, s, base, side, "facade", 0, s.halfWidth + FACADE_DEPTH / 2, h / 2, [w, h, FACADE_DEPTH]);
       dressFacade(c, s, base, side, w, h);
       crownFacade(c, s, base, side, w, h);
+      tickerFor(c, s, base, side, w, shopIndex++);
       lots.push({ base, side, w, h, d });
       d += w;
     }
@@ -332,7 +357,7 @@ function giantForStreet(c: Ctx, s: Street, lots: { base: ReturnType<typeof sampl
 
 /** สี่แยก: ตึกสูงสี่มุม แต่ละมุมมีจอใหญ่และป้าย */
 export function layoutNexus(seed: number): KitItem[] {
-  const c: Ctx = { rand: mulberry32(seed ^ 0x5eed), crown: mulberry32(seed ^ 0x5eed ^ 0xc0ffee), out: [], street: "nexus", last: new Map() };
+  const c: Ctx = { rand: mulberry32(seed ^ 0x5eed), crown: mulberry32(seed ^ 0x5eed ^ 0xc0ffee), tick: mulberry32(seed ^ 0x5eed ^ 0x71c4e7), out: [], street: "nexus", last: new Map() };
   const r = c.rand;
   const corner = NEXUS_HALF + 7;
   for (const [sx, sz] of [[1, 1], [-1, 1], [1, -1], [-1, -1]] as const) {

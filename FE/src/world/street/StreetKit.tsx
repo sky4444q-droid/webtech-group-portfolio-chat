@@ -128,7 +128,7 @@ export function StreetKit() {
       ))}
       {/* จอโฆษณา: แยกตามโปรแกรม */}
       {SCREEN_PROGRAMS.map((_, p) => (
-        <ScreenGroup key={p} program={p} seed={p * 3 + 1} items={get("screen").filter((it) => it.variant % SCREEN_PROGRAMS.length === p)} />
+        <ScreenGroup key={p} program={p} seed={p * 3 + 1} items={[...get("screen"), ...get("ticker")].filter((it) => it.variant % SCREEN_PROGRAMS.length === p)} />
       ))}
       {/* จอใหญ่แสงใต้น้ำ — จอแรกของแต่ละถนนเป็นจอสำคัญ (โลโก้ + ป้ายบอกทาง) */}
       {get("bigScreen").map((it, i) => (
@@ -139,7 +139,7 @@ export function StreetKit() {
         <GiantScreen key={`${it.street}-g${i}`} item={it} />
       ))}
       {/* พื้นสะท้อนปลอม (โหมดต่ำ) ใต้จอใหญ่และป้ายตั้ง */}
-      {!fx.reflector && <FakeReflections items={[...get("bigScreen"), ...get("signV")]} />}
+      {!fx.reflector && <FakeReflections items={[...get("bigScreen"), ...get("giantScreen"), ...get("signV")]} />}
       {fx.steam && <Steam points={get("steam").map((it) => it.position)} />}
       {get("panel").map((it, i) => (
         <InfoPanel key={`${it.street}-${i}`} item={it} content={panelContent(it, i)} />

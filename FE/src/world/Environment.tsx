@@ -14,6 +14,7 @@ import { Skyline } from "./street/Skyline";
 import { EnergyCoreTower } from "./street/EnergyCoreTower";
 import { DustMotes, GroundFog, RainSplashes, Traffic } from "./fx/Effects";
 import { HoloFish } from "./fx/HoloFish";
+import { mulberry32 } from "../lib/rng";
 
 export function Environment() {
   const quality = useWorld((s) => s.quality);
@@ -54,6 +55,39 @@ function FloorPlain() {
   );
 }
 
+let puddleMap: THREE.CanvasTexture | null = null;
+/** แผนที่ความหยาบความถี่ต่ำ 256² (แคชระดับโมดูล): พื้นที่ดำ = แอ่งน้ำเงาจัด, ขาว = พื้นแห้งหยาบ — วาดห่อขอบให้ซ้ำต่อเนื่อง */
+function getPuddleMap(): THREE.CanvasTexture {
+  if (puddleMap) return puddleMap;
+  const N = 256;
+  const c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#e6e6e6";
+  g.fillRect(0, 0, N, N);
+  const rnd = mulberry32(0x9ddc1e);
+  for (let i = 0; i < 26; i++) {
+    const x = rnd() * N;
+    const y = rnd() * N;
+    const r = 18 + rnd() * 38;
+    const dark = 30 + Math.floor(rnd() * 60);
+    // วาดซ้ำที่ offset ±N เพื่อให้ขอบต่อกันพอดีเมื่อ repeat
+    for (const ox of [-N, 0, N])
+      for (const oy of [-N, 0, N]) {
+        const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
+        gr.addColorStop(0, `rgba(${dark},${dark},${dark},0.95)`);
+        gr.addColorStop(0.6, `rgba(${dark},${dark},${dark},0.5)`);
+        gr.addColorStop(1, "rgba(0,0,0,0)");
+        g.fillStyle = gr;
+        g.fillRect(x + ox - r, y + oy - r, r * 2, r * 2);
+      }
+  }
+  puddleMap = new THREE.CanvasTexture(c);
+  puddleMap.wrapS = puddleMap.wrapT = THREE.RepeatWrapping;
+  puddleMap.repeat.set(6, 6);
+  return puddleMap;
+}
+
 function Floor({ high }: { high: boolean }) {
   // พื้นกระเบื้องดำแผ่นใหญ่เงา (ตามรูปตัวอย่าง): normal + roughness จาก ambientCG Tiles052 (CC0) ให้เห็นรอยต่อกระเบื้อง
   const [normalMap, roughnessMap] = useTexture(["/assets/textures/tiles052_normal.jpg", "/assets/textures/tiles052_roughness.jpg"]);
@@ -63,6 +97,7 @@ function Floor({ high }: { high: boolean }) {
       t.repeat.set(105, 105);
     }
   }, [normalMap, roughnessMap]);
+  const puddles = useMemo(() => getPuddleMap(), []);
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
       <planeGeometry args={[420, 420]} />
@@ -71,10 +106,11 @@ function Floor({ high }: { high: boolean }) {
           normalMap={normalMap}
           // พื้นกระเบื้องดำเงาเกือบกระจก (แบบรูปตัวอย่าง): สะท้อนแรง เบลอน้อย ไม่จางตามระยะ — รอยต่อกระเบื้องมาจาก normal/roughness
           normalScale={new THREE.Vector2(0.25, 0.25)}
-          roughnessMap={roughnessMap}
+          // เบลอแนวตั้งแรง (ขยายภาพสะท้อนเป็นริ้วยาว) + แผนที่แอ่งน้ำคูณความหยาบ: ใต้ป้ายเป็นริ้วยาว ที่อื่นเป็นหย่อม
+          roughnessMap={puddles}
           resolution={1024}
-          blur={[40, 12]}
-          mixBlur={0.15}
+          blur={[6, 260]}
+          mixBlur={0.6}
           mixStrength={3}
           mixContrast={1.15}
           roughness={0.35}

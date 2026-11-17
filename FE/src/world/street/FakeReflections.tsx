@@ -27,6 +27,15 @@ function getGradient(): THREE.Texture {
 const tmp = new THREE.Object3D();
 const REACH = 5.5;
 
+/** ความยาวริ้วและความสว่างต่อชนิด: จอใหญ่/จอยักษ์ยาวกว่า, ป้ายตั้งที่สูง (ป้ายซ้อน y > 9) ยืดตามความสูงเป็นริ้วยาวเหมือนพื้นเปียกโหมดสูง */
+function reachOf(it: KitItem): { reach: number; glow: number } {
+  if (it.type === "giantScreen") return { reach: REACH * 1.9, glow: 0.7 };
+  if (it.type === "bigScreen") return { reach: REACH * 1.6, glow: 0.9 };
+  if (it.type === "signV" && it.position[1] > 9) return { reach: Math.min(REACH * 1.5, REACH + (it.position[1] - 9) * 0.2), glow: 0.45 };
+  return { reach: REACH, glow: 0.55 };
+}
+
+
 export function FakeReflections({ items }: { items: KitItem[] }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const map = useMemo(() => getGradient(), []);
@@ -43,10 +52,11 @@ export function FakeReflections({ items }: { items: KitItem[] }) {
     items.forEach((it, i) => {
       tmp.position.set(it.position[0], 0, it.position[2]);
       tmp.rotation.set(0, it.rotationY, 0);
-      tmp.scale.set(it.size[0] * 0.9, 1, REACH * (it.type === "bigScreen" ? 1.6 : 1));
+      const r = reachOf(it);
+      tmp.scale.set(it.size[0] * 0.9, 1, r.reach);
       tmp.updateMatrix();
       m.setMatrixAt(i, tmp.matrix);
-      m.setColorAt(i, neonColor(it.variant, it.type === "bigScreen" ? 0.9 : 0.55));
+      m.setColorAt(i, neonColor(it.variant, r.glow));
     });
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;

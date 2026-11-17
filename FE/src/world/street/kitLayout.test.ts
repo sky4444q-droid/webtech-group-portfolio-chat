@@ -231,3 +231,21 @@ describe("giant screen support", () => {
     }
   });
 });
+
+describe("ticker strips", () => {
+  it("puts a ticker above at least 30% of shopfronts on every street", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const shops = items.filter((i) => i.type === "shopfront");
+      const tickers = items.filter((i) => i.type === "ticker");
+      const covered = shops.filter((sh) =>
+        tickers.some((t) => Math.hypot(t.position[0] - sh.position[0], t.position[2] - sh.position[2]) <= 0.5 && t.position[1] >= sh.position[1]),
+      );
+      expect(covered.length / shops.length).toBeGreaterThanOrEqual(0.3);
+    }
+  });
+
+  it("renders tickers with the ticker program (variant % 5 === 2)", () => {
+    for (const s of streets) for (const t of layoutStreet(s, CITY_SEED).filter((i) => i.type === "ticker")) expect(t.variant % 5).toBe(2);
+  });
+});
