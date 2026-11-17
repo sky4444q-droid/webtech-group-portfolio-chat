@@ -106,6 +106,7 @@ export function CameraRig() {
       };
       const ms = s.skipRequested ? tr.duration : now - tr.start;
       const k = Math.min(1, ms / tr.duration);
+      guideState.tripK = k;
       const dest = viewpointWorld(s.travel.to, 0);
       const toTeam = s.travel.to === "team";
       const fromTeam = s.travel.from === "team";
@@ -159,7 +160,7 @@ export function CameraRig() {
           }
         } else {
           // แปลงร่าง/หันทักทาย: กล้องค่อย ๆ ไปจุดชมแรกของปลายทาง
-          cue("morph", () => sfx.play("discover"));
+          cue("morph", () => sfx.play("morph"));
           if (toTeam) {
             pos.set(...dest.position);
             look.set(...dest.target);

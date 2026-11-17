@@ -6,6 +6,7 @@ import { useAudio } from "../store/useAudio";
 import { useAi } from "../store/useAi";
 import * as sfx from "./sfx";
 import * as voice from "./voice";
+import { guideState } from "../world/travel/guideState";
 
 export function useAudioDirector(): void {
   const district = useWorld((s) => s.district);
@@ -27,7 +28,17 @@ export function useAudioDirector(): void {
 
   useEffect(() => {
     if (!unlocked) return;
-    sfx.setAmbience(introDone ? (travel ? travel.to : district) : "alley");
+    // Intro เดินในซอยทางเข้า
+    if (!introDone) {
+      sfx.setAmbience("gateLane");
+      return;
+    }
+    const update = () => sfx.setAmbience(sfx.ambienceFor(district, travel, guideState.tripK));
+    update();
+    if (!travel) return;
+    // ระหว่างเดินทาง: เปลี่ยนเสียงตามถนนที่กำลังเดิน (เช็คเป็นระยะ ไม่ต้องทุกเฟรม)
+    const id = window.setInterval(update, 250);
+    return () => window.clearInterval(id);
   }, [unlocked, introDone, district, travel]);
 
   // ไปถึงพื้นที่ (หลัง Intro และไม่ได้อยู่ระหว่างเดินทาง)

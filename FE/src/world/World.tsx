@@ -1,8 +1,9 @@
 // ฉาก 3D ทั้งหมด (Canvas เดียว) — เรนเดอร์เฉพาะพื้นที่ที่อยู่ และพื้นที่ต้นทาง/ปลายทางตอนเดินทาง
 
-import { Suspense, useRef, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, type ReactNode } from "react";
 import type { DepthOfFieldEffect } from "postprocessing";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
+import { flickerProbeEnabled, installFlickerProbe } from "../debug/flickerProbe";
 import { PerformanceMonitor } from "@react-three/drei";
 import { Bloom, BrightnessContrast, DepthOfField, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { MascotFocus } from "./fx/MascotFocus";
@@ -64,6 +65,7 @@ export function World() {
         <DataFragments />
       </Suspense>
       <CameraRig />
+      {flickerProbeEnabled() && <FlickerProbe />}
       {/* multisampling ต้องเป็น 0: MSAA ใน composer ทำให้ภาพดำเป็นช่วง ๆ (กะพริบ) บนการ์ดจอบางรุ่น */}
       {fx.bloom && (
         <EffectComposer multisampling={0}>
@@ -109,4 +111,11 @@ function TravelScenes() {
 /** ตัวจิ๋ว: เดินใน Intro แล้วนำทางทุกการเดินทาง (ซ่อนตัวเองเมื่อแปลงร่างเป็น AI แล้ว) */
 function IntroMascot() {
   return <Mascot />;
+}
+
+/** ?debug=flicker (โหมดพัฒนาเท่านั้น): ผูก window.__flickerProbe() */
+function FlickerProbe() {
+  const get = useThree((s) => s.get);
+  useEffect(() => installFlickerProbe(() => get()), [get]);
+  return null;
 }

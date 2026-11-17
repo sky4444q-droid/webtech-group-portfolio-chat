@@ -14,6 +14,8 @@ export const guideState = {
   /** ความชัดของ AI ต้นทาง/ปลายทาง 0..1 */
   aiFrom: 1,
   aiTo: 1,
+  /** ความคืบหน้าของการเดินทาง 0..1 (ใช้เปลี่ยนเสียงบรรยากาศตามถนน) */
+  tripK: 0,
   from: null as DistrictId | null,
   to: null as DistrictId | null,
 };

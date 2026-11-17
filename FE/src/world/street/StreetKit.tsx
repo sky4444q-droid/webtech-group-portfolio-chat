@@ -1,7 +1,9 @@
 // เมืองจากชุดตัวต่อ: วาดเฉพาะถนนที่อยู่ + ถนนที่กำลังเดินผ่าน + สี่แยก
 // ป้าย = กล่องเรืองแสงจาง ๆ + ตัวอักษรจาก atlas · จอ = canvas วาดตามจังหวะ · จอใหญ่ = แสงใต้น้ำ · แผง = แผงข้อมูล
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import * as sfx from "../../audio/sfx";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { useWorld } from "../../store/useWorld";
@@ -103,6 +105,7 @@ export function StreetKit() {
           <meshBasicMaterial toneMapped={false} />
         </KitInstances>
       ))}
+      {flicker && <NeonBuzz faces={[...faces.values()].flat().filter((f) => f.flicker)} />}
       {[...faces].map(([page, list]) => (
         <SignFaces key={page} faces={list} map={signAtlas().pages[page]} color={glowColor} flicker={flicker} />
       ))}
@@ -143,4 +146,25 @@ function keyTargetOf(it: KitItem, all: KitItem[]): DistrictId | undefined {
   const i = same.indexOf(it);
   if (it.street === "nexus") return NEXUS_TARGETS[i];
   return i === 0 ? STREETS[it.street].district : undefined;
+}
+
+const BUZZ_RANGE = 6;
+const BUZZ_COOLDOWN = 5;
+
+/** เสียงซ่าไฟฟ้าเมื่อกล้องเข้าใกล้ป้ายที่กะพริบ (ไม่เกิน 6 หน่วย) — เว้นช่วงไม่ให้ดังถี่ */
+function NeonBuzz({ faces }: { faces: SignFace[] }) {
+  const last = useRef(-Infinity);
+  const p = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ camera, clock }) => {
+    const t = clock.elapsedTime;
+    if (t - last.current < BUZZ_COOLDOWN) return;
+    for (const f of faces) {
+      if (camera.position.distanceTo(p.set(...f.item.position)) < BUZZ_RANGE) {
+        last.current = t;
+        sfx.play("neonBuzz");
+        return;
+      }
+    }
+  });
+  return null;
 }

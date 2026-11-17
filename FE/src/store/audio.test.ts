@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { initialAudioState, useAudio } from "./useAudio";
+import { ambienceFor } from "../audio/sfx";
 
 describe("useAudio", () => {
   beforeEach(() => {
@@ -38,5 +39,21 @@ describe("useAudio", () => {
     useAudio.getState().toggleMaster();
     expect(useAudio.getState().voiceOn()).toBe(false);
     expect(useAudio.getState().ambienceOn()).toBe(false);
+  });
+});
+
+describe("ambienceFor", () => {
+  it("maps districts to their street ambience", () => {
+    expect(ambienceFor("team", null, 0)).toBe("officeRow");
+    expect(ambienceFor("nexus", null, 0)).toBe("nexus");
+    expect(ambienceFor("gate", null, 0)).toBe("gateLane");
+    expect(ambienceFor("projects", null, 0)).toBe("galleryAvenue");
+    expect(ambienceFor("sanctuary", null, 0)).toBe("sanctuaryAlley");
+  });
+
+  it("uses the street being walked during a trip", () => {
+    const trip = { from: "gate" as const, to: "team" as const };
+    expect(ambienceFor("gate", trip, 0.2)).toBe("gateLane");
+    expect(ambienceFor("gate", trip, 0.8)).toBe("officeRow");
   });
 });
