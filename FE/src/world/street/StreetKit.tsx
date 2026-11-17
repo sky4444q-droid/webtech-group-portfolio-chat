@@ -85,7 +85,7 @@ export function StreetKit() {
   const faces = useMemo(() => signFaces([...get("signH"), ...get("signV"), ...get("lightbox")]), [byType]); // eslint-disable-line react-hooks/exhaustive-deps
   const backColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.22), []);
   const glowColor = useMemo(() => (it: KitItem) => neonColor(it.variant, it.type === "bigScreen" ? 2.4 : it.type === "panel" ? 1.1 : 1.8), []);
-  const shopColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.55), []);
+  const shopColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.09), []);
   const lampColor = useMemo(() => (it: KitItem) => neonColor(it.variant % 2 ? 3 : 0, 2.2), []);
   const facadeTint = useMemo(() => (it: KitItem) => new THREE.Color().setScalar(0.1 + (it.variant % 4) * 0.025), []);
 
@@ -95,9 +95,9 @@ export function StreetKit() {
       <KitInstances items={[...get("facade"), ...get("endCap")]} color={facadeTint}>
         <meshStandardMaterial map={concrete} normalMap={concreteN} roughness={0.85} metalness={0.1} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.55} />
       </KitInstances>
-      {/* หน้าร้าน: กระจกเปิดไฟ */}
+      {/* หน้าร้าน: กระจกมืดเงา ๆ มีแสงสีร้านจาง ๆ (ไม่ใช่บล็อกนีออนทึบ) */}
       <KitInstances items={get("shopfront")} color={shopColor}>
-        <meshBasicMaterial toneMapped={false} />
+        <meshStandardMaterial color="#ffffff" metalness={0.8} roughness={0.18} emissive="#000000" envMapIntensity={0.6} />
       </KitInstances>
       {/* ป้าย: กล่องเรืองแสงจาง ๆ + ตัวอักษรจาก atlas */}
       {SIGNS.map((t) => (

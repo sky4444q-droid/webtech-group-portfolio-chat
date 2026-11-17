@@ -75,20 +75,21 @@ let windowsTexture: THREE.CanvasTexture | null = null;
 export function buildingWindowsTexture(): THREE.CanvasTexture {
   if (windowsTexture) return windowsTexture;
   const canvas = document.createElement("canvas");
-  canvas.width = 64;
-  canvas.height = 128;
+  // ถี่และเล็กพอที่ตึกสูง 40 หน่วยยังเห็นเป็นหน้าต่างเล็ก ๆ (texture ถูกยืดเต็มหน้าตึก) · ไฟส่วนใหญ่ขาว/ฟ้าเย็นและหรี่ ตึกจึงดูเกือบดำแบบรูปตัวอย่าง
+  canvas.width = 128;
+  canvas.height = 512;
   const ctx = canvas.getContext("2d")!;
   ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, 64, 128);
-  const palette = ["#ff4f9a", "#5ad8ff", "#b98cff", "#ffd27a", "#8fffc0"];
+  ctx.fillRect(0, 0, 128, 512);
+  const palette = ["#cfe6ff", "#cfe6ff", "#9fd8ff", "#ffe2b0", "#ff7fb0"];
   let seed = 7;
   const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  for (let y = 2; y < 128; y += 6) {
-    for (let x = 2; x < 64; x += 5) {
-      if (rand() > 0.72) {
+  for (let y = 2; y < 512; y += 5) {
+    for (let x = 2; x < 128; x += 4) {
+      if (rand() > 0.86) {
         ctx.fillStyle = palette[Math.floor(rand() * palette.length)];
-        ctx.globalAlpha = 0.35 + rand() * 0.65;
-        ctx.fillRect(x, y, 3, 3);
+        ctx.globalAlpha = 0.2 + rand() * 0.45;
+        ctx.fillRect(x, y, 2, 2);
       }
     }
   }

@@ -25,7 +25,7 @@ export function TeamDistrict() {
   const tr = useT();
   const windows = useMemo(() => {
     const tex = buildingWindowsTexture().clone();
-    tex.repeat.set(3, 6);
+    tex.repeat.set(1, 1);
     tex.needsUpdate = true;
     return tex;
   }, []);
