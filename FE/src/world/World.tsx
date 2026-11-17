@@ -12,6 +12,7 @@ import * as THREE from "three";
 import type { DistrictId } from "../types";
 import { COLORS } from "../config/theme";
 import { DISTRICTS } from "../config/districts";
+import { CAMERA_FOV } from "../config/camera";
 import { useWorld } from "../store/useWorld";
 import { CameraRig } from "./CameraRig";
 import { fxEnabled } from "./fx/fxEnabled";
@@ -47,7 +48,7 @@ export function World() {
       className="world-canvas"
       // ฉากนี้ติดที่ fill-rate: ล็อก dpr = 1 ทั้งสองโหมด (วัดแล้ว projects 42 -> 62 fps)
       dpr={[1, 1]}
-      camera={{ fov: 55, near: 0.1, far: 500, position: DISTRICTS.gate.camera.position }}
+      camera={{ fov: CAMERA_FOV, near: 0.1, far: 500, position: DISTRICTS.gate.camera.position }}
       gl={{ antialias: !high, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
