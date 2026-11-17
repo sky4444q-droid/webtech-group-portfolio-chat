@@ -18,6 +18,8 @@ import { WaterScreen } from "./WaterScreen";
 import { InfoPanel, panelContent } from "./InfoPanel";
 import { STREETS } from "./streets";
 import { FakeReflections } from "./FakeReflections";
+import { LightSpill } from "./SpillMeshes";
+import { spillsFor } from "./lightSpill";
 import { Steam } from "../fx/Effects";
 import { fxEnabled } from "../fx/fxEnabled";
 import type { DistrictId } from "../../types";
@@ -68,6 +70,8 @@ export function StreetKit() {
     for (const k of keys) for (const it of city[k]) map.set(it.type, [...(map.get(it.type) ?? []), it]);
     return map;
   }, [keys, city]);
+  // แสงย้อยจากป้าย/จอ ทุกถนนที่วาดอยู่ + สี่แยก
+  const spills = useMemo(() => spillsFor([...byType.values()].flat()), [byType]);
   const get = (t: KitType) => byType.get(t) ?? [];
 
   const [concrete, concreteN, metalN, metalR] = useTexture([
@@ -105,6 +109,7 @@ export function StreetKit() {
           <meshBasicMaterial toneMapped={false} />
         </KitInstances>
       ))}
+      <LightSpill spills={spills} />
       {flicker && <NeonBuzz faces={[...faces.values()].flat().filter((f) => f.flicker)} />}
       {[...faces].map(([page, list]) => (
         <SignFaces key={page} faces={list} map={signAtlas().pages[page]} color={glowColor} flicker={flicker} />

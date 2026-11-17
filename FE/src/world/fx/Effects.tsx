@@ -50,8 +50,8 @@ export function GroundFog({ layers, center }: { layers: number; center: [number,
       t.offset.y += dt * 0.004 * (i % 2 ? -1 : 1);
     });
   });
-  // หมอกชั้นเดียวบาง ๆ ใต้เข่า สีฟ้าเทาเย็น (ไม่ติดม่วง)
-  const colors = ["#6f8bb0"];
+  // หมอกชั้นเดียวบาง ๆ ใต้เข่า สีม่วงเข้ม
+  const colors = ["#3a2a6a"];
   return (
     <group position={center}>
       {textures.map((t, i) => (

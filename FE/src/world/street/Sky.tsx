@@ -15,7 +15,7 @@ export function Sky() {
         fragmentShader: `varying vec3 vDir;
           void main() {
             float h = clamp(vDir.y, 0.0, 1.0);
-            vec3 glow = vec3(0.03, 0.045, 0.07); // หมอกฟ้าจาง ๆ ไกล ๆ (ไม่ติดม่วง)
+            vec3 glow = vec3(0.10, 0.05, 0.16); // แสงเมืองม่วงจาง ๆ ใกล้ขอบฟ้า
             vec3 top = vec3(0.008, 0.008, 0.014);
             gl_FragColor = vec4(mix(glow, top, pow(h, 0.45)), 1.0);
           }`,

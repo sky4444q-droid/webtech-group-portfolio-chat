@@ -9,7 +9,8 @@ import { screenInterval } from "./screenPolicy";
 import { SCREEN_H, SCREEN_PROGRAMS, SCREEN_W } from "./screenPrograms";
 
 /** สีนีออนของป้าย/จอ ตาม variant */
-export const NEON = ["#ff2a6d", "#05d9e8", "#b967ff", "#ff1f3d", "#e9e6ff", "#2d6bff", "#ffb347", "#ff5ec8"];
+// 8 ช่อง: ม่วง/ม่วงชมพู/ฟ้าไซยาน/น้ำเงิน รวม 6 ช่อง ตามสีแบรนด์ · ชมพูกับแดงอย่างละ 1 · ไม่มีส้ม
+export const NEON = ["#8B5CF6", "#05d9e8", "#D946EF", "#2d6bff", "#8B5CF6", "#ff2a6d", "#D946EF", "#ff1f3d"];
 
 export function neonColor(variant: number, intensity = 1): THREE.Color {
   return new THREE.Color(NEON[variant % NEON.length]).multiplyScalar(intensity);

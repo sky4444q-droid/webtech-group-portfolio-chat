@@ -160,8 +160,16 @@ export function layoutStreet(s: Street, seed: number): KitItem[] {
   const cables = s.mood === "shrine" ? 9 : 4;
   for (let i = 0; i < cables; i++) {
     const at = sample(s.points, ((i + 0.5) / cables) * len);
-    put(c, s, at, 1, "cable", 0, 0, pick(r, 4.5, 8), [s.halfWidth * 2 + 2, 0.05, 0.05]);
-    if (s.mood === "shrine" || r() < 0.3) put(c, s, at, 1, "lamp", pick(r, -1, 1), pick(r, -0.6, 0.6), pick(r, 3.2, 4.2), [0.4, 0.6, 0.4]);
+    const cableY = pick(r, 4.5, 8);
+    put(c, s, at, 1, "cable", 0, 0, cableY, [s.halfWidth * 2 + 2, 0.05, 0.05]);
+    if (s.mood === "shrine" || r() < 0.3) {
+      put(c, s, at, 1, "lamp", pick(r, -1, 1), pick(r, -0.6, 0.6), pick(r, 3.2, 4.2), [0.4, 0.6, 0.4]);
+      // สายแขวนโคม: เส้นตั้งจากยอดโคมขึ้นไปถึงสายไฟข้ามถนน (ไม่ใช้ rand เพิ่ม ผังเดิมจึงไม่เลื่อน)
+      const lamp = c.out[c.out.length - 1];
+      const top = lamp.position[1] + lamp.size[1] / 2;
+      const h = cableY - top;
+      c.out.push({ type: "cable", street: s.id, position: [lamp.position[0], top + h / 2, lamp.position[2]], rotationY: 0, size: [0.03, h, 0.03], variant: 0, side: 1 });
+    }
   }
 
   // ปิดปลายถนน (Team HQ ใช้ตึกสำนักงานของตัวเองแทน)

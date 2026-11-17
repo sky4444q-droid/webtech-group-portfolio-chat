@@ -90,3 +90,20 @@ describe("layoutStreet", () => {
     }
   });
 });
+
+describe("lamp cords", () => {
+  it("hangs every lamp from a vertical cord that reaches the cable above it", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const lamps = items.filter((i) => i.type === "lamp");
+      const cords = items.filter((i) => i.type === "cable" && i.size[0] < i.size[1]);
+      expect(lamps.length).toBeGreaterThan(0);
+      expect(cords.length).toBe(lamps.length);
+      for (const l of lamps) {
+        const cord = cords.find((c) => c.position[0] === l.position[0] && c.position[2] === l.position[2])!;
+        expect(cord.size).toEqual([0.03, expect.any(Number), 0.03]);
+        expect(cord.position[1] - cord.size[1] / 2).toBeCloseTo(l.position[1] + l.size[1] / 2, 5);
+      }
+    }
+  });
+});

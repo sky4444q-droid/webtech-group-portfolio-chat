@@ -54,7 +54,7 @@ export function World() {
       }}
     >
       <color attach="background" args={[COLORS.bg]} />
-      <fog attach="fog" args={[COLORS.fog, 30, 170]} />
+      <fog attach="fog" args={["#120c2a", 40, 210]} />
       {high && <PerformanceMonitor onDecline={autoLowerQuality} />}
       <Suspense fallback={null}>
         <Environment />
