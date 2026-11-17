@@ -17,6 +17,11 @@ export function windowGrid(widthM: number, heightM: number): { cols: number; row
   return { cols: Math.max(1, Math.round(widthM / BAY_M)), rows: Math.max(1, Math.round(heightM / FLOOR_M)) };
 }
 
+/** ตัวคูณ UV (จำนวนแผ่น texture) ของผนังขนาดจริง — ตรงกับที่ shader คำนวณ */
+export function windowUvScale(faceW: number, faceH: number): [number, number] {
+  return [faceW / (BAY_M * TILE_COLS), faceH / (FLOOR_M * TILE_ROWS)];
+}
+
 const VERT_HEAD = /* glsl */ `
 varying vec2 vWinUv;
 varying float vWinMask;

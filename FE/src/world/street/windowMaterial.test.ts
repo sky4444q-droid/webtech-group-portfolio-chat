@@ -15,3 +15,23 @@ describe("curtainWallTexture", () => {
     expect(curtainWallTexture()).toBe(curtainWallTexture());
   });
 });
+
+import * as THREE from "three";
+import { patchWindowUv, windowUvScale } from "./windowMaterial";
+
+describe("patchWindowUv", () => {
+  it("แทนที่ chunk ใน shader มาตรฐานได้จริง", () => {
+    const mat = new THREE.MeshStandardMaterial();
+    patchWindowUv(mat);
+    const shader = { vertexShader: THREE.ShaderLib.standard.vertexShader, fragmentShader: THREE.ShaderLib.standard.fragmentShader, uniforms: {} };
+    mat.onBeforeCompile(shader as never, undefined as never);
+    expect(shader.vertexShader).toContain("vWinUv = uv");
+    expect(shader.fragmentShader).toContain("texture2D(emissiveMap, vWinUv)");
+    expect(shader.fragmentShader).not.toContain("#include <emissivemap_fragment>");
+  });
+  it("ตึก 13×33 ม. = 10 ช่อง × 10 ชั้น = 1.25 × 0.625 แผ่น", () => {
+    const [u, v] = windowUvScale(13, 33);
+    expect(u * 8).toBeCloseTo(10, 5);
+    expect(v * 16).toBeCloseTo(10, 5);
+  });
+});

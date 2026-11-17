@@ -120,16 +120,17 @@ export function curtainWallTexture(): THREE.CanvasTexture {
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         const x = c * bw + 2, y = r * bh + 2, w = bw - 4, h = bh - 12; // เสาค้ำ 4px · แถบพื้นชั้น 10px ด้านล่าง
+        // กระจกดับ: สะท้อนฟ้าจาง ๆ
+        ctx.fillStyle = "#0a1020";
+        ctx.globalAlpha = 1;
+        ctx.fillRect(x, y, w, h);
         if (rand() < 0.35) {
+          // ไฟเปิด = จุดแสงเล็กกลางช่อง (ไม่ใช่แผงเต็มช่อง) ตึกจึงยังมืด ป้ายเด่นกว่า
           const k = rand();
           ctx.fillStyle = k < 0.55 ? "#ffd9a8" : k < 0.85 ? "#9fc4ff" : "#D946EF";
-          ctx.globalAlpha = 0.55 + rand() * 0.45;
-        } else {
-          // กระจกดับ: สะท้อนฟ้าจาง ๆ
-          ctx.fillStyle = "#0a1020";
-          ctx.globalAlpha = 1;
+          ctx.globalAlpha = 0.35 + rand() * 0.4;
+          ctx.fillRect(x + 6, y + 10, w - 12, h - 22);
         }
-        ctx.fillRect(x, y, w, h);
       }
     }
     ctx.globalAlpha = 1;

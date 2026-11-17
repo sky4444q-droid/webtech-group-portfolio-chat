@@ -1,7 +1,7 @@
 // เมืองจากชุดตัวต่อ: วาดเฉพาะถนนที่อยู่ + ถนนที่กำลังเดินผ่าน + สี่แยก
 // ป้าย = กล่องเรืองแสงจาง ๆ + ตัวอักษรจาก atlas · จอ = canvas วาดตามจังหวะ · จอใหญ่ = แสงใต้น้ำ · แผง = แผงข้อมูล
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as sfx from "../../audio/sfx";
 import { useTexture } from "@react-three/drei";
@@ -86,6 +86,14 @@ export function StreetKit() {
     concrete.colorSpace = THREE.SRGBColorSpace;
   }, [concrete, concreteN, metalN, metalR]);
 
+  // สร้าง material แล้วแพตช์ก่อน compile ครั้งแรก (แพตช์ผ่าน ref ช้าเกินไป หน้าต่างยืดเต็มหน้าตึก)
+  const facadeMat = useMemo(() => {
+    const m = new THREE.MeshStandardMaterial({ map: concrete, normalMap: concreteN, roughness: 0.85, metalness: 0.1, emissive: new THREE.Color("#ffffff"), emissiveMap: windows, emissiveIntensity: 0.4 });
+    patchWindowUv(m);
+    return m;
+  }, [concrete, concreteN, windows]);
+  useEffect(() => () => facadeMat.dispose(), [facadeMat]);
+
   const faces = useMemo(() => signFaces([...get("signH"), ...get("signV"), ...get("lightbox")]), [byType]); // eslint-disable-line react-hooks/exhaustive-deps
   const backColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.22), []);
   const glowColor = useMemo(() => (it: KitItem) => neonColor(it.variant, it.type === "bigScreen" ? 2.4 : it.type === "panel" ? 1.1 : 1.8), []);
@@ -98,7 +106,7 @@ export function StreetKit() {
     <group>
       {/* ตึก (รวมตึกสี่แยก): คอนกรีตเก่าสีเข้ม + ผนังกระจกหน้าต่างขนาดจริงคงที่ · เข้มขึ้นตามความสูง */}
       <KitInstances items={[...get("facade"), ...get("endCap"), ...get("tier")]} color={facadeTint}>
-        <meshStandardMaterial ref={(m: THREE.MeshStandardMaterial | null) => m && patchWindowUv(m)} map={concrete} normalMap={concreteN} roughness={0.85} metalness={0.1} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={0.55} />
+        <primitive object={facadeMat} attach="material" />
       </KitInstances>
       {/* หน้าร้าน: กระจกมืดเงา ๆ มีแสงสีร้านจาง ๆ (ไม่ใช่บล็อกนีออนทึบ) */}
       <KitInstances items={get("shopfront")} color={shopColor}>
