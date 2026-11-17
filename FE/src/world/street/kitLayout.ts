@@ -366,8 +366,18 @@ const SCREEN_BLOCKERS = new Set<KitType>(["signH", "signV", "lightbox", "screen"
 const SCREEN_COVER = 0.43;
 /** โปรแกรมจอที่ไม่มีตัวหนังสือ (variant % 5 ∈ {1,3,4}: อีควอไลเซอร์ ลายสแกน จอเสีย) */
 const TEXTLESS_VARIANTS = [1, 3, 4, 6, 8, 9, 11, 13, 14];
-/** ระยะชิดผนัง: หน้าจอยื่นพ้นหน้าตึก 3 ซม. (กันระนาบซ้อน z-fight) */
+/** ความลึกจอ: ทั้งกล่องจออยู่หน้าผนัง หลังจอพ้นผนัง 2 ซม. (กันระนาบซ้อน z-fight) */
 const SCREEN_DEPTH = 0.1;
+
+/** กรอบมืดของจอแบน/วิดีโอวอลล์: ใหญ่กว่าจอเล็กน้อย หน้ากรอบอยู่หลังหน้าจอ 5 ซม. หลังกรอบยังพ้นผนัง 3 ซม. */
+export function bezelFor(it: KitItem): KitItem {
+  const back = 0.02;
+  return {
+    ...it,
+    position: [it.position[0] - Math.sin(it.rotationY) * back, it.position[1], it.position[2] - Math.cos(it.rotationY) * back],
+    size: [it.size[0] + 0.12, it.size[1] + 0.12, 0.04],
+  };
+}
 
 type Rect = { x0: number; x1: number; y0: number; y1: number };
 
@@ -402,7 +412,7 @@ function dressScreens(c: Ctx, s: Street, r: () => number) {
       const px = wx + ux * a;
       const pz = wz + uz * a;
       const dPoly = distanceToPolyline([px, pz], s.points);
-      // front = ระยะหน้าชิ้นที่ยื่นพ้นผนัง (จอ 3 ซม., โฮโล 0.75–1.05 ม.)
+      // front = ระยะหน้าชิ้นที่ยื่นพ้นผนัง (จอ 12 ซม. = ลึก 10 + เว้นหลัง 2, โฮโล 0.75–1.05 ม.)
       const centre = Math.min(dPoly, s.halfWidth) - front + (type === "holo" ? 0 : size[2] / 2);
       const gap = dPoly - centre;
       c.out.push({ type, street: s.id, position: [px + fx * gap, y, pz + fz * gap], rotationY: f.rotationY, size, variant, side: f.side });
@@ -436,11 +446,11 @@ function dressScreens(c: Ctx, s: Street, r: () => number) {
         cover += bw * bh;
         const a = x0 + bw / 2;
         const y = y0 + bh / 2;
-        if (kind === "monitor") push("monitor", a, y, [bw, bh, SCREEN_DEPTH], 0.03, variant);
+        if (kind === "monitor") push("monitor", a, y, [bw, bh, SCREEN_DEPTH], SCREEN_DEPTH + 0.02, variant);
         else if (kind === "holo") push("holo", a, y, [bw, bh, 0.02], holoOff, variant);
         else {
           const n = Math.round(bw / 1.4);
-          for (let i = 0; i < n; i++) for (let j = 0; j < 2; j++) push("videoWall", x0 + 0.7 + i * 1.4, y0 + 0.45 + j * 0.9, [1.38, 0.88, SCREEN_DEPTH], 0.03, variant);
+          for (let i = 0; i < n; i++) for (let j = 0; j < 2; j++) push("videoWall", x0 + 0.7 + i * 1.4, y0 + 0.45 + j * 0.9, [1.38, 0.88, SCREEN_DEPTH], SCREEN_DEPTH + 0.02, variant);
         }
         break;
       }

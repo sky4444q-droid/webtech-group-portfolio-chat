@@ -291,6 +291,52 @@ describe("no coplanar faces on street walls", () => {
     }
     expect(checked).toBeGreaterThan(20);
   });
+
+  // วัดจากผนังจริงแบบเดียวกับตัววาง: จุดบนระนาบหน้าตึกที่ระยะ a ตามแนวตึก, W = min(ระยะจุดนั้นถึงเส้นถนน, halfWidth)
+  it("keeps every screen, bezel and holo face in front of the real facade wall", async () => {
+    const { bezelFor } = await import("./kitLayout");
+    let checked = 0;
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const facades = items.filter((i) => i.type === "facade");
+      // คืนระยะกึ่งกลางชิ้นจากเส้นถนนตามแนวตั้งฉากผนัง และ W ของผนังตรงนั้น
+      const measure = (it: KitItem) => {
+        for (const f of facades) {
+          if (f.side !== it.side) continue;
+          const ux = Math.cos(f.rotationY), uz = -Math.sin(f.rotationY);
+          const nx = Math.sin(f.rotationY), nz = Math.cos(f.rotationY);
+          const a = (it.position[0] - f.position[0]) * ux + (it.position[2] - f.position[2]) * uz;
+          if (Math.abs(a) > f.size[0] / 2 + 1e-6) continue;
+          const px = f.position[0] + nx * 3 + ux * a;
+          const pz = f.position[2] + nz * 3 + uz * a;
+          const out = (it.position[0] - px) * nx + (it.position[2] - pz) * nz;
+          if (out < -0.5 || out > 2) continue;
+          const dPoly = distanceToPolyline([px, pz], s.points);
+          return { W: Math.min(dPoly, s.halfWidth), centre: dPoly - out };
+        }
+        throw new Error(`${s.id} ${it.type} has no wall`);
+      };
+      for (const it of items.filter((i) => i.type === "monitor" || i.type === "videoWall")) {
+        const m = measure(it);
+        const back = m.centre + it.size[2] / 2;
+        expect(m.W - back, `${s.id} ${it.type} back face`).toBeGreaterThanOrEqual(0.02 - 1e-9);
+        const b = bezelFor(it);
+        const mb = measure(b);
+        const bFront = mb.centre - b.size[2] / 2;
+        expect(m.W - (mb.centre + b.size[2] / 2), `${s.id} bezel back face`).toBeGreaterThanOrEqual(0.02 - 1e-9);
+        // กรอบอยู่ระหว่างผนังกับหน้าจอ
+        expect(bFront - (m.centre - it.size[2] / 2), `${s.id} bezel behind screen face`).toBeGreaterThanOrEqual(0.02 - 1e-9);
+        checked++;
+      }
+      for (const h of items.filter((i) => i.type === "holo")) {
+        const m = measure(h);
+        expect(m.W - m.centre).toBeGreaterThanOrEqual(0.6 - 1e-9);
+        expect(m.W - m.centre).toBeLessThanOrEqual(1.2 + 1e-9);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(50);
+  });
 });
 
 describe("TEAM_TOWER", () => {
@@ -370,22 +416,5 @@ describe("lower-facade screens and holograms", () => {
       }
     }
     expect(n).toBeGreaterThan(50);
-  });
-
-  it("keeps monitor/videoWall faces >= 0.02 in front of the facade and holos 0.6-1.2 off it", () => {
-    for (const s of streets) {
-      const off = (p: [number, number, number]) => distanceToPolyline([p[0], p[2]], s.points);
-      const items = layoutStreet(s, CITY_SEED);
-      for (const it of items.filter((i) => i.type === "monitor" || i.type === "videoWall")) {
-        expect(s.halfWidth - (off(it.position) - it.size[2] / 2), `${s.id} ${it.type}`).toBeGreaterThanOrEqual(0.02 - 1e-9);
-      }
-      const holos = items.filter((i) => i.type === "holo");
-      expect(holos.length, s.id).toBeGreaterThan(0);
-      for (const h of holos) {
-        const gap = s.halfWidth - off(h.position);
-        expect(gap).toBeGreaterThanOrEqual(0.6 - 1e-9);
-        expect(gap).toBeLessThanOrEqual(1.2 + 1e-9);
-      }
-    }
   });
 });

@@ -7,7 +7,7 @@ import * as sfx from "../../audio/sfx";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { useWorld } from "../../store/useWorld";
-import { cityLayout, type KitItem, type KitType } from "./kitLayout";
+import { bezelFor, cityLayout, type KitItem, type KitType } from "./kitLayout";
 import { streetOf, type StreetId } from "./streets";
 import { KitInstances, ScreenGroup, SignFaces, neonColor, type SignFace } from "./kitMeshes";
 import { curtainWallTexture, patchWindowUv } from "./windowMaterial";
@@ -112,19 +112,8 @@ export function StreetKit() {
   const shopColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 0.09), []);
   const stripColor = useMemo(() => (it: KitItem) => neonColor(it.variant, 1.4), []);
   const lampColor = useMemo(() => (it: KitItem) => neonColor(it.variant % 2 ? 3 : 0, 2.2), []);
-  // กรอบจอแบน/วิดีโอวอลล์: กล่องมืดใหญ่กว่าจอเล็กน้อย หน้ากรอบอยู่หลังหน้าจอ 2 ซม. แต่ยังพ้นผนัง 1 ซม.
-  const bezels = useMemo(
-    () =>
-      [...get("monitor"), ...get("videoWall")].map((it) => {
-        const back = 0.02;
-        return {
-          ...it,
-          position: [it.position[0] - Math.sin(it.rotationY) * back, it.position[1], it.position[2] - Math.cos(it.rotationY) * back] as KitItem["position"],
-          size: [it.size[0] + 0.12, it.size[1] + 0.12, 0.06] as KitItem["size"],
-        };
-      }),
-    [byType], // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  // กรอบจอแบน/วิดีโอวอลล์ (คำนวณใน kitLayout ให้เทสต์ตรวจระยะจากผนังได้)
+  const bezels = useMemo(() => [...get("monitor"), ...get("videoWall")].map(bezelFor), [byType]); // eslint-disable-line react-hooks/exhaustive-deps
   const facadeTint = useMemo(() => (it: KitItem) => new THREE.Color().setScalar(0.1 + (it.variant % 4) * 0.025), []);
 
   return (
