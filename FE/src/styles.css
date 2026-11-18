@@ -1342,3 +1342,36 @@ button {
   background: rgba(4, 4, 6, 0.8) !important;
   box-shadow: none !important;
 }
+
+/* ---------- รูปสมาชิกแบบโฮโลแกรม (สีประจำตัวจาก --accent) ---------- */
+.holo-photo {
+  --accent: var(--brand-purple);
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.holo-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+.holo-photo::before,
+.holo-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* ย้อมสี + เส้นสแกน */
+.holo-photo::before {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%, color-mix(in srgb, var(--accent) 30%, transparent)),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+  mix-blend-mode: screen;
+}
+/* แถบแสงวิ่งขึ้น */
+.holo-photo::after {
+  background: linear-gradient(180deg, transparent 0 44%, color-mix(in srgb, var(--accent) 35%, transparent) 50%, transparent 56% 100%);
+  background-size: 100% 220%;
+  animation: holo-photo-sweep 3.2s linear infinite;
+}
+@keyframes holo-photo-sweep { from { background-position: 0 100%; } to { background-position: 0 -120%; } }
+.holo-member-photo { width: 52px; height: 52px; border: 1px solid; border-radius: 10px; }
+@media (prefers-reduced-motion: reduce) { .holo-photo::after { animation: none; } }

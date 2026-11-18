@@ -1,5 +1,6 @@
 // Team Headquarters — อาคารวิจัย/สำนักงานใหญ่ มีจอข้อมูลทีมและจอติดต่อ
 
+import type { CSSProperties } from "react";
 import { useAi } from "../../store/useAi";
 import * as sfx from "../../audio/sfx";
 import { useMemo, useRef, useState } from "react";
@@ -16,10 +17,11 @@ import { screenTexture } from "../textures";
 import { curtainWallTexture, windowGrid } from "../street/windowMaterial";
 import { TEAM_LOBBY_OFFSET, TEAM_TOWER } from "../street/streets";
 import { HoloCard } from "../HoloCard";
-import { TEAM_HOLO_CARD } from "../../config/viewpoints";
+import { TEAM_HOLO_CARD, TEAM_SCREEN_X } from "../../config/viewpoints";
 import { usePortfolio } from "../../store/usePortfolio";
 import { usePick } from "../../i18n";
 import { Text } from "../../ui/Pending";
+import { MemberHolograms } from "./MemberHolograms";
 
 /** ผิวสแตนเลสขัดลายเส้น (วาดบน canvas) */
 function brushed(): THREE.CanvasTexture {
@@ -193,11 +195,12 @@ export function TeamDistrict() {
       <group position={TEAM_LOBBY_OFFSET}>
       <Lobby color={cfg.color} />
 
-      <Screen title={tr("teamScreen")} color={cfg.color} panel={{ kind: "team", display: "holo" }} position={[-3.6, 1.95, -2]} rotation={[0, 0.12, 0]} scale={0.75} />
-      <Screen title={tr("contactScreen")} color={COLORS.pink} panel={{ kind: "contact" }} position={[3.6, 1.95, -2]} rotation={[0, -0.12, 0]} scale={0.75} />
+      <Screen title={tr("teamScreen")} color={cfg.color} panel={{ kind: "team", display: "holo" }} position={[-TEAM_SCREEN_X, 1.95, -2]} rotation={[0, 0.22, 0]} scale={0.68} />
+      <Screen title={tr("contactScreen")} color={COLORS.pink} panel={{ kind: "contact" }} position={[TEAM_SCREEN_X, 1.95, -2]} rotation={[0, -0.22, 0]} scale={0.68} />
 
       <TeamHolo />
-      <AiPresence district="team" size={0.45} position={[-6.6, 2.3, -0.5]} />
+      <MemberHolograms fallbackColor={cfg.color} />
+      <AiPresence district="team" size={0.45} position={[-7.9, 2.3, 0.8]} />
       <pointLight color={cfg.color} intensity={30} distance={22} position={[0, 3.8, 3]} />
       <pointLight color={COLORS.cyan} intensity={14} distance={14} position={[0, 3.6, -4]} />
       </group>
@@ -339,7 +342,13 @@ function TeamHolo() {
                 openPanel({ kind: "member", id: m.id });
               }}
             >
-              <span className="member-silhouette" aria-hidden="true" />
+              {m.photo ? (
+                <span className="holo-photo holo-member-photo" style={m.accent ? ({ "--accent": m.accent } as CSSProperties) : undefined}>
+                  <img src={m.photo} alt="" />
+                </span>
+              ) : (
+                <span className="member-silhouette" aria-hidden="true" />
+              )}
               <strong>{p(m.name)}</strong>
               <small>
                 <Text value={m.role} placeholder={m.placeholder} />

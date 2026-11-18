@@ -97,6 +97,7 @@ export const th = {
   vpProjectsHall: "ทางเข้าหอ",
   vpProjectsPedestal: "หน้าแท่นผลงาน",
   vpTeamLobby: "ล็อบบี้",
+  vpTeamMembers: "สมาชิก",
   vpTeamScreen: "จอข้อมูลทีม",
   vpTeamContact: "จอช่องทางติดต่อ",
   vpSanctuaryEdge: "ขอบลาน",

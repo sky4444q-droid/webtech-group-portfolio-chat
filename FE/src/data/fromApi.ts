@@ -2,6 +2,7 @@
 // ข้อมูลในไฟล์เป็นภาษาไทยอย่างเดียว จึงใช้ข้อความเดียวกันทั้ง TH/EN (ไม่แปลเอง เพื่อไม่แต่งข้อมูล)
 // ช่องที่ไม่มีข้อมูล → "รอข้อมูล"
 
+import { memberLook } from "./memberLooks";
 import type { Contact, Localized, Member, Portfolio, Project } from "../types";
 import { NEXORA_PROJECT, PENDING, portfolio as fallback } from "./portfolio";
 
@@ -54,7 +55,9 @@ export function portfolioFromApi(api: ApiPortfolio): Portfolio {
     role: text(m.role),
     skills: list((m.skills ?? []).filter(has).map(shortSkill)),
     works: list((m.works ?? []).map((w) => (typeof w === "string" ? w : (w?.title ?? ""))).filter(has)),
-    photo: null,
+    photo: memberLook(m.nickname)?.photo ?? null,
+    accent: memberLook(m.nickname)?.color ?? null,
+    icon: memberLook(m.nickname)?.icon ?? null,
   }));
 
   // แสดงผลงานชิ้นเดียว: เว็บนี้ ทุกคนในทีมเป็นผู้ร่วมทำ

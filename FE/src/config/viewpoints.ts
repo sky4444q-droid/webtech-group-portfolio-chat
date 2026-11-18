@@ -27,6 +27,10 @@ const EYE_Y = 2.1; // ยกกล้องสูงขึ้นเล็กน�
 // ทิศของแต่ละที่: Gate ถนนไปทาง +x (เข้าเมือง) · Projects ปลายถนนทาง −z · Team ล็อบบี้ในตึก · Sanctuary ลานลึกทาง +z
 // ถอยกล้องออกจากเป้า 2–4 ม. · วงแหวนอยู่หน้ากล้อง ~5–8 ม. เพื่อให้ยังอยู่ในจอเมื่อกล้องสูงขึ้น
 const L = TEAM_LOBBY_OFFSET;
+/** จอทีม/ติดต่อในล็อบบี้อยู่ที่ x = ±นี้ (ตรงกลางเว้นไว้ให้แท่นโฮโลแกรมสมาชิก) */
+export const TEAM_SCREEN_X = 5;
+/** แถวแท่นโฮโลแกรมสมาชิกในล็อบบี้ (z) */
+export const HOLO_ROW_Z = 0.4;
 const lobby = (p: Vec3): Vec3 => [p[0] + L[0], p[1] + L[1], p[2] + L[2]];
 
 export const VIEWPOINTS: Record<DistrictId, Viewpoint[]> = {
@@ -45,9 +49,10 @@ export const VIEWPOINTS: Record<DistrictId, Viewpoint[]> = {
   ],
   team: [
     // ล็อบบี้ลึกถึง z = 11 (ผนังหน้า) ถอยได้ไม่เกิน ~1.5 ม.
-    { id: "lobby", label: "vpTeamLobby", mode: "eye", position: lobby([0, EYE_Y, 10.5]), target: lobby([0, 1.9, -2]), lookRange: EYE, marker: lobby([0, 0.05, 5.5]) },
-    { id: "teamScreen", label: "vpTeamScreen", mode: "eye", position: lobby([-3.6, EYE_Y, 5.5]), target: lobby([-3.6, 1.9, -2]), lookRange: EYE, marker: lobby([-3.6, 0.05, 0.6]) },
-    { id: "contactScreen", label: "vpTeamContact", mode: "eye", position: lobby([3.6, EYE_Y, 5.5]), target: lobby([3.6, 1.9, -2]), lookRange: EYE, marker: lobby([3.6, 0.05, 0.6]) },
+    { id: "lobby", label: "vpTeamLobby", mode: "eye", position: lobby([0, EYE_Y, 10.5]), target: lobby([0, 1.9, -2]), lookRange: EYE, marker: lobby([0, 0.05, 6.5]) },
+    { id: "teamScreen", label: "vpTeamScreen", mode: "eye", position: lobby([-TEAM_SCREEN_X, EYE_Y, 5.5]), target: lobby([-TEAM_SCREEN_X, 1.9, -2]), lookRange: EYE, marker: lobby([-TEAM_SCREEN_X, 0.05, 0.6]) },
+    { id: "contactScreen", label: "vpTeamContact", mode: "eye", position: lobby([TEAM_SCREEN_X, EYE_Y, 5.5]), target: lobby([TEAM_SCREEN_X, 1.9, -2]), lookRange: EYE, marker: lobby([TEAM_SCREEN_X, 0.05, 0.6]) },
+    { id: "members", label: "vpTeamMembers", mode: "eye", position: lobby([0, EYE_Y, 5.2]), target: lobby([0, 2.05, HOLO_ROW_Z]), lookRange: EYE, marker: lobby([0, 0.05, 1.5]) },
   ],
   sanctuary: [
     { id: "edge", label: "vpSanctuaryEdge", mode: "eye", position: [0, 1.9, -4.5], target: [0, 4.5, 10], lookRange: EYE, marker: [2, 0.05, 2.5] },
@@ -65,7 +70,7 @@ export function viewpointWorld(district: DistrictId, index: number): { position:
 }
 
 /** ตำแหน่งการ์ด Hologram ทีม (สัมพัทธ์กับล็อบบี้) — TeamDistrict วางการ์ดที่นี่ */
-export const TEAM_HOLO_CARD: Vec3 = [-3.6, 1.9, -0.8];
+export const TEAM_HOLO_CARD: Vec3 = [-TEAM_SCREEN_X, 1.9, -0.8];
 const teamBase = DISTRICTS.team.position;
 export const TEAM_HOLO_CARD_WORLD: Vec3 = add(teamBase, lobby(TEAM_HOLO_CARD));
 

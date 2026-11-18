@@ -98,6 +98,7 @@ export const en: Record<keyof typeof th, string> = {
   vpProjectsHall: "Hall entrance",
   vpProjectsPedestal: "At the showcase",
   vpTeamLobby: "Lobby",
+  vpTeamMembers: "Members",
   vpTeamScreen: "Team screen",
   vpTeamContact: "Contact screen",
   vpSanctuaryEdge: "Plaza edge",

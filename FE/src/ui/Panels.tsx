@@ -1,5 +1,6 @@
 // Panel ข้อมูล: ผลงาน, ทีม, ช่องทางติดต่อ — ข้อมูลมาจาก src/data/portfolio.ts
 
+import type { CSSProperties } from "react";
 import { useWorld } from "../store/useWorld";
 import { usePortfolio } from "../store/usePortfolio";
 import { usePick, useT } from "../i18n";
@@ -133,7 +134,7 @@ export function TeamPanel() {
               if (e.key === "Enter") useWorld.getState().openPanel({ kind: "member", id: m.id });
             }}
           >
-            <div className="member-photo">
+            <div className={`member-photo${m.photo ? " holo-photo" : ""}`} style={m.accent ? ({ "--accent": m.accent } as CSSProperties) : undefined}>
               {m.photo ? <img src={m.photo} alt={p(m.name)} /> : <span className="member-silhouette" aria-hidden="true" />}
             </div>
             <div className="member-info">

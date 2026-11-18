@@ -1,6 +1,7 @@
 // การเปิดดูแบบเต็มจอ: ผลงานครบทุกช่อง, ข้อมูลทีม, โปรไฟล์สมาชิกรายคน, ไดอะแกรม Architecture
 // ฉากด้านหลังมืดและเบลอลง ปิดด้วย Esc หรือปุ่ม ✕
 
+import type { CSSProperties } from "react";
 import { useWorld } from "../store/useWorld";
 import { usePortfolio } from "../store/usePortfolio";
 import { usePick, useT } from "../i18n";
@@ -28,7 +29,7 @@ function MemberProfile({ id }: { id: string }) {
   return (
     <Shell kicker={tr("memberProfile")} title={p(member.name)}>
       <div className="member-profile">
-        <div className="member-photo member-photo-large">
+        <div className={`member-photo member-photo-large${member.photo ? " holo-photo" : ""}`} style={member.accent ? ({ "--accent": member.accent } as CSSProperties) : undefined}>
           {member.photo ? <img src={member.photo} alt={p(member.name)} /> : <span className="member-silhouette" aria-hidden="true" />}
         </div>
         <div>
