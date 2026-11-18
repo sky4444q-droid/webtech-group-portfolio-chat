@@ -1,13 +1,19 @@
 {
   "_note": "ข้อมูลทีมทั้งหมดอยู่ที่ไฟล์นี้ไฟล์เดียว แก้ที่นี่แล้ว AI จะตอบตามข้อมูลใหม่ ช่องที่เป็น null หรือ [] คือยังไม่มีข้อมูล AI จะไม่พูดถึง ห้ามใส่ข้อมูลที่ไม่จริง สมาชิกแต่ละคนเพิ่มช่องได้ตามโครงของคนแรก",
   "group": {
-    "name": null,
-    "concept": null,
-    "highlights": [],
-    "sharedWorks": [],
+    "name": "NEXORA",
+    "concept": "ทีมที่อยากให้การทำความรู้จักคนหนึ่งคนไม่ใช่แค่การอ่านเรซูเม่ แต่เป็นการเดินสำรวจโลกเสมือนและคุยกับ AI ที่รู้จักทุกคนในทีม",
+    "highlights": [
+      "ครบทั้ง Frontend, Backend และ DevOps แบ่งหน้าที่ชัดเจนคนละส่วน",
+      "ใช้ AI เป็นเครื่องมือช่วยวางแผนและพัฒนา โดยตรวจสอบผลลัพธ์ก่อนใช้งานจริง",
+      "ทำงานผ่าน GitHub แบบมี branch, Pull Request และ CI/CD"
+    ],
+    "sharedWorks": [
+      "NEXORA Virtual Universe: เว็บ Portfolio ของกลุ่มแบบโลก 3D พร้อม AI Assistant ที่ตอบคำถามเกี่ยวกับทีม (React, Express, PostgreSQL, Gemini, Render)"
+    ],
     "contact": {
       "email": null,
-      "github": null,
+      "github": "https://github.com/sky4444q-droid/webtech-group-portfolio-chat",
       "other": null
     }
   },
