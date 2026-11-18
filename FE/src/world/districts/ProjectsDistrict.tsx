@@ -1,5 +1,7 @@
 // Project Dimension — หอจัดแสดงผลงานแบบ Virtual Museum + Hologram
 
+import { useAi } from "../../store/useAi";
+import * as sfx from "../../audio/sfx";
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useCursor } from "@react-three/drei";
@@ -9,10 +11,11 @@ import { COLORS } from "../../config/theme";
 import { usePortfolio } from "../../store/usePortfolio";
 import { useWorld } from "../../store/useWorld";
 import { NeonSign } from "../NeonSign";
-import { Portal } from "../Portal";
 import { AiPresence } from "../ai/AiPresence";
 import { pedestalPositions } from "../layout";
 import { NeonPillar } from "./common";
+import { HoloCard } from "../HoloCard";
+import { usePick, useT } from "../../i18n";
 
 const HOLO_COLORS = [COLORS.cyan, COLORS.pink, COLORS.green];
 
@@ -22,27 +25,43 @@ export function ProjectsDistrict() {
   const spots = pedestalPositions(projects.length);
   return (
     <group position={cfg.position}>
-      {/* พื้นห้องจัดแสดงและผนังตาราง */}
-      <mesh position={[0, 0.1, -1]}>
-        <boxGeometry args={[30, 0.2, 16]} />
-        <meshStandardMaterial color="#0c0920" metalness={0.85} roughness={0.3} />
+      {/* หอจัดแสดงปิดปลายถนน: ผนังหลัง ผนังข้าง หลังคา และทางเข้ากว้างหันหาถนน */}
+      <mesh position={[0, 7, -9.2]}>
+        <boxGeometry args={[30, 14, 0.4]} />
+        <meshStandardMaterial color="#08080c" metalness={0.6} roughness={0.4} />
       </mesh>
-      <mesh position={[0, 7, -9]}>
+      <mesh position={[0, 7, -8.95]}>
         <planeGeometry args={[30, 14, 30, 14]} />
-        <meshBasicMaterial color={cfg.color} wireframe transparent opacity={0.12} toneMapped={false} />
+        <meshBasicMaterial color={cfg.color} wireframe transparent opacity={0.1} toneMapped={false} />
+      </mesh>
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * 15, 7, -3.5]}>
+          <boxGeometry args={[0.4, 14, 11.5]} />
+          <meshStandardMaterial color="#08080c" metalness={0.6} roughness={0.4} />
+        </mesh>
+      ))}
+      <mesh position={[0, 14.2, -3.5]}>
+        <boxGeometry args={[30.4, 0.4, 11.5]} />
+        <meshStandardMaterial color="#060609" metalness={0.5} roughness={0.5} />
+      </mesh>
+      {/* กรอบทางเข้าเรืองแสง */}
+      <mesh position={[0, 12.4, 2.2]}>
+        <boxGeometry args={[30, 3.2, 0.4]} />
+        <meshStandardMaterial color="#08080c" metalness={0.6} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, 10.75, 2.42]}>
+        <boxGeometry args={[29, 0.07, 0.04]} />
+        <meshBasicMaterial color={cfg.color} toneMapped={false} />
       </mesh>
       {[-14, -7, 7, 14].map((x) => (
-        <NeonPillar key={x} height={12} color={cfg.color} position={[x, 0, -8]} />
+        <NeonPillar key={x} height={10.8} color={cfg.color} position={[x, 0, 1.6]} />
       ))}
-      <NeonSign text={cfg.sign} color={cfg.color} height={0.9} position={[0, 11.5, -8.8]} />
-      <NeonSign text="展示" color={COLORS.pink} height={3} vertical position={[-15.5, 7, -7]} flicker />
 
       {projects.map((p, i) => (
         <Pedestal key={p.id} id={p.id} index={i} position={spots[i]} color={HOLO_COLORS[i % HOLO_COLORS.length]} />
       ))}
 
       <AiPresence district="projects" position={[0, 8, -5]} size={0.9} />
-      <Portal target="nexus" radius={1.6} position={[10.5, 0.2, 3]} rotation={[0, -0.6, 0]} />
       <pointLight color={cfg.color} intensity={60} distance={30} position={[0, 9, 3]} />
     </group>
   );
@@ -51,6 +70,7 @@ export function ProjectsDistrict() {
 function Pedestal({ id, index, position, color }: { id: string; index: number; position: [number, number, number]; color: string }) {
   const openPanel = useWorld((s) => s.openPanel);
   const selected = useWorld((s) => s.panel?.kind === "project" && s.panel.id === id);
+  const showHolo = useWorld((s) => s.panel?.kind === "project" && s.panel.id === id && s.panel.display === "holo");
   const [hovered, setHovered] = useState(false);
   useCursor(hovered);
   const holo = useRef<THREE.Mesh>(null);
@@ -71,7 +91,8 @@ function Pedestal({ id, index, position, color }: { id: string; index: number; p
   const open = () => {
     const s = useWorld.getState();
     if (!s.introDone || s.travel) return;
-    openPanel({ kind: "project", id });
+    sfx.play("panelOpen");
+    openPanel({ kind: "project", id, display: "holo" });
   };
 
   return (
@@ -80,6 +101,8 @@ function Pedestal({ id, index, position, color }: { id: string; index: number; p
         onPointerOver={(e) => {
           e.stopPropagation();
           setHovered(true);
+          useAi.getState().noticeHover();
+          sfx.play("hover");
         }}
         onPointerOut={() => setHovered(false)}
         onClick={(e) => {
@@ -112,6 +135,41 @@ function Pedestal({ id, index, position, color }: { id: string; index: number; p
         </mesh>
       </group>
       <NeonSign text={`PROJECT ${String(index + 1).padStart(2, "0")}`} color={color} height={0.42} position={[0, 4.6, 0]} />
+      {showHolo && <ProjectHolo id={id} color={color} />}
     </group>
+  );
+}
+
+/** สรุปผลงานแบบ Hologram ลอยข้างแท่น: ชื่อ สรุป Tech Stack + ปุ่มดูทั้งหมด (เต็มจอ) */
+function ProjectHolo({ id, color }: { id: string; color: string }) {
+  const tr = useT();
+  const p = usePick();
+  const project = usePortfolio((s) => s.data.projects.find((x) => x.id === id));
+  const expandPanel = useWorld((s) => s.expandPanel);
+  if (!project) return null;
+  return (
+    <HoloCard position={[2.9, 3.1, 0.6]} color={color} wide>
+      <span className="holo-kicker">PROJECT</span>
+      <h3 className="holo-title">{p(project.name)}</h3>
+      <p className="holo-text">{p(project.summary)}</p>
+      {project.techStack.length > 0 && (
+        <ul className="holo-chips">
+          {project.techStack.slice(0, 6).map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+      )}
+      <button
+        type="button"
+        className="btn btn-small holo-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          sfx.play("panelOpen");
+          expandPanel();
+        }}
+      >
+        {tr("holoSeeAll")}
+      </button>
+    </HoloCard>
   );
 }

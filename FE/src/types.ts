@@ -34,6 +34,10 @@ export interface Member {
   works: Localized[];
   /** path รูปใน public/images เช่น "/images/member-1.jpg" */
   photo: string | null;
+  /** สีประจำตัว (โฮโลแกรม) — null = ใช้สีเขต */
+  accent: string | null;
+  /** สัญลักษณ์งาน — null = ไม่แสดง */
+  icon: "cloud" | "code" | "database" | null;
 }
 
 export interface Project {

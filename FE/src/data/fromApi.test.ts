@@ -50,3 +50,13 @@ describe("portfolioFromApi", () => {
     expect(e.projects).toHaveLength(1);
   });
 });
+
+describe("member looks", () => {
+  it("attaches photo and colour by the English nickname", () => {
+    const p = portfolioFromApi({ members: [{ name: "ก", nickname: "สกาย (Sky)" }, { name: "ข", nickname: "เก้า (Kao)" }, { name: "ค", nickname: "แสตมป์ (Stamp)" }, { name: "ง", nickname: "อื่น" }] });
+    expect(p.members.map((m) => m.photo)).toEqual(["/images/member-sky.webp", "/images/member-kao.webp", "/images/member-stamp.webp", null]);
+    expect(p.members[0].accent).toBe("#05d9e8");
+    expect(p.members[2].icon).toBe("database");
+    expect(p.members[3].accent).toBeNull();
+  });
+});

@@ -55,9 +55,7 @@ export const th = {
   memberRole: "บทบาท",
   memberSkills: "ทักษะ",
   memberWorks: "ผลงาน",
-  teamOpenHint: "คลิกจอข้อมูลเพื่อดูทีม หรือจอติดต่อเพื่อดูช่องทางติดต่อ",
-  teamScreen: "TEAM",
-  contactScreen: "CONTACT",
+  teamOpenHint: "คลิกโฮโลแกรมสมาชิกเพื่อดูโปรไฟล์ · ช่องทางติดต่ออยู่ที่ปุ่ม \"ติดต่อ\"",
 
   contactTitle: "ช่องทางติดต่อ",
 
@@ -76,4 +74,55 @@ export const th = {
   guide3Body: "กดปุ่ม “คุยกับ AI” หรือคลิกที่ร่าง AI ในฉาก เพื่อถามเรื่องทีม ผลงาน หรือเรื่องทั่วไป",
 
   smallScreen: "เว็บนี้ออกแบบสำหรับคอมพิวเตอร์ เปิดบนจอใหญ่เพื่อประสบการณ์ที่ดีที่สุด",
+
+  // ---------- เสียง / คำพูดของ AI (พูดถึงพื้นที่และวิธีใช้เท่านั้น ห้ามอ้างข้อมูลทีม) ----------
+  voiceGreeting: "ยินดีต้อนรับสู่ NEXORA ฉันจะพาคุณสำรวจจักรวาลนี้เอง",
+  voiceArriveGate: "นี่คือประตูทางเข้า จุดเริ่มต้นของการเดินทาง",
+  voiceArriveNexus: "ที่นี่คือศูนย์กลางของจักรวาล เลือกประตูที่อยากไปได้เลย",
+  voiceArriveProjects: "หอจัดแสดงผลงาน คลิกที่แท่นเพื่อดูรายละเอียด",
+  voiceArriveTeam: "สำนักงานใหญ่ของทีม จอด้านหน้ามีข้อมูลทีมและช่องทางติดต่อ",
+  voiceArriveSanctuary: "ที่นี่คือที่สถิตของฉัน ถามอะไรก็ได้นะ",
+  soundOn: "เปิดเสียง",
+  soundOff: "ปิดเสียง",
+  soundVoice: "เสียงพูดของ AI",
+  soundAmbience: "เสียงบรรยากาศและเสียงประกอบ",
+
+  // ---------- จุดชม ----------
+  vpGateEntry: "กลางซอย",
+  vpGateAlley: "มองไปซุ้มประตู",
+  vpNexusCenter: "กลางสี่แยก",
+  vpNexusBridge: "บนสะพานลอย",
+  vpProjectsHall: "ทางเข้าหอ",
+  vpProjectsPedestal: "หน้าแท่นผลงาน",
+  vpTeamLobby: "ล็อบบี้",
+  vpTeamMembers: "สมาชิก",
+  vpSanctuaryEdge: "ขอบลาน",
+  vpSanctuaryFace: "ต่อหน้า AI",
+  viewBack: "ย้อนกลับ",
+
+  walkSkip: "คลิกเพื่อไปถึงเลย",
+
+  // ---------- Hologram / เต็มจอ ----------
+  holoSeeAll: "ดูทั้งหมด",
+  projectArchView: "ดูไดอะแกรม Architecture",
+  archTitle: "Architecture",
+  memberProfile: "โปรไฟล์สมาชิก",
+
+  // ---------- Discovery ----------
+  voiceDiscover: "เจอเศษข้อมูลแล้ว! ยังมีซ่อนอยู่อีกนะ",
+  voiceDiscoverAll: "ครบทุกชิ้นแล้ว ลองไปที่ที่สถิตของฉันดูสิ",
+  discoveryLabel: "เศษข้อมูลที่ค้นพบ",
+  // ---------- ป้าย / แผงข้อมูลในถนน ----------
+  panelHowTo: "วิธีใช้งาน",
+  panelFollowGuide: "กดชื่อที่ด้านบนแล้วเดินตามตัวจิ๋วไปได้เลย",
+  panelTechStack: "เทคโนโลยีที่ใช้",
+  panelProject: "ผลงาน",
+  // ---------- HUD ----------
+  hudTagline: "พอร์ตโฟลิโอกลุ่มในรูปเมืองนีออน",
+  hintClickKey: "คลิก",
+  hintClick: "เลือก / เดินไปจุดชม",
+  hintRightKey: "คลิกขวา",
+  hintRight: "ย้อนกลับ",
+  hintMoveKey: "เลื่อนเมาส์",
+  hintMove: "มองรอบ ๆ",
 };

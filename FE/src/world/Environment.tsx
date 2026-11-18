@@ -2,140 +2,147 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { MeshReflectorMaterial, Sparkles, Stars } from "@react-three/drei";
+import { Environment as HdrEnvironment, MeshReflectorMaterial, useTexture } from "@react-three/drei";
+import { Sky } from "./street/Sky";
+import { Suspense } from "react";
 import * as THREE from "three";
-import { COLORS } from "../config/theme";
 import { DISTRICT_ORDER, DISTRICTS } from "../config/districts";
 import { useWorld } from "../store/useWorld";
 import { buildingWindowsTexture } from "./textures";
+import { fxEnabled } from "./fx/fxEnabled";
+import { Skyline } from "./street/Skyline";
+import { EnergyCoreTower } from "./street/EnergyCoreTower";
+import { DustMotes, GroundFog, RainSplashes, Traffic } from "./fx/Effects";
+import { HoloFish } from "./fx/HoloFish";
+import { SteamPlumes } from "./fx/SteamPlumes";
+import { cityLayout } from "./street/kitLayout";
+import { hazePatches, spillsFor } from "./street/lightSpill";
+import { FloorDecals } from "./street/DecalMeshes";
+import { mulberry32 } from "../lib/rng";
 
 export function Environment() {
   const quality = useWorld((s) => s.quality);
+  const district = useWorld((s) => s.district);
   const high = quality === "high";
+  const fx = fxEnabled(quality);
+  const center = DISTRICTS[district].position;
+  // หมอกใต้แสงทั้งเมือง คำนวณครั้งเดียว (ไม่ผูกกับย่านปัจจุบัน)
+  const patches = useMemo(() => hazePatches(spillsFor(Object.values(cityLayout()).flat())), []);
   return (
     <>
-      <ambientLight intensity={0.35} color="#6b4cff" />
-      <hemisphereLight args={["#3a1d7a", "#05030c", 0.6]} />
-      <directionalLight position={[-40, 60, 30]} intensity={0.4} color="#9b7bff" />
-      <Stars radius={260} depth={60} count={high ? 4000 : 1500} factor={4} saturation={0.6} fade speed={0.5} />
-      <City />
-      <Floor high={high} />
-      {high && <Rain />}
-      {DISTRICT_ORDER.map((id) => (
-        <Sparkles
-          key={id}
-          position={[DISTRICTS[id].position[0], 6, DISTRICTS[id].position[2]]}
-          count={high ? 70 : 25}
-          scale={[34, 12, 34]}
-          size={3}
-          speed={0.35}
-          color={DISTRICTS[id].color}
-        />
-      ))}
+      {/* แสงรวมกลาง ๆ จางมาก — แสงหลักมาจากป้าย จอ และไฟถนนเอง (ไม่มีแสงม่วงรวมแล้ว) */}
+      <ambientLight intensity={0.08} color="#d8dce6" />
+      <Sky />
+      <Skyline />
+      <EnergyCoreTower />
+      <Suspense fallback={<FloorPlain />}>
+        <Floor high={fx.reflector} />
+        {/* แสงสะท้อนจาก HDRI กลางคืน (CC0) — ไม่ใช้เป็นพื้นหลัง · ต่ำไว้ เพราะพื้นมุมเฉียงสะท้อนฟ้า HDRI เป็นแผ่นเทาซีด */}
+        <HdrEnvironment files="/assets/hdri/dikhololo_night_1k.hdr" environmentIntensity={0.12} />
+      </Suspense>
+      {/* รอยบนพื้น (ฝาท่อ/เส้นเลน/หย่อมกระเบื้อง) ที่ y 0.01 แสดงทั้งสองโหมดคุณภาพ */}
+      <FloorDecals />
+      {fx.rain && <Rain />}
+      {fx.rain && <RainSplashes />}
+      {fx.traffic && <Traffic />}
+      {fx.dust && <DustMotes />}
+      {fx.fish && <HoloFish />}
+      {fx.steam && <SteamPlumes />}
+      <GroundFog layers={fx.fogLayers} center={[center[0], 0, center[2]]} patches={patches} hazeOn={fx.steam} />
     </>
   );
 }
 
 // ---------- พื้นเปียกสะท้อนแสง ----------
 
+function FloorPlain() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[420, 420]} />
+      <meshStandardMaterial color="#050507" metalness={0.7} roughness={0.45} />
+    </mesh>
+  );
+}
+
+let puddleMap: THREE.CanvasTexture | null = null;
+/** แผนที่ความหยาบความถี่ต่ำ 256² (แคชระดับโมดูล): พื้นที่ดำ = แอ่งน้ำเงาจัด, ขาว = พื้นแห้งหยาบ — วาดห่อขอบให้ซ้ำต่อเนื่อง */
+function getPuddleMap(): THREE.CanvasTexture {
+  if (puddleMap) return puddleMap;
+  const N = 256;
+  const c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#f2f2f2";
+  g.fillRect(0, 0, N, N);
+  const rnd = mulberry32(0x9ddc1e);
+  for (let i = 0; i < 11; i++) {
+    const x = rnd() * N;
+    const y = rnd() * N;
+    const r = 18 + rnd() * 38;
+    const dark = 6 + Math.floor(rnd() * 24);
+    // วาดซ้ำที่ offset ±N เพื่อให้ขอบต่อกันพอดีเมื่อ repeat
+    for (const ox of [-N, 0, N])
+      for (const oy of [-N, 0, N]) {
+        const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
+        gr.addColorStop(0, `rgba(${dark},${dark},${dark},0.95)`);
+        gr.addColorStop(0.8, `rgba(${dark},${dark},${dark},0.95)`);
+        gr.addColorStop(1, "rgba(0,0,0,0)");
+        g.fillStyle = gr;
+        g.fillRect(x + ox - r, y + oy - r, r * 2, r * 2);
+      }
+  }
+  puddleMap = new THREE.CanvasTexture(c);
+  puddleMap.wrapS = puddleMap.wrapT = THREE.RepeatWrapping;
+  puddleMap.repeat.set(6, 6);
+  return puddleMap;
+}
+
+// โหมดต่ำเท่านั้นที่ใช้ roughness map (โหมดสูงใช้แผนที่แอ่งน้ำ) จึงโหลดเฉพาะตรงนี้
+function LowFloorMaterial({ normalMap }: { normalMap: THREE.Texture }) {
+  const roughnessMap = useTexture("/assets/textures/tiles052_roughness.jpg");
+  useMemo(() => {
+    roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping;
+    roughnessMap.repeat.set(105, 105);
+  }, [roughnessMap]);
+  return <meshStandardMaterial color="#1d1f25" metalness={0.7} roughness={0.45} normalMap={normalMap} normalScale={new THREE.Vector2(0.7, 0.7)} roughnessMap={roughnessMap} />;
+}
+
 function Floor({ high }: { high: boolean }) {
+  // พื้นกระเบื้องดำแผ่นใหญ่เงา (ตามรูปตัวอย่าง): normal + roughness จาก ambientCG Tiles052 (CC0) ให้เห็นรอยต่อกระเบื้อง
+  const normalMap = useTexture("/assets/textures/tiles052_normal.jpg");
+  useMemo(() => {
+    normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
+    normalMap.repeat.set(105, 105);
+  }, [normalMap]);
+  const puddles = useMemo(() => getPuddleMap(), []);
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
       <planeGeometry args={[420, 420]} />
       {high ? (
         <MeshReflectorMaterial
-          resolution={512}
-          blur={[300, 80]}
-          mixBlur={0.9}
-          mixStrength={2.2}
-          roughness={0.75}
-          depthScale={0.6}
-          minDepthThreshold={0.4}
-          maxDepthThreshold={1.2}
-          color="#0a0714"
-          metalness={0.6}
-          mirror={0.5}
+          normalMap={normalMap}
+          // พื้นกระเบื้องดำเงาเกือบกระจก (แบบรูปตัวอย่าง): สะท้อนแรง เบลอน้อย ไม่จางตามระยะ — รอยต่อกระเบื้องมาจาก normal/roughness
+          normalScale={new THREE.Vector2(0.7, 0.7)}
+          // เบลอแนวตั้งแรง (ขยายภาพสะท้อนเป็นริ้วยาว) + แผนที่แอ่งน้ำคูณความหยาบ: ใต้ป้ายเป็นริ้วยาว ที่อื่นเป็นหย่อม
+          roughnessMap={puddles}
+          resolution={1024}
+          blur={[2, 120]}
+          mixBlur={0.35}
+          mixStrength={2.1}
+          mixContrast={1.15}
+          roughness={0.35}
+          depthScale={0}
+          // สีของวัสดุนี้ "คูณ" กับภาพสะท้อน (สูตรของ drei) — ถ้าดำ ภาพสะท้อนจะหายเกือบหมด
+          // จึงใช้เทาอ่อน + mirror 1 + ไม่เป็นโลหะ: ความมืดของพื้นมาจากฉากที่สะท้อนเอง
+          color="#2e3446"
+          metalness={0}
+          envMapIntensity={0.15}
+          mirror={1}
         />
       ) : (
-        <meshStandardMaterial color="#0a0714" metalness={0.7} roughness={0.45} />
+        <LowFloorMaterial normalMap={normalMap} />
       )}
     </mesh>
-  );
-}
-
-// ---------- เมืองนีออน (ตึกแบบ instanced ให้เบาเครื่อง) ----------
-
-interface Building {
-  x: number;
-  z: number;
-  w: number;
-  d: number;
-  h: number;
-}
-
-function makeCity(): Building[] {
-  let seed = 42;
-  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const out: Building[] = [];
-  const clear = DISTRICT_ORDER.map((id) => ({
-    x: DISTRICTS[id].position[0],
-    z: DISTRICTS[id].position[2],
-    r: id === "sanctuary" ? 44 : 26,
-  }));
-  let tries = 0;
-  while (out.length < 420 && tries < 6000) {
-    tries++;
-    const x = (rand() - 0.5) * 380;
-    const z = (rand() - 0.5) * 380;
-    if (clear.some((c) => Math.hypot(x - c.x, z - c.z) < c.r)) continue;
-    // เว้นทางบินของกล้องระหว่าง Nexus กับพื้นที่อื่น (กล้องอยู่ที่ z+17 ของแต่ละพื้นที่) ไม่ให้บินทะลุตึก
-    if ((Math.abs(x) < 14 && Math.abs(z) < 115) || (z > -14 && z < 34 && Math.abs(x) < 115)) continue;
-    const far = Math.hypot(x, z) / 190;
-    out.push({ x, z, w: 3 + rand() * 6, d: 3 + rand() * 6, h: 6 + rand() * rand() * 55 * (0.6 + far) });
-  }
-  return out;
-}
-
-function City() {
-  const buildings = useMemo(makeCity, []);
-  const body = useRef<THREE.InstancedMesh>(null);
-  const strips = useRef<THREE.InstancedMesh>(null);
-  const windows = useMemo(() => buildingWindowsTexture(), []);
-  const stripColors = [COLORS.pink, COLORS.cyan, COLORS.purple, COLORS.blue, COLORS.green];
-
-  useLayoutEffect(() => {
-    const m = new THREE.Object3D();
-    const c = new THREE.Color();
-    buildings.forEach((b, i) => {
-      m.position.set(b.x, b.h / 2, b.z);
-      m.scale.set(b.w, b.h, b.d);
-      m.rotation.set(0, 0, 0);
-      m.updateMatrix();
-      body.current!.setMatrixAt(i, m.matrix);
-      // แถบนีออนแนวตั้งที่มุมตึก
-      m.position.set(b.x + b.w / 2 + 0.05, b.h / 2, b.z + b.d / 2 + 0.05);
-      m.scale.set(0.12, b.h * 0.9, 0.12);
-      m.updateMatrix();
-      strips.current!.setMatrixAt(i, m.matrix);
-      c.set(stripColors[i % stripColors.length]).multiplyScalar(2.2);
-      strips.current!.setColorAt(i, c);
-    });
-    body.current!.instanceMatrix.needsUpdate = true;
-    strips.current!.instanceMatrix.needsUpdate = true;
-    if (strips.current!.instanceColor) strips.current!.instanceColor.needsUpdate = true;
-  }, [buildings]);
-
-  return (
-    <group>
-      <instancedMesh ref={body} args={[undefined, undefined, buildings.length]}>
-        <boxGeometry />
-        <meshStandardMaterial color="#0d0a1c" roughness={0.6} metalness={0.4} emissive="#ffffff" emissiveMap={windows} emissiveIntensity={1.4} />
-      </instancedMesh>
-      <instancedMesh ref={strips} args={[undefined, undefined, buildings.length]}>
-        <boxGeometry />
-        <meshBasicMaterial toneMapped={false} />
-      </instancedMesh>
-    </group>
   );
 }
 

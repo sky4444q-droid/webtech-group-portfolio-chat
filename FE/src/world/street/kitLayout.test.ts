@@ -1,0 +1,443 @@
+import { describe, expect, it } from "vitest";
+import { CITY_SEED, layoutNexus, layoutStreet, type KitItem } from "./kitLayout";
+import { STREETS, TEAM_TOWER, distanceToPolyline, polylineLength } from "./streets";
+import { DISTRICTS } from "../../config/districts";
+
+const SIGNS = new Set(["signH", "signV", "lightbox", "screen", "panel"]);
+const streets = Object.values(STREETS);
+
+describe("layoutStreet", () => {
+  it("is deterministic for a seed", () => {
+    for (const s of streets) expect(layoutStreet(s, CITY_SEED)).toEqual(layoutStreet(s, CITY_SEED));
+  });
+
+  it("keeps a clear walking corridor", () => {
+    for (const s of streets)
+      for (const it of layoutStreet(s, CITY_SEED)) {
+        if (it.position[1] >= 2.6) continue;
+        expect(distanceToPolyline([it.position[0], it.position[2]], s.points)).toBeGreaterThan(1.2);
+      }
+  });
+
+  it("lines both sides with facades from start to end", () => {
+    for (const s of streets) {
+      const len = polylineLength(s.points);
+      const items = layoutStreet(s, CITY_SEED);
+      for (const side of [-1, 1] as const) {
+        const cover = items.filter((i) => i.type === "facade" && i.side === side).reduce((n, i) => n + i.size[0], 0);
+        expect(cover / len).toBeGreaterThanOrEqual(0.9);
+      }
+    }
+  });
+
+  it("is dense like the reference", () => {
+    for (const s of streets) {
+      const n = layoutStreet(s, CITY_SEED).filter((i) => SIGNS.has(i.type)).length;
+      expect(n / polylineLength(s.points)).toBeGreaterThanOrEqual(1.2);
+    }
+  });
+
+  it("puts at least one bigScreen on every street and at nexus", () => {
+    for (const s of streets) expect(layoutStreet(s, CITY_SEED).some((i) => i.type === "bigScreen")).toBe(true);
+    expect(layoutNexus(CITY_SEED).some((i) => i.type === "bigScreen")).toBe(true);
+  });
+
+  it("closes the far end of every street, leaving the team HQ plot empty", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const end = s.points[s.points.length - 1];
+      const caps = items.filter((i) => i.type === "endCap");
+      if (s.id === "officeRow") {
+        expect(caps.length).toBe(0);
+        const [ax, , az] = DISTRICTS.team.position;
+        const inPlot = (i: KitItem) => i.position[0] > ax && i.position[0] < ax + 12 && Math.abs(i.position[2] - az) < 6;
+        expect(items.filter(inPlot)).toEqual([]);
+      } else {
+        expect(caps.length).toBe(1);
+        // อยู่เลยปลายถนนออกไป
+        const start = s.points[0];
+        const len = Math.hypot(end[0] - start[0], end[1] - start[1]);
+        const capLen = Math.hypot(caps[0].position[0] - start[0], caps[0].position[2] - start[1]);
+        expect(capLen).toBeGreaterThan(len);
+      }
+    }
+  });
+
+  it("keeps every street piece out of the Team HQ tower (no buildings poking into the lobby)", () => {
+    const [tx, , tz] = DISTRICTS.team.position;
+    const t = TEAM_TOWER;
+    const box = { x0: tx + t.center[0] - t.size[0] / 2, x1: tx + t.center[0] + t.size[0] / 2, z0: tz + t.center[2] - t.size[2] / 2, z1: tz + t.center[2] + t.size[2] / 2 };
+    for (const s of streets)
+      for (const it of layoutStreet(s, CITY_SEED)) {
+        if (it.type === "cable") continue; // สายไฟลอยสูงข้ามถนน ไม่ชนตึก
+        // ตึกชั้นบน/ของบนหลังคา/เสาอากาศ/ไฟเตือน/เส้นขอบ ต้องอยู่นอกตึก Team เช่นกัน (ไม่ข้ามด้วย continue)
+        const c = Math.abs(Math.cos(it.rotationY));
+        const sn = Math.abs(Math.sin(it.rotationY));
+        const hx = (c * it.size[0] + sn * it.size[2]) / 2;
+        const hz = (sn * it.size[0] + c * it.size[2]) / 2;
+        const overlaps = it.position[0] + hx > box.x0 + 1e-6 && it.position[0] - hx < box.x1 && it.position[2] + hz > box.z0 && it.position[2] - hz < box.z1;
+        expect(overlaps, `${s.id} ${it.type} at ${it.position.map((v) => v.toFixed(2))}`).toBe(false);
+      }
+  });
+
+  it("varies sign variants so neighbours differ", () => {
+    for (const s of streets) {
+      for (const side of [-1, 1] as const) {
+        const signs = layoutStreet(s, CITY_SEED).filter((i) => SIGNS.has(i.type) && i.side === side);
+        for (let i = 1; i < signs.length; i++) {
+          if (signs[i].type === signs[i - 1].type) expect(signs[i].variant).not.toBe(signs[i - 1].variant);
+        }
+      }
+    }
+  });
+});
+
+describe("lamp cords", () => {
+  it("hangs every lamp from a vertical cord that reaches the cable above it", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const lamps = items.filter((i) => i.type === "lamp");
+      const cords = items.filter((i) => i.type === "cable" && i.size[0] < i.size[1]);
+      expect(lamps.length).toBeGreaterThan(0);
+      expect(cords.length).toBe(lamps.length);
+      for (const l of lamps) {
+        const cord = cords.find((c) => c.position[0] === l.position[0] && c.position[2] === l.position[2])!;
+        expect(cord.size).toEqual([0.03, expect.any(Number), 0.03]);
+        expect(cord.position[1] - cord.size[1] / 2).toBeCloseTo(l.position[1] + l.size[1] / 2, 5);
+      }
+    }
+  });
+});
+
+describe("canyon buildings", () => {
+  it("builds streets as canyons", () => {
+    const hs = streets.flatMap((s) => layoutStreet(s, CITY_SEED).filter((i) => i.type === "facade").map((i) => i.size[1]));
+    expect(Math.min(...hs)).toBeGreaterThanOrEqual(18);
+    expect(Math.max(...hs)).toBeLessThanOrEqual(60);
+    expect(hs.reduce((a, b) => a + b, 0) / hs.length).toBeGreaterThanOrEqual(32);
+  });
+
+  it("stacks a setback tier on at least 40% of facades, never overhanging the street face", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const facades = items.filter((i) => i.type === "facade");
+      const tiers = items.filter((i) => i.type === "tier");
+      expect(tiers.length / facades.length).toBeGreaterThanOrEqual(0.4);
+      // ระยะหน้าที่ใกล้ถนนที่สุดของชิ้น (กึ่งกลางถึงเส้นกลางถนน ลบครึ่งความลึก)
+      const near = (i: KitItem) => distanceToPolyline([i.position[0], i.position[2]], s.points) - i.size[2] / 2;
+      for (const t of tiers) {
+        const f = facades.find((f) => f.side === t.side && Math.abs(f.position[0] - t.position[0]) < f.size[0] && Math.abs(f.position[2] - t.position[2]) < f.size[0] && Math.abs(f.position[1] * 2 - (t.position[1] - t.size[1] / 2)) < 1e-6)!;
+        expect(f, `${s.id} tier has a facade`).toBeDefined();
+        expect(near(t)).toBeGreaterThanOrEqual(near(f) + 0.5 - 1e-6);
+        expect(t.size[1] / (f.size[1])).toBeGreaterThanOrEqual(0.25 - 1e-6);
+        expect(t.size[1] / (f.size[1])).toBeLessThanOrEqual(0.45 + 1e-6);
+      }
+    }
+  });
+
+  it("tops every antenna with a beacon", () => {
+    for (const s of [...streets, null]) {
+      const items = s ? layoutStreet(s, CITY_SEED) : layoutNexus(CITY_SEED);
+      const antennas = items.filter((i) => i.type === "antenna");
+      const beacons = items.filter((i) => i.type === "beacon");
+      expect(antennas.length).toBeGreaterThan(0);
+      expect(beacons.length).toBe(antennas.length);
+      for (const a of antennas) {
+        const tip = a.position[1] + a.size[1] / 2;
+        expect(beacons.some((b) => b.position[0] === a.position[0] && b.position[2] === a.position[2] && Math.abs(b.position[1] - tip) < 0.5)).toBe(true);
+      }
+    }
+  });
+
+  it("puts roof clutter and edge strips on the buildings", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      expect(items.some((i) => i.type === "roof")).toBe(true);
+      expect(items.some((i) => i.type === "edgeStrip")).toBe(true);
+    }
+  });
+});
+
+describe("high signs", () => {
+  it("stacks vertical signs up building edges", () => {
+    for (const s of streets) {
+      const vs = layoutStreet(s, CITY_SEED).filter((i) => i.type === "signV");
+      const groups = new Map<string, KitItem[]>();
+      for (const v of vs) {
+        const key = `${Math.round(v.position[0] / 0.1)},${Math.round(v.position[2] / 0.1)}`;
+        groups.set(key, [...(groups.get(key) ?? []), v]);
+      }
+      const stacks = [...groups.values()].filter((g) => {
+        if (g.length < 3) return false;
+        const ys = g.map((i) => i.position[1]);
+        const top = g.reduce((a, b) => (a.position[1] > b.position[1] ? a : b));
+        return ys.every((y, i) => i === 0 || y > ys[i - 1]) && top.position[1] > 20;
+      });
+      expect(stacks.length, s.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("places mid-height signs", () => {
+    for (const s of streets) {
+      const hs = layoutStreet(s, CITY_SEED).filter((i) => i.type === "signH" || i.type === "lightbox");
+      expect(hs.filter((i) => i.position[1] > 9).length / hs.length, s.id).toBeGreaterThanOrEqual(0.25);
+    }
+  });
+});
+
+describe("giant wrap-around screens", () => {
+  const bottom = (i: KitItem) => i.position[1] - i.size[1] / 2;
+  it("puts at least 2 at nexus and exactly 1 per street", () => {
+    expect(layoutNexus(CITY_SEED).filter((i) => i.type === "giantScreen").length).toBeGreaterThanOrEqual(2);
+    for (const s of streets) expect(layoutStreet(s, CITY_SEED).filter((i) => i.type === "giantScreen").length, s.id).toBe(1);
+  });
+
+  it("keeps every giant screen high (bottom y >= 14, height 12-20)", () => {
+    const all = [...layoutNexus(CITY_SEED), ...streets.flatMap((s) => layoutStreet(s, CITY_SEED))].filter((i) => i.type === "giantScreen");
+    for (const g of all) {
+      expect(bottom(g)).toBeGreaterThanOrEqual(14);
+      expect(g.size[1]).toBeGreaterThanOrEqual(12);
+      expect(g.size[1]).toBeLessThanOrEqual(20);
+    }
+  });
+
+  it("sits higher than or far from each street's key bigScreen", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const key = items.find((i) => i.type === "bigScreen")!;
+      const g = items.find((i) => i.type === "giantScreen")!;
+      const higher = bottom(g) > key.position[1] + key.size[1] / 2;
+      const far = Math.hypot(g.position[0] - key.position[0], g.position[2] - key.position[2]) > 15;
+      expect(higher || far, s.id).toBe(true);
+    }
+  });
+
+  it("keeps each giant screen's bottom above the top of its street's key bigScreen", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const key = items.find((i) => i.type === "bigScreen")!;
+      for (const g of items.filter((i) => i.type === "giantScreen")) {
+        expect(bottom(g), s.id).toBeGreaterThan(key.position[1] + key.size[1] / 2);
+      }
+    }
+  });
+});
+
+describe("giant screen support", () => {
+  it("never rises above the facade it hangs on", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const g = items.find((i) => i.type === "giantScreen")!;
+      const lx = [Math.cos(g.rotationY), -Math.sin(g.rotationY)];
+      // ตึกที่จอเกาะ: แตะมุมตึก และอยู่ด้านแกน x ท้องถิ่นฝั่ง -corner
+      const host = items.filter((f) => {
+        if (f.type !== "facade" || f.side !== g.side) return false;
+        const dx = f.position[0] - g.position[0];
+        const dz = f.position[2] - g.position[2];
+        return Math.hypot(dx, dz) <= Math.hypot(f.size[0] / 2, f.size[2] / 2) + 0.01 && Math.sign(dx * lx[0] + dz * lx[1]) === -g.corner!;
+      });
+      expect(host.length, s.id).toBe(1);
+      expect(g.position[1] + g.size[1] / 2, s.id).toBeLessThanOrEqual(host[0].size[1] + 1e-6);
+    }
+  });
+});
+
+describe("ticker strips", () => {
+  it("fits between the shopfront top (3.2) and the sign start (3.4)", () => {
+    for (const s of streets)
+      for (const t of layoutStreet(s, CITY_SEED).filter((i) => i.type === "ticker")) {
+        expect(t.position[1] - t.size[1] / 2).toBeGreaterThanOrEqual(3.22 - 1e-9);
+        expect(t.position[1] + t.size[1] / 2).toBeLessThanOrEqual(3.4 + 1e-9);
+      }
+  });
+
+  it("puts a ticker above at least 30% of shopfronts on every street", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const shops = items.filter((i) => i.type === "shopfront");
+      const tickers = items.filter((i) => i.type === "ticker");
+      const covered = shops.filter((sh) =>
+        tickers.some((t) => Math.hypot(t.position[0] - sh.position[0], t.position[2] - sh.position[2]) <= 0.5 && t.position[1] >= sh.position[1]),
+      );
+      expect(covered.length / shops.length).toBeGreaterThanOrEqual(0.3);
+    }
+  });
+
+  it("renders tickers with the ticker program (variant % 5 === 2)", () => {
+    for (const s of streets) for (const t of layoutStreet(s, CITY_SEED).filter((i) => i.type === "ticker")) expect(t.variant % 5).toBe(2);
+  });
+});
+
+describe("no coplanar faces on street walls", () => {
+  // หน้าร้าน/แผ่นแสงบนผนังที่อยู่ระนาบเดียวกับหน้าตึกพอดีจะ z-fight (ภาพกะพริบข้างทางตอนเดิน)
+  it("keeps shopfronts and wall light spills off the facade plane", async () => {
+    const { spillsFor } = await import("./lightSpill");
+    let checked = 0;
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const off = (p: [number, number, number]) => distanceToPolyline([p[0], p[2]], s.points);
+      for (const it of items.filter((i) => i.type === "shopfront")) {
+        const front = off(it.position) - it.size[2] / 2;
+        expect(Math.abs(front - s.halfWidth), `${s.id} shopfront front face`).toBeGreaterThan(0.01);
+        expect(front).toBeLessThan(s.halfWidth);
+        checked++;
+      }
+      for (const sp of spillsFor(items).filter((x) => x.kind === "wall")) {
+        const d = off(sp.position);
+        expect(Math.abs(d - s.halfWidth), `${s.id} wall spill`).toBeGreaterThan(0.01);
+        expect(d, `${s.id} wall spill must sit in front of the wall`).toBeLessThan(s.halfWidth);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
+  });
+
+  // วัดจากผนังจริงแบบเดียวกับตัววาง: จุดบนระนาบหน้าตึกที่ระยะ a ตามแนวตึก, W = min(ระยะจุดนั้นถึงเส้นถนน, halfWidth)
+  it("keeps every screen, bezel and holo face in front of the real facade wall", async () => {
+    const { bezelFor } = await import("./kitLayout");
+    let checked = 0;
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const facades = items.filter((i) => i.type === "facade");
+      // คืนระยะกึ่งกลางชิ้นจากเส้นถนนตามแนวตั้งฉากผนัง และ W ของผนังตรงนั้น
+      const measure = (it: KitItem) => {
+        for (const f of facades) {
+          if (f.side !== it.side) continue;
+          const ux = Math.cos(f.rotationY), uz = -Math.sin(f.rotationY);
+          const nx = Math.sin(f.rotationY), nz = Math.cos(f.rotationY);
+          const a = (it.position[0] - f.position[0]) * ux + (it.position[2] - f.position[2]) * uz;
+          if (Math.abs(a) > f.size[0] / 2 + 1e-6) continue;
+          const px = f.position[0] + nx * 3 + ux * a;
+          const pz = f.position[2] + nz * 3 + uz * a;
+          const out = (it.position[0] - px) * nx + (it.position[2] - pz) * nz;
+          if (out < -0.5 || out > 2) continue;
+          const dPoly = distanceToPolyline([px, pz], s.points);
+          return { W: Math.min(dPoly, s.halfWidth), centre: dPoly - out };
+        }
+        throw new Error(`${s.id} ${it.type} has no wall`);
+      };
+      for (const it of items.filter((i) => i.type === "monitor" || i.type === "videoWall")) {
+        const m = measure(it);
+        const back = m.centre + it.size[2] / 2;
+        expect(m.W - back, `${s.id} ${it.type} back face`).toBeGreaterThanOrEqual(0.02 - 1e-9);
+        const b = bezelFor(it);
+        const mb = measure(b);
+        const bFront = mb.centre - b.size[2] / 2;
+        expect(m.W - (mb.centre + b.size[2] / 2), `${s.id} bezel back face`).toBeGreaterThanOrEqual(0.02 - 1e-9);
+        // กรอบอยู่ระหว่างผนังกับหน้าจอ
+        expect(bFront - (m.centre - it.size[2] / 2), `${s.id} bezel behind screen face`).toBeGreaterThanOrEqual(0.02 - 1e-9);
+        checked++;
+      }
+      for (const h of items.filter((i) => i.type === "holo")) {
+        const m = measure(h);
+        expect(m.W - m.centre).toBeGreaterThanOrEqual(0.6 - 1e-9);
+        expect(m.W - m.centre).toBeLessThanOrEqual(1.2 + 1e-9);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(50);
+  });
+});
+
+describe("TEAM_TOWER", () => {
+  // พื้นสะท้อนตัดภาพที่ y=0 พอดี: ก้นตึกที่อยู่บน y=0 จะโผล่-หายในเงาสะท้อน (พื้นล็อบบี้กะพริบ)
+  it("sinks its base below the reflective floor and keeps its top", () => {
+    expect(TEAM_TOWER.center[1] - TEAM_TOWER.size[1] / 2).toBeLessThan(-0.05);
+    expect(TEAM_TOWER.center[1] + TEAM_TOWER.size[1] / 2).toBeCloseTo(42);
+  });
+});
+
+describe("lower-facade screens and holograms", () => {
+  const NEW = new Set(["monitor", "videoWall", "holo"]);
+  const OBST = new Set(["signH", "signV", "lightbox", "screen", "panel", "bigScreen", "giantScreen"]);
+
+  it("leaves the legacy layout byte-identical", async () => {
+    const { createHash } = await import("node:crypto");
+    const fixture = (await import("./__fixtures__/kitLayout.legacy.json")).default as { sha256: string };
+    const { cityLayout } = await import("./kitLayout");
+    const all = Object.entries(cityLayout())
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+      .map(([k, v]) => [k, v.filter((i) => !NEW.has(i.type))]);
+    expect(createHash("sha256").update(JSON.stringify(all)).digest("hex")).toBe(fixture.sha256);
+  });
+
+  // กรอบท้องถิ่นของหน้าตึก: ระยะตามแนวถนน (เทียบศูนย์กลางตึก) และความสูง
+  const local = (f: KitItem, i: KitItem) => {
+    const ux = Math.cos(f.rotationY);
+    const uz = -Math.sin(f.rotationY);
+    const a = (i.position[0] - f.position[0]) * ux + (i.position[2] - f.position[2]) * uz;
+    return { x0: a - i.size[0] / 2, x1: a + i.size[0] / 2, y0: i.position[1] - i.size[1] / 2, y1: i.position[1] + i.size[1] / 2 };
+  };
+  const onFacade = (f: KitItem, i: KitItem) => {
+    if (i.side !== f.side || i.street !== f.street) return false;
+    const l = local(f, i);
+    const c = (l.x0 + l.x1) / 2;
+    return Math.abs(c) <= f.size[0] / 2 + 1e-6;
+  };
+
+  it("covers 35-50% of the lower facade area per street", () => {
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const facades = items.filter((i) => i.type === "facade");
+      let area = 0;
+      let cover = 0;
+      for (const f of facades) {
+        area += f.size[0] * Math.max(0, Math.min(25, f.size[1]) - 4);
+      }
+      for (const n of items.filter((i) => NEW.has(i.type))) cover += n.size[0] * n.size[1];
+      expect(cover / area, s.id).toBeGreaterThanOrEqual(0.35);
+      expect(cover / area, s.id).toBeLessThanOrEqual(0.5);
+    }
+  });
+
+  it("keeps new items in y 4-25, below facade top - 1, and off existing signs", () => {
+    let n = 0;
+    for (const s of streets) {
+      const items = layoutStreet(s, CITY_SEED);
+      const facades = items.filter((i) => i.type === "facade");
+      const news = items.filter((i) => NEW.has(i.type));
+      const obst = items.filter((i) => OBST.has(i.type));
+      for (const it of news) {
+        const f = facades.find((f) => onFacade(f, it))!;
+        expect(f, `${s.id} ${it.type} has a facade`).toBeDefined();
+        const l = local(f, it);
+        expect(l.y0).toBeGreaterThanOrEqual(4 - 1e-6);
+        expect(l.y1).toBeLessThanOrEqual(Math.min(25, f.size[1] - 1) + 1e-6);
+        expect(l.x0).toBeGreaterThanOrEqual(-f.size[0] / 2 - 1e-6);
+        expect(l.x1).toBeLessThanOrEqual(f.size[0] / 2 + 1e-6);
+        for (const o of obst) {
+          if (o.side !== it.side || o.street !== it.street) continue;
+          if (Math.hypot(o.position[0] - it.position[0], o.position[2] - it.position[2]) > 20) continue;
+          const b = local(f, o);
+          const hit = l.x0 < b.x1 && l.x1 > b.x0 && l.y0 < b.y1 && l.y1 > b.y0;
+          expect(hit, `${s.id} ${it.type} overlaps ${o.type}`).toBe(false);
+        }
+        n++;
+      }
+    }
+    expect(n).toBeGreaterThan(50);
+  });
+});
+
+describe("nexus plaza screens", () => {
+  it("dress the plaza-facing corner walls in front of the facade, below the giant screens", () => {
+    const items = layoutNexus(CITY_SEED);
+    const facades = items.filter((i) => i.type === "facade");
+    const screens = items.filter((i) => i.type === "monitor" || i.type === "videoWall" || i.type === "holo");
+    expect(screens.length).toBeGreaterThan(20);
+    for (const s of screens) {
+      // ระยะจากระนาบหน้าตึกที่ใกล้ที่สุด ตามทิศที่ชิ้นหันออก
+      const nx = Math.sin(s.rotationY);
+      const nz = Math.cos(s.rotationY);
+      const f = facades.reduce((a, b) => (Math.hypot(b.position[0] - s.position[0], b.position[2] - s.position[2]) < Math.hypot(a.position[0] - s.position[0], a.position[2] - s.position[2]) ? b : a));
+      const wall = (f.position[0] + nx * f.size[0] / 2) * Math.abs(nx) + (f.position[2] + nz * f.size[2] / 2) * Math.abs(nz);
+      const out = (s.position[0] * Math.abs(nx) + s.position[2] * Math.abs(nz) - wall) * (nx + nz);
+      if (s.type === "holo") {
+        expect(out).toBeGreaterThanOrEqual(0.6);
+        expect(out).toBeLessThanOrEqual(1.2);
+      } else expect(out - s.size[2] / 2).toBeGreaterThanOrEqual(0.02 - 1e-9);
+      expect(s.position[1] - s.size[1] / 2).toBeGreaterThanOrEqual(4 - 1e-9);
+      expect(s.position[1] + s.size[1] / 2).toBeLessThanOrEqual(21 + 1e-9);
+    }
+  });
+});

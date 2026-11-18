@@ -28,7 +28,7 @@ describe("useWorld", () => {
   });
 
   it("finishTravel arrives and closes any open panel", () => {
-    useWorld.getState().openPanel({ kind: "team" });
+    useWorld.getState().openPanel({ kind: "team", display: "full" });
     useWorld.getState().travelTo("team");
     useWorld.getState().finishTravel();
     const s = useWorld.getState();
@@ -68,5 +68,99 @@ describe("useWorld", () => {
     useWorld.getState().setLang("en");
     expect(useWorld.getState().lang).toBe("en");
     spy.mockRestore();
+  });
+
+  describe("viewpoints", () => {
+    it("goToViewpoint then backViewpoint returns to the previous one", () => {
+      useWorld.getState().goToViewpoint(1);
+      expect(useWorld.getState().viewpoint).toBe(1);
+      expect(useWorld.getState().backViewpoint()).toBe(true);
+      expect(useWorld.getState().viewpoint).toBe(0);
+    });
+
+    it("backViewpoint at the first viewpoint returns false", () => {
+      expect(useWorld.getState().backViewpoint()).toBe(false);
+    });
+
+    it("ignores goToViewpoint while traveling or before the intro ends", () => {
+      useWorld.getState().travelTo("projects");
+      useWorld.getState().goToViewpoint(1);
+      expect(useWorld.getState().viewpoint).toBe(0);
+      reset({ introDone: false });
+      useWorld.getState().goToViewpoint(1);
+      expect(useWorld.getState().viewpoint).toBe(0);
+    });
+
+    it("ignores an out-of-range viewpoint", () => {
+      useWorld.getState().goToViewpoint(99);
+      expect(useWorld.getState().viewpoint).toBe(0);
+    });
+
+    it("arriving in a district resets the viewpoint", () => {
+      useWorld.getState().goToViewpoint(1);
+      useWorld.getState().travelTo("team");
+      useWorld.getState().finishTravel();
+      expect(useWorld.getState().viewpoint).toBe(0);
+      expect(useWorld.getState().viewpointStack).toEqual([]);
+    });
+
+    it("closeTopmost steps back a viewpoint when nothing else is open", () => {
+      useWorld.getState().goToViewpoint(1);
+      useWorld.getState().openPanel({ kind: "team", display: "full" });
+      useWorld.getState().closeTopmost();
+      expect(useWorld.getState().viewpoint).toBe(1);
+      useWorld.getState().closeTopmost();
+      expect(useWorld.getState().viewpoint).toBe(0);
+    });
+  });
+
+  describe("detail display", () => {
+    it("expandPanel turns a hologram into fullscreen", () => {
+      useWorld.getState().openPanel({ kind: "project", id: "project-1", display: "holo" });
+      useWorld.getState().expandPanel();
+      expect(useWorld.getState().panel).toEqual({ kind: "project", id: "project-1", display: "full" });
+    });
+
+    it("Esc from fullscreen closes everything", () => {
+      useWorld.getState().openPanel({ kind: "project", id: "project-1", display: "full" });
+      useWorld.getState().closeTopmost();
+      expect(useWorld.getState().panel).toBeNull();
+    });
+
+    it("expandPanel does nothing without a hologram open", () => {
+      useWorld.getState().expandPanel();
+      expect(useWorld.getState().panel).toBeNull();
+    });
+  });
+
+  describe("history during travel", () => {
+    it("a Back press during a trip is queued and taken after arriving", () => {
+      useWorld.getState().travelTo("projects");
+      useWorld.getState().travelTo("nexus", { fromHistory: true });
+      useWorld.getState().finishTravel();
+      expect(useWorld.getState().district).toBe("projects");
+      expect(useWorld.getState().travel?.to).toBe("nexus");
+    });
+
+    it("a Mini Map click during a trip is still ignored", () => {
+      useWorld.getState().travelTo("projects");
+      useWorld.getState().travelTo("team");
+      useWorld.getState().finishTravel();
+      expect(useWorld.getState().travel).toBeNull();
+    });
+  });
+
+  describe("quality", () => {
+    it("auto-downgrade does not override a quality the visitor picked", () => {
+      useWorld.getState().setQuality("high");
+      useWorld.getState().autoLowerQuality();
+      expect(useWorld.getState().quality).toBe("high");
+    });
+
+    it("auto-downgrade lowers quality when the visitor never chose", () => {
+      reset({ quality: "high", qualityChosen: false });
+      useWorld.getState().autoLowerQuality();
+      expect(useWorld.getState().quality).toBe("low");
+    });
   });
 });

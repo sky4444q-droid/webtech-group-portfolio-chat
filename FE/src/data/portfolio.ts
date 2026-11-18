@@ -61,6 +61,8 @@ export const portfolio: Portfolio = {
     skills: [PENDING],
     works: [PENDING],
     photo: null,
+    accent: null,
+    icon: null,
   })),
 
   projects: [NEXORA_PROJECT],

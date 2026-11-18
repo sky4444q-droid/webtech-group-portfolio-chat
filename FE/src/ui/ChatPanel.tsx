@@ -1,5 +1,6 @@
 // หน้าต่างแชทกับ AI — เปิดได้จากทุกพื้นที่
 
+import { useAi } from "../store/useAi";
 import { useEffect, useRef, useState } from "react";
 import { useWorld } from "../store/useWorld";
 import { useChat } from "../store/useChat";
@@ -84,7 +85,10 @@ export function ChatPanel() {
           rows={2}
           placeholder={tr("chatPlaceholder")}
           aria-label={tr("chatPlaceholder")}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            useAi.getState().noticeTyping();
+          }}
           onKeyDown={(e) => {
             // ไม่ส่งตอนกำลังพิมพ์ภาษาไทยด้วย IME, Shift+Enter = ขึ้นบรรทัดใหม่
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {

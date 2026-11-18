@@ -4,6 +4,8 @@ import { create } from "zustand";
 import type { ChatMessage } from "../types";
 import { ChatApiError, sendChat, WAKING_NOTICE_MS, type ChatErrorKind, isMockMode } from "../services/chatApi";
 import { useWorld } from "./useWorld";
+import { useAi } from "./useAi";
+import * as sfx from "../audio/sfx";
 import { load, save } from "../lib/storage";
 import type { DictKey } from "../i18n";
 
@@ -48,6 +50,7 @@ export const useChat = create<ChatState>((set, get) => {
   async function request(text: string) {
     const { lang, district } = useWorld.getState();
     set({ pending: true, waking: false });
+    useAi.getState().setMood("thinking");
     const wakeTimer = setTimeout(() => {
       if (get().pending) set({ waking: true });
     }, WAKING_NOTICE_MS);
@@ -67,12 +70,15 @@ export const useChat = create<ChatState>((set, get) => {
         mock: result.mock,
         messages: [...s.messages, { id: newId(), role: "assistant", text: result.reply, sources: result.sources }],
       }));
+      useAi.getState().setMood("happy", 1600);
+      sfx.play("reply");
     } catch (err) {
       const kind: ChatErrorKind = err instanceof ChatApiError ? err.kind : "server";
       // ข้อความ error เก็บเป็น key ของคำแปล เพื่อให้เปลี่ยนภาษาตามผู้ใช้ได้
       set((s) => ({
         messages: [...s.messages, { id: newId(), role: "assistant", text: ERROR_KEYS[kind], sources: [], error: true }],
       }));
+      useAi.getState().setMood("error", 1800);
     } finally {
       clearTimeout(wakeTimer);
       set({ pending: false, waking: false });
@@ -86,6 +92,7 @@ export const useChat = create<ChatState>((set, get) => {
       const text = raw.trim();
       if (!text || get().pending) return;
       set((s) => ({ messages: [...s.messages, { id: newId(), role: "user", text, sources: [] }] }));
+      sfx.play("send");
       await request(text);
     },
 

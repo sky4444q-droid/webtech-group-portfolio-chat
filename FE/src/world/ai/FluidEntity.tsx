@@ -3,6 +3,8 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import type { AiMood } from "../../store/useAi";
+import { MOOD_STYLE, talkPulse } from "./moodStyle";
 
 const vertexShader = /* glsl */ `
   uniform float uTime;
@@ -42,7 +44,12 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-export function FluidEntity({ color, accent, thinking }: { color: string; accent: string; thinking: boolean }) {
+export function FluidEntity({ color, accent, mood }: { color: string; accent: string; mood: AiMood }) {
+  const st = MOOD_STYLE[mood];
+  const light = useRef<THREE.PointLight>(null);
+  const baseB = useMemo(() => new THREE.Color(accent), [accent]);
+  const tmp = useMemo(() => new THREE.Color(), []);
+  const time = useRef(0);
   const mesh = useRef<THREE.Mesh>(null);
   const material = useMemo(
     () =>
@@ -64,9 +71,15 @@ export function FluidEntity({ color, accent, thinking }: { color: string; accent
 
   useFrame(({ clock }, dt) => {
     const u = material.uniforms;
-    u.uTime.value = clock.elapsedTime * (thinking ? 2 : 1);
-    u.uAmp.value = THREE.MathUtils.damp(u.uAmp.value, thinking ? 0.32 : 0.18, 3, dt);
-    u.uGlow.value = THREE.MathUtils.damp(u.uGlow.value, thinking ? 1.8 : 1.1, 3, dt);
+    time.current += dt * st.speed;
+    u.uTime.value = time.current;
+    const talk = talkPulse(clock.elapsedTime) * 0.12 * st.talk;
+    u.uAmp.value = THREE.MathUtils.damp(u.uAmp.value, 0.18 * st.amp + talk, 6, dt);
+    u.uGlow.value = THREE.MathUtils.damp(u.uGlow.value, 1.1 * st.glow, 3, dt);
+    tmp.copy(baseB);
+    if (st.tint) tmp.lerp(new THREE.Color(st.tint), 0.75);
+    (u.uColorB.value as THREE.Color).lerp(tmp, Math.min(1, dt * 4));
+    if (light.current) light.current.intensity = THREE.MathUtils.damp(light.current.intensity, 25 * st.glow, 4, dt);
     if (mesh.current) mesh.current.rotation.y += dt * 0.2;
   });
 
@@ -75,7 +88,7 @@ export function FluidEntity({ color, accent, thinking }: { color: string; accent
       <mesh ref={mesh} material={material}>
         <icosahedronGeometry args={[1, 24]} />
       </mesh>
-      <pointLight color={color} intensity={thinking ? 50 : 25} distance={18} />
+      <pointLight ref={light} color={color} intensity={25} distance={18} />
     </group>
   );
 }

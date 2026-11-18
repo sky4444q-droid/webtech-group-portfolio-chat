@@ -11,12 +11,15 @@ export function useHashSync() {
 
     const onHashChange = () => {
       const id = districtFromHash(window.location.hash);
-      if (id) useWorld.getState().travelTo(id);
+      if (id) useWorld.getState().travelTo(id, { fromHistory: true });
     };
     window.addEventListener("hashchange", onHashChange);
 
     const unsubscribe = useWorld.subscribe((s, prev) => {
       if (s.introDone && s.district !== prev.district) {
+        // มาถึงระหว่างที่มีคิวจากปุ่ม Back/Forward: URL ชี้ไปที่ปลายทางในคิวอยู่แล้ว — ไม่แตะประวัติ
+        // (ถ้าแทนที่/เพิ่มตรงนี้ ประวัติจะเพี้ยน และ Back ครั้งต่อไปพากลับไปที่ที่ผู้ชมเพิ่งหนีออกมา)
+        if (prev.queuedTarget) return;
         const h = hashFor(s.district);
         if (window.location.hash !== h) window.history.pushState(null, "", h);
       }

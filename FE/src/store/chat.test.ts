@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { chatDeps, initialChatState, useChat } from "./useChat";
 import { ChatApiError, type sendChat } from "../services/chatApi";
+import { initialAiState, useAi } from "./useAi";
 
 describe("useChat", () => {
   beforeEach(() => {
@@ -62,5 +63,22 @@ describe("useChat", () => {
     expect(spy).toHaveBeenCalledTimes(1);
     resolve({ reply: "r", sources: [], sessionId: null, mock: false });
     await first;
+  });
+  it("the AI thinks while waiting, then is happy on success", async () => {
+    useAi.setState(initialAiState());
+    let resolve!: (v: Awaited<ReturnType<typeof sendChat>>) => void;
+    vi.spyOn(chatDeps, "sendChat").mockReturnValue(new Promise((r) => (resolve = r)));
+    const p = useChat.getState().send("hi");
+    expect(useAi.getState().mood).toBe("thinking");
+    resolve({ reply: "r", sources: [], sessionId: null, mock: false });
+    await p;
+    expect(useAi.getState().mood).toBe("happy");
+  });
+
+  it("the AI shows an error mood when the backend fails", async () => {
+    useAi.setState(initialAiState());
+    vi.spyOn(chatDeps, "sendChat").mockRejectedValue(new ChatApiError("server", "x"));
+    await useChat.getState().send("hi");
+    expect(useAi.getState().mood).toBe("error");
   });
 });

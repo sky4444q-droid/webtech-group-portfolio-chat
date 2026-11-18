@@ -56,9 +56,7 @@ export const en: Record<keyof typeof th, string> = {
   memberRole: "Role",
   memberSkills: "Skills",
   memberWorks: "Work",
-  teamOpenHint: "Click the data screen for the team, or the contact screen for contact channels",
-  teamScreen: "TEAM",
-  contactScreen: "CONTACT",
+  teamOpenHint: "Click a member hologram to see the profile · contact channels are under the \"Contact\" button",
 
   contactTitle: "Contact",
 
@@ -77,4 +75,55 @@ export const en: Record<keyof typeof th, string> = {
   guide3Body: "Press “Talk to AI” or click the AI entity in the scene to ask about the team, our work, or anything else.",
 
   smallScreen: "This site is designed for desktop. Open it on a larger screen for the best experience.",
+
+  // ---------- Voice / AI lines (about places and how to use them only — never team data) ----------
+  voiceGreeting: "Welcome to NEXORA. I'll guide you through this universe.",
+  voiceArriveGate: "This is the gate, where every journey begins.",
+  voiceArriveNexus: "This is the heart of the universe. Pick any gate you like.",
+  voiceArriveProjects: "The project gallery. Click a pedestal to see the details.",
+  voiceArriveTeam: "Team headquarters. The screens ahead hold our team info and contacts.",
+  voiceArriveSanctuary: "This is where I dwell. Ask me anything.",
+  soundOn: "Sound on",
+  soundOff: "Sound off",
+  soundVoice: "AI voice",
+  soundAmbience: "Ambience and sound effects",
+
+  // ---------- Viewpoints ----------
+  vpGateEntry: "Down the lane",
+  vpGateAlley: "Toward the arch",
+  vpNexusCenter: "Crossroads",
+  vpNexusBridge: "On the footbridge",
+  vpProjectsHall: "Hall entrance",
+  vpProjectsPedestal: "At the showcase",
+  vpTeamLobby: "Lobby",
+  vpTeamMembers: "Members",
+  vpSanctuaryEdge: "Plaza edge",
+  vpSanctuaryFace: "Before the AI",
+  viewBack: "Back",
+
+  walkSkip: "Click to arrive now",
+
+  // ---------- Hologram / fullscreen ----------
+  holoSeeAll: "See everything",
+  projectArchView: "View architecture diagram",
+  archTitle: "Architecture",
+  memberProfile: "Member profile",
+
+  // ---------- Discovery ----------
+  voiceDiscover: "You found a data fragment! There are more hidden around.",
+  voiceDiscoverAll: "You found them all. Come visit me in the Sanctuary.",
+  discoveryLabel: "Data fragments found",
+  // ---------- Street signs / info panels ----------
+  panelHowTo: "HOW TO",
+  panelFollowGuide: "Pick a place at the top and follow the little guide.",
+  panelTechStack: "TECH STACK",
+  panelProject: "PROJECT",
+  // ---------- HUD ----------
+  hudTagline: "A group portfolio as a neon city",
+  hintClickKey: "Click",
+  hintClick: "select / walk to a viewpoint",
+  hintRightKey: "Right-click",
+  hintRight: "go back",
+  hintMoveKey: "Move",
+  hintMove: "look around",
 };

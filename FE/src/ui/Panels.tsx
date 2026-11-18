@@ -1,5 +1,6 @@
 // Panel ข้อมูล: ผลงาน, ทีม, ช่องทางติดต่อ — ข้อมูลมาจาก src/data/portfolio.ts
 
+import type { CSSProperties } from "react";
 import { useWorld } from "../store/useWorld";
 import { usePortfolio } from "../store/usePortfolio";
 import { usePick, useT } from "../i18n";
@@ -8,13 +9,12 @@ import { MaybeLink, PendingBadge, Text } from "./Pending";
 
 export function Panels() {
   const panel = useWorld((s) => s.panel);
-  if (!panel) return null;
-  if (panel.kind === "project") return <ProjectPanel id={panel.id} />;
-  if (panel.kind === "team") return <TeamPanel />;
+  // ช่องทางติดต่อเป็น Panel ข้าง · ผลงาน/ทีมแบบเต็มจออยู่ที่ Fullscreen · Hologram อยู่ในฉาก
+  if (panel?.kind !== "contact") return null;
   return <ContactPanel />;
 }
 
-function Shell({ title, kicker, placeholder, children }: { title: React.ReactNode; kicker: string; placeholder?: boolean; children: React.ReactNode }) {
+export function Shell({ title, kicker, placeholder, children }: { title: React.ReactNode; kicker: string; placeholder?: boolean; children: React.ReactNode }) {
   const tr = useT();
   const closePanel = useWorld((s) => s.closePanel);
   return (
@@ -48,7 +48,7 @@ function List({ items, placeholder }: { items: Localized[]; placeholder: boolean
   );
 }
 
-function ProjectPanel({ id }: { id: string }) {
+export function ProjectPanel({ id }: { id: string }) {
   const tr = useT();
   const p = usePick();
   const portfolio = usePortfolio((s) => s.data);
@@ -101,12 +101,15 @@ function ProjectPanel({ id }: { id: string }) {
       <div className="panel-links">
         <MaybeLink href={project.demoUrl}>{tr("projectDemo")}</MaybeLink>
         <MaybeLink href={project.githubUrl}>{tr("projectGithub")}</MaybeLink>
+        <button type="button" className="btn" onClick={() => useWorld.getState().openPanel({ kind: "architecture", projectId: project.id })}>
+          {tr("projectArchView")}
+        </button>
       </div>
     </Shell>
   );
 }
 
-function TeamPanel() {
+export function TeamPanel() {
   const tr = useT();
   const p = usePick();
   const { group, members } = usePortfolio((s) => s.data);
@@ -121,8 +124,17 @@ function TeamPanel() {
       <h3>{tr("teamMembers")}</h3>
       <div className="members">
         {members.map((m) => (
-          <article key={m.id} className="member">
-            <div className="member-photo">
+          <article
+            key={m.id}
+            className="member member-clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => useWorld.getState().openPanel({ kind: "member", id: m.id })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") useWorld.getState().openPanel({ kind: "member", id: m.id });
+            }}
+          >
+            <div className={`member-photo${m.photo ? " holo-photo" : ""}`} style={m.accent ? ({ "--accent": m.accent } as CSSProperties) : undefined}>
               {m.photo ? <img src={m.photo} alt={p(m.name)} /> : <span className="member-silhouette" aria-hidden="true" />}
             </div>
             <div className="member-info">
