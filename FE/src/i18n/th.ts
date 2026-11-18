@@ -55,9 +55,7 @@ export const th = {
   memberRole: "บทบาท",
   memberSkills: "ทักษะ",
   memberWorks: "ผลงาน",
-  teamOpenHint: "คลิกจอข้อมูลเพื่อดูทีม หรือจอติดต่อเพื่อดูช่องทางติดต่อ",
-  teamScreen: "TEAM",
-  contactScreen: "CONTACT",
+  teamOpenHint: "คลิกโฮโลแกรมสมาชิกเพื่อดูโปรไฟล์ · ช่องทางติดต่ออยู่ที่ปุ่ม \"ติดต่อ\"",
 
   contactTitle: "ช่องทางติดต่อ",
 
@@ -98,8 +96,6 @@ export const th = {
   vpProjectsPedestal: "หน้าแท่นผลงาน",
   vpTeamLobby: "ล็อบบี้",
   vpTeamMembers: "สมาชิก",
-  vpTeamScreen: "จอข้อมูลทีม",
-  vpTeamContact: "จอช่องทางติดต่อ",
   vpSanctuaryEdge: "ขอบลาน",
   vpSanctuaryFace: "ต่อหน้า AI",
   viewBack: "ย้อนกลับ",
@@ -111,7 +107,6 @@ export const th = {
   projectArchView: "ดูไดอะแกรม Architecture",
   archTitle: "Architecture",
   memberProfile: "โปรไฟล์สมาชิก",
-  holoTeamHint: "คลิกการ์ดเพื่อดูโปรไฟล์",
 
   // ---------- Discovery ----------
   voiceDiscover: "เจอเศษข้อมูลแล้ว! ยังมีซ่อนอยู่อีกนะ",

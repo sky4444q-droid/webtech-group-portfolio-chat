@@ -1,6 +1,6 @@
 // ฉาก 3D ทั้งหมด (Canvas เดียว) — เรนเดอร์เฉพาะพื้นที่ที่อยู่ และพื้นที่ต้นทาง/ปลายทางตอนเดินทาง
 
-import { Suspense, useEffect, useRef, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import type { DepthOfFieldEffect } from "postprocessing";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { flickerProbeEnabled, installFlickerProbe } from "../debug/flickerProbe";
@@ -8,6 +8,7 @@ import { perfProbeEnabled, installPerfProbe } from "../debug/perfProbe";
 import { PerformanceMonitor } from "@react-three/drei";
 import { Bloom, BrightnessContrast, DepthOfField, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { MascotFocus } from "./fx/MascotFocus";
+import { LightBudget, applyLightBudget } from "./fx/LightBudgetRig";
 import * as THREE from "three";
 import type { DistrictId } from "../types";
 import { COLORS } from "../config/theme";
@@ -72,7 +73,9 @@ export function World() {
         <TravelScenes />
         <IntroMascot />
         <DataFragments />
+        <ShaderWarmup />
       </Suspense>
+      <LightBudget />
       <CameraRig />
       {flickerProbeEnabled() && <FlickerProbe />}
       {perfProbeEnabled() && <PerfProbe />}
@@ -108,6 +111,73 @@ function ActiveDistricts() {
         <group key={id}>{SCENES[id]()}</group>
       ))}
     </>
+  );
+}
+
+/**
+ * คอมไพล์ shader ของทุกเขต + ลิฟต์ล่วงหน้าตอนโหลด แล้วถอดออก
+ * ไม่งั้นครั้งแรกที่ไปแต่ละเขต three ต้อง compile โปรแกรมใหม่ 5–36 ตัวกลางการเดินทาง (ภาพค้าง 0.2–2 วินาที)
+ * - ซ่อนไว้ทั้งกลุ่ม เปิดให้เห็นเฉพาะตอน compile (ไฟของกลุ่มนี้ปิดไว้ จำนวนไฟจึงเท่างบเดิม)
+ * - dispose={null}: ไม่ dispose material ตอนถอด → three ไม่ปล่อยโปรแกรม ไปเขตจริงแล้วใช้ต่อได้ทันที
+ */
+function ShaderWarmup() {
+  const [done, setDone] = useState(false);
+  const group = useRef<THREE.Group>(null);
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+
+  useEffect(() => {
+    let cancelled = false;
+    let raf = 0;
+    const start = performance.now();
+    const run = () => {
+      const g = group.current;
+      // รอ HDRI ก่อน (shader ที่มี/ไม่มี envMap เป็นคนละตัว) แต่ไม่เกิน 6 วินาที
+      if (!g || (!scene.environment && performance.now() - start < 6000)) {
+        raf = requestAnimationFrame(run);
+        return;
+      }
+      g.visible = true;
+      const lights: THREE.Object3D[] = [];
+      g.traverse((o) => {
+        if ((o as THREE.Light).isLight && o.visible) {
+          o.visible = false;
+          lights.push(o);
+        }
+      });
+      applyLightBudget(scene, camera);
+      // มี EffectComposer = ฉากถูกวาดลง render target (ไม่มี tone mapping ใน shader) → compile ให้ตรงกัน
+      const composer = fxEnabled(useWorld.getState().quality).bloom;
+      const target = composer ? new THREE.WebGLRenderTarget(1, 1) : null;
+      const prev = gl.getRenderTarget();
+      let pending: Promise<unknown> = Promise.resolve();
+      gl.setRenderTarget(target);
+      try {
+        pending = gl.compileAsync(scene, camera);
+      } finally {
+        gl.setRenderTarget(prev);
+        target?.dispose();
+        g.visible = false;
+        lights.forEach((o) => (o.visible = true));
+      }
+      pending.catch(() => undefined).then(() => !cancelled && setDone(true));
+    };
+    raf = requestAnimationFrame(run);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
+  }, [gl, scene, camera]);
+
+  if (done) return null;
+  return (
+    <group ref={group} visible={false} dispose={null}>
+      {(Object.keys(SCENES) as DistrictId[]).map((id) => (
+        <group key={id}>{SCENES[id]()}</group>
+      ))}
+      <ElevatorScene />
+    </group>
   );
 }
 

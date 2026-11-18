@@ -19,7 +19,8 @@ export const FRAGMENTS: Fragment[] = [
   { id: "frag-gate", district: "nexus", viewpoint: 0, position: [-4.5, 1.2, -2.5] },
   { id: "frag-nexus", district: "nexus", viewpoint: 1, position: [7.5, 1.5, -7.5] },
   { id: "frag-projects", district: "projects", viewpoint: 1, position: [-4.5, 1.1, -2] },
-  { id: "frag-team", district: "team", viewpoint: 2, position: [6.6 + 8, 1.2, -3.6] },
+  // ข้างแท่นโฮโลแกรมของแสตมป์ (พิกัดล็อบบี้ +8) — มองเห็นจากจุดชม "สมาชิก"
+  { id: "frag-team", district: "team", viewpoint: 1, position: [3.7 + 8, 1.3, -0.4] },
   { id: "frag-sanctuary", district: "sanctuary", viewpoint: 1, position: [-1.6, 1.1, 6] },
 ];
 

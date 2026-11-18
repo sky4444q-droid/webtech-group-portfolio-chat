@@ -1,26 +1,14 @@
-// Team Headquarters — อาคารวิจัย/สำนักงานใหญ่ มีจอข้อมูลทีมและจอติดต่อ
+// Team Headquarters — อาคารสำนักงานใหญ่ ล็อบบี้มีแท่นโฮโลแกรมสมาชิก (ช่องทางติดต่ออยู่ที่ปุ่ม "ติดต่อ" บน HUD)
 
-import type { CSSProperties } from "react";
-import { useAi } from "../../store/useAi";
-import * as sfx from "../../audio/sfx";
-import { useMemo, useRef, useState } from "react";
-import { useFrame, type ThreeElements } from "@react-three/fiber";
-import { useCursor } from "@react-three/drei";
+import { useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { DISTRICTS } from "../../config/districts";
 import { COLORS } from "../../config/theme";
-import { useWorld, type Panel } from "../../store/useWorld";
-import { useT } from "../../i18n";
 import { NeonSign } from "../NeonSign";
 import { AiPresence } from "../ai/AiPresence";
-import { screenTexture } from "../textures";
 import { curtainWallTexture, windowGrid } from "../street/windowMaterial";
 import { TEAM_LOBBY_OFFSET, TEAM_TOWER } from "../street/streets";
-import { HoloCard } from "../HoloCard";
-import { TEAM_HOLO_CARD, TEAM_SCREEN_X } from "../../config/viewpoints";
-import { usePortfolio } from "../../store/usePortfolio";
-import { usePick } from "../../i18n";
-import { Text } from "../../ui/Pending";
 import { MemberHolograms } from "./MemberHolograms";
 
 /** ผิวสแตนเลสขัดลายเส้น (วาดบน canvas) */
@@ -165,7 +153,6 @@ function ElevatorEntrance({ color }: { color: string }) {
 
 export function TeamDistrict() {
   const cfg = DISTRICTS.team;
-  const tr = useT();
   const windows = useMemo(() => {
     // ไม่ได้แพตช์ shader → ตั้ง repeat ให้หน้าต่างขนาดเท่าตึกอื่น (แผ่นละ 8×16 ช่อง)
     const tex = curtainWallTexture().clone();
@@ -195,10 +182,7 @@ export function TeamDistrict() {
       <group position={TEAM_LOBBY_OFFSET}>
       <Lobby color={cfg.color} />
 
-      <Screen title={tr("teamScreen")} color={cfg.color} panel={{ kind: "team", display: "holo" }} position={[-TEAM_SCREEN_X, 1.95, -2]} rotation={[0, 0.22, 0]} scale={0.68} />
-      <Screen title={tr("contactScreen")} color={COLORS.pink} panel={{ kind: "contact" }} position={[TEAM_SCREEN_X, 1.95, -2]} rotation={[0, -0.22, 0]} scale={0.68} />
 
-      <TeamHolo />
       <MemberHolograms fallbackColor={cfg.color} />
       <AiPresence district="team" size={0.45} position={[-7.9, 2.3, 0.8]} />
       <pointLight color={cfg.color} intensity={30} distance={22} position={[0, 3.8, 3]} />
@@ -208,59 +192,6 @@ export function TeamDistrict() {
   );
 }
 
-function Screen({
-  title,
-  color,
-  panel,
-  ...group
-}: { title: string; color: string; panel: Exclude<Panel, null> } & ThreeElements["group"]) {
-  const openPanel = useWorld((s) => s.openPanel);
-  const [hovered, setHovered] = useState(false);
-  useCursor(hovered);
-  const texture = useMemo(() => screenTexture(title, color), [title, color]);
-  const frame = useRef<THREE.Group>(null);
-
-  useFrame(({ clock }, dt) => {
-    if (!frame.current) return;
-    frame.current.position.y = Math.sin(clock.elapsedTime * 1.3 + (panel.kind === "team" ? 0 : 1.5)) * 0.08;
-    const s = THREE.MathUtils.damp(frame.current.scale.x, hovered ? 1.06 : 1, 8, dt);
-    frame.current.scale.setScalar(s);
-  });
-
-  return (
-    <group {...group}>
-      <group
-        ref={frame}
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          setHovered(true);
-          useAi.getState().noticeHover();
-          sfx.play("hover");
-        }}
-        onPointerOut={() => setHovered(false)}
-        onClick={(e) => {
-          e.stopPropagation();
-          const s = useWorld.getState();
-          if (s.introDone && !s.travel) {
-            sfx.play("panelOpen");
-            openPanel(panel);
-          }
-        }}
-      >
-        <mesh>
-          <planeGeometry args={[5, 3.125]} />
-          <meshBasicMaterial map={texture} transparent toneMapped={false} color={[1.4, 1.4, 1.4]} side={THREE.DoubleSide} depthWrite={false} />
-        </mesh>
-      </group>
-      <mesh position={[0, -2.6, 0]}>
-        <cylinderGeometry args={[0.08, 0.2, 2, 8]} />
-        <meshBasicMaterial color={color} toneMapped={false} />
-      </mesh>
-    </group>
-  );
-}
-
-/** ล็อบบี้ชั้นล่างของสำนักงานใหญ่ — ผนังกระจก เพดานไฟ จอข้อมูลอยู่ระดับสายตา */
 const LOBBY = { halfW: 9, back: -6, front: 11, height: 4.4 };
 
 function Lobby({ color }: { color: string }) {
@@ -312,62 +243,6 @@ function Lobby({ color }: { color: string }) {
           <meshBasicMaterial color={x === 0 ? color : COLORS.cyan} toneMapped={false} />
         </mesh>
       ))}
-    </group>
-  );
-}
-
-/** การ์ดสมาชิกแบบ Hologram กางออกจากจอทีม — คลิกการ์ด = โปรไฟล์เต็มจอ */
-function TeamHolo() {
-  const tr = useT();
-  const p = usePick();
-  const open = useWorld((s) => s.panel?.kind === "team" && s.panel.display === "holo");
-  const members = usePortfolio((s) => s.data.members);
-  const expandPanel = useWorld((s) => s.expandPanel);
-  const openPanel = useWorld((s) => s.openPanel);
-  if (!open) return null;
-  // การ์ดเดียวรวมทุกคน: ให้ CSS จัดเรียง แทนการวางการ์ดแยกตามพิกัดฉาก (ซึ่งซ้อนกันบนจอเตี้ย)
-  return (
-    <group position={TEAM_HOLO_CARD}>
-      <HoloCard position={[0, 0, 0]} color={COLORS.green} className="holo-card-team">
-        <div className="holo-team-grid">
-          {members.map((m, i) => (
-            <button
-              key={m.id}
-              type="button"
-              className="holo-member"
-              style={{ animationDelay: `${i * 0.08}s` }}
-              onClick={(e) => {
-                e.stopPropagation();
-                sfx.play("panelOpen");
-                openPanel({ kind: "member", id: m.id });
-              }}
-            >
-              {m.photo ? (
-                <span className="holo-photo holo-member-photo" style={m.accent ? ({ "--accent": m.accent } as CSSProperties) : undefined}>
-                  <img src={m.photo} alt="" />
-                </span>
-              ) : (
-                <span className="member-silhouette" aria-hidden="true" />
-              )}
-              <strong>{p(m.name)}</strong>
-              <small>
-                <Text value={m.role} placeholder={m.placeholder} />
-              </small>
-            </button>
-          ))}
-        </div>
-        <p className="holo-hint">{tr("holoTeamHint")}</p>
-        <button
-          type="button"
-          className="btn btn-small holo-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            expandPanel();
-          }}
-        >
-          {tr("holoSeeAll")}
-        </button>
-      </HoloCard>
     </group>
   );
 }

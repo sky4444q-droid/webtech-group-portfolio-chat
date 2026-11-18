@@ -1373,5 +1373,4 @@ button {
   animation: holo-photo-sweep 3.2s linear infinite;
 }
 @keyframes holo-photo-sweep { from { background-position: 0 100%; } to { background-position: 0 -120%; } }
-.holo-member-photo { width: 52px; height: 52px; border: 1px solid; border-radius: 10px; }
 @media (prefers-reduced-motion: reduce) { .holo-photo::after { animation: none; } }

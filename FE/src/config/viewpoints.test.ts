@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TEAM_HOLO_CARD_WORLD, VIEWPOINTS, teamHoloCamera, viewpointWorld } from "./viewpoints";
+import { VIEWPOINTS, viewpointWorld } from "./viewpoints";
 import { DISTRICT_ORDER, DISTRICTS } from "./districts";
 import { th } from "../i18n/th";
 import { NEXUS_HALF, distanceToPolyline, streetOf } from "../world/street/streets";
@@ -117,28 +117,6 @@ describe("viewpoint framing", () => {
       expect(v.position[1] - floor).toBeGreaterThanOrEqual(onBridge ? 1.6 : 1.8);
       expect(v.position[1] - floor).toBeLessThanOrEqual(2.6);
     }
-  });
-});
-
-describe("teamHoloCamera", () => {
-  // การ์ดทีมกว้าง 480px ที่ distanceFactor 7 → กว้างในฉาก = 3360 / ความสูงจอ
-  // สัดส่วนต่อความกว้างจอ = 3360 / (2·tan(fov/2)·ระยะ·ความกว้างจอ) — ต้องไม่ล้นจอที่กว้าง 736px ขึ้นไป
-  const FOV = (CAMERA_FOV * Math.PI) / 180;
-  const fraction = (dist: number, width: number) => 3360 / (2 * Math.tan(FOV / 2) * dist * width);
-
-  it("frames the team card from far enough that it fits on screen", () => {
-    const pose = teamHoloCamera();
-    const card = viewpointWorld("team", 0).position; // ensure world coords are used
-    expect(card).toBeTruthy();
-    const [cx, cy, cz] = TEAM_HOLO_CARD_WORLD;
-    const dist = Math.hypot(pose.position[0] - cx, pose.position[1] - cy, pose.position[2] - cz);
-    expect(fraction(dist, 736)).toBeLessThanOrEqual(0.75);
-  });
-
-  it("looks straight at the card", () => {
-    const pose = teamHoloCamera();
-    expect(pose.target[0]).toBeCloseTo(TEAM_HOLO_CARD_WORLD[0]);
-    expect(pose.position[0]).toBeCloseTo(TEAM_HOLO_CARD_WORLD[0]);
   });
 });
 

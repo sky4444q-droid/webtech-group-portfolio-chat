@@ -56,9 +56,7 @@ export const en: Record<keyof typeof th, string> = {
   memberRole: "Role",
   memberSkills: "Skills",
   memberWorks: "Work",
-  teamOpenHint: "Click the data screen for the team, or the contact screen for contact channels",
-  teamScreen: "TEAM",
-  contactScreen: "CONTACT",
+  teamOpenHint: "Click a member hologram to see the profile · contact channels are under the \"Contact\" button",
 
   contactTitle: "Contact",
 
@@ -99,8 +97,6 @@ export const en: Record<keyof typeof th, string> = {
   vpProjectsPedestal: "At the showcase",
   vpTeamLobby: "Lobby",
   vpTeamMembers: "Members",
-  vpTeamScreen: "Team screen",
-  vpTeamContact: "Contact screen",
   vpSanctuaryEdge: "Plaza edge",
   vpSanctuaryFace: "Before the AI",
   viewBack: "Back",
@@ -112,7 +108,6 @@ export const en: Record<keyof typeof th, string> = {
   projectArchView: "View architecture diagram",
   archTitle: "Architecture",
   memberProfile: "Member profile",
-  holoTeamHint: "Click a card to see the profile",
 
   // ---------- Discovery ----------
   voiceDiscover: "You found a data fragment! There are more hidden around.",
