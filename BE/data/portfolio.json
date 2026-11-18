@@ -58,7 +58,7 @@
           "status": "อยู่ระหว่างการพัฒนาและปรับปรุง",
           "detail": "เว็บไซต์แชทบอทที่ให้ข้อมูลเกี่ยวกับประวัติส่วนตัว การศึกษา ทักษะ ความสนใจ และเป้าหมายทางอาชีพ",
           "tools": "React, TypeScript, Git, GitHub และ AI Tools",
-          "link": "https://github.com/sky4444q-droid/my-ai-chatbot"
+          "link": "https://my-ai-chatbot-web.onrender.com"
         },
         {
           "title": "Venue Booking System",
