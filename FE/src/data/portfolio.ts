@@ -27,7 +27,7 @@ export const NEXORA_PROJECT: Project = {
     en: "Let visitors get to know the team by exploring a world, and ask the AI about the team from anywhere.",
   },
   features: [
-    { th: "โลก 3D 5 พื้นที่ เดินทางผ่านประตูและ Mini Map", en: "3D world with 5 districts, travel via portals and a mini map" },
+    { th: "เมืองนีออน 3D 5 พื้นที่ มีมาสคอตพาเดินทาง เลือกปลายทางจากแถบเมนู", en: "3D neon city with 5 districts; a mascot guides each trip, picked from the nav bar" },
     { th: "แชทกับ AI ที่จำบทสนทนาแยกตามผู้ชม พร้อมแหล่งอ้างอิง", en: "AI chat with per-visitor history and sources" },
     { th: "ข้อมูลทีมดึงจากหลังบ้าน แหล่งเดียวกับที่ AI ใช้ตอบ", en: "Team data loaded from the backend, the same source the AI uses" },
     { th: "สลับภาษาไทย/อังกฤษ และปรับคุณภาพกราฟิกได้", en: "Thai/English switch and graphics quality setting" },
@@ -38,7 +38,7 @@ export const NEXORA_PROJECT: Project = {
     en: "React (Vite) frontend → Express API (/messages, /portfolio) → Gemini API, chat history in PostgreSQL, CI/CD with GitHub Actions, deployed on Render",
   },
   images: ["/images/nexora-emblem.png"],
-  demoUrl: null,
+  demoUrl: "https://webtech-chat-web.onrender.com",
   githubUrl: "https://github.com/sky4444q-droid/webtech-group-portfolio-chat",
   memberIds: [],
 };
