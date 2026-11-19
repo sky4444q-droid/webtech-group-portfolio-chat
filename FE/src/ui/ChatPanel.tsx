@@ -12,7 +12,7 @@ export function ChatPanel() {
   const open = useWorld((s) => s.chatOpen);
   const wide = useWorld((s) => s.district === "sanctuary" && !s.travel);
   const setChatOpen = useWorld((s) => s.setChatOpen);
-  const { messages, pending, waking, mock, send, retry } = useChat();
+  const { messages, pending, waking, mock, send, retry, loadHistory } = useChat();
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -23,7 +23,8 @@ export function ChatPanel() {
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
-  }, [open]);
+    if (open) void loadHistory();
+  }, [open, loadHistory]);
 
   if (!open) return null;
 

@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import type { ChatMessage } from "../types";
-import { ChatApiError, sendChat, WAKING_NOTICE_MS, type ChatErrorKind, isMockMode } from "../services/chatApi";
+import { ChatApiError, fetchHistory, sendChat, WAKING_NOTICE_MS, type ChatErrorKind, isMockMode } from "../services/chatApi";
 import { useWorld } from "./useWorld";
 import { useAi } from "./useAi";
 import * as sfx from "../audio/sfx";
@@ -10,7 +10,7 @@ import { load, save } from "../lib/storage";
 import type { DictKey } from "../i18n";
 
 /** แยกไว้เพื่อให้ test แทนที่การเรียกหลังบ้านได้ */
-export const chatDeps = { sendChat };
+export const chatDeps = { sendChat, fetchHistory };
 
 const ERROR_KEYS: Record<ChatErrorKind, DictKey> = {
   rate_limit: "chatErrRate",
@@ -28,6 +28,8 @@ export interface ChatState {
   waking: boolean;
   mock: boolean;
   send: (text: string) => Promise<void>;
+  /** โหลดประวัติแชทเดิมจากฐานข้อมูลครั้งแรกที่เปิดแชท (ถ้ามี sessionId จากครั้งก่อน) */
+  loadHistory: () => Promise<void>;
   retry: () => Promise<void>;
 }
 
@@ -85,8 +87,19 @@ export const useChat = create<ChatState>((set, get) => {
     }
   }
 
+  let historyLoaded = false;
+
   return {
     ...initialChatState(),
+
+    loadHistory: async () => {
+      const { sessionId, mock } = get();
+      if (historyLoaded || mock || !sessionId) return;
+      historyLoaded = true;
+      const history = await chatDeps.fetchHistory(sessionId);
+      // ถ้าผู้ใช้เริ่มพิมพ์ไปก่อนประวัติโหลดเสร็จ ให้เอาประวัติไว้ข้างหน้า
+      if (history.length) set((s) => ({ messages: [...history, ...s.messages] }));
+    },
 
     send: async (raw) => {
       const text = raw.trim();

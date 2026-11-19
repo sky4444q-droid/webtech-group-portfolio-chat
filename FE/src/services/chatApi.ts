@@ -5,7 +5,7 @@
 // รองรับทั้งรูปแบบเดิมของ BE ({ userMessage, assistantMessage })
 // และรูปแบบใหม่ที่มี sessionId / sources เพิ่ม
 
-import type { ChatRequest, ChatResult, ChatSource } from "../types";
+import type { ChatMessage, ChatRequest, ChatResult, ChatSource } from "../types";
 
 /** Render แบบฟรีหลับได้ คำขอแรกอาจช้า 30–60 วินาที */
 export const DEFAULT_TIMEOUT_MS = 70_000;
@@ -99,6 +99,29 @@ export async function sendChat(req: ChatRequest, opts: SendChatOptions = {}): Pr
     sessionId: readString(body, "sessionId") ?? null,
     mock: false,
   };
+}
+
+/** ประวัติแชทของ session นี้จากฐานข้อมูล (GET /messages) — โหลดไม่ได้หรือโหมดจำลองคืน [] */
+export async function fetchHistory(sessionId: string, opts: SendChatOptions = {}): Promise<ChatMessage[]> {
+  if (opts.mock ?? isMockMode()) return [];
+  const fetchImpl = opts.fetchImpl ?? fetch;
+  try {
+    const res = await fetchImpl(`${apiBase(opts.baseUrl)}/messages?sessionId=${encodeURIComponent(sessionId)}`, {
+      signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+    });
+    if (!res.ok) return [];
+    const body: unknown = await res.json();
+    if (!Array.isArray(body)) return [];
+    return body.flatMap((m): ChatMessage[] => {
+      const role = readString(m, "role");
+      const text = readString(m, "text");
+      if ((role !== "user" && role !== "assistant") || text === undefined) return [];
+      const id = isRecord(m) && (typeof m.id === "number" || typeof m.id === "string") ? `db-${m.id}` : `db-${Math.random()}`;
+      return [{ id, role, text, sources: readSources(isRecord(m) ? m.sources : undefined) }];
+    });
+  } catch {
+    return [];
+  }
 }
 
 // ---------- ตัวช่วยอ่าน JSON ที่ไม่แน่ใจรูปแบบ ----------

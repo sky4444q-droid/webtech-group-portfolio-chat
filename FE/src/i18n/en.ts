@@ -61,16 +61,16 @@ export const en: Record<keyof typeof th, string> = {
   contactTitle: "Contact",
 
   gateHint: "The gateway. Pass through to reach the Central Nexus",
-  nexusHint: "The heart of the universe. Choose a gate to travel",
+  nexusHint: "The heart of the universe. Pick a destination from the top bar",
   sanctuaryHint: "The AI's sanctuary. Click the entity to start a conversation",
 
   guideStep: "Step",
   guideNext: "Next",
   guideDone: "Start exploring",
   guide1Title: "Welcome to the Central Nexus",
-  guide1Body: "This is the heart of the universe. Click a neon gate to travel to another district.",
-  guide2Title: "Universe map",
-  guide2Body: "Use the map in the bottom-left corner to see where you are and jump anywhere instantly.",
+  guide1Body: "This is the heart of the universe. The mascot will guide you to each district.",
+  guide2Title: "Travel bar",
+  guide2Body: "Use the district names in the top bar to see where you are and travel anywhere.",
   guide3Title: "The AI is with you everywhere",
   guide3Body: "Press “Talk to AI” or click the AI entity in the scene to ask about the team, our work, or anything else.",
 
@@ -79,7 +79,7 @@ export const en: Record<keyof typeof th, string> = {
   // ---------- Voice / AI lines (about places and how to use them only — never team data) ----------
   voiceGreeting: "Welcome to NEXORA. I'll guide you through this universe.",
   voiceArriveGate: "This is the gate, where every journey begins.",
-  voiceArriveNexus: "This is the heart of the universe. Pick any gate you like.",
+  voiceArriveNexus: "This is the heart of the universe. Pick any district from the top bar.",
   voiceArriveProjects: "The project gallery. Click a pedestal to see the details.",
   voiceArriveTeam: "Team headquarters. The screens ahead hold our team info and contacts.",
   voiceArriveSanctuary: "This is where I dwell. Ask me anything.",
