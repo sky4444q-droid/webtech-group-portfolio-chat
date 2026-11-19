@@ -19,7 +19,7 @@
 - บังคับด้วยเมาส์อย่างเดียว ไม่มี WASD/ลูกศร
 - ไฟล์ภายนอก: เฉพาะ CC0 จาก ambientCG และ Poly Haven, รวม ≤ ~6 MB, ทุกไฟล์บันทึกใน `FE/CREDITS.md`, เก็บใน `FE/public/assets/` · ไม่มีไฟล์เสียง (เสียงสร้างด้วยโค้ด)
 - โหมดคุณภาพต่ำต้องปิดของหนักใหม่ทุกตัว (กรวยแสง, แฟลร์, โดรน/รถ, ฝน, พื้นสะท้อน, Bloom) และ `prefers-reduced-motion`/โหมดต่ำ → การเดินทางเป็นการจางสั้น ๆ
-- ทุก task จบด้วย `npm test`, `npm run typecheck`, `npm run build` ผ่าน (รันใน `FE/`) และดูในเบราว์เซอร์ (`fe-dev` ใน `C:\web port\.claude\launch.json`) ว่าไม่มี error ใน Console
+- ทุก task จบด้วย `npm test`, `npm run typecheck`, `npm run build` ผ่าน (รันใน `FE/`) และดูในเบราว์เซอร์ ว่าไม่มี error ใน Console
 - ของเดิมต้องไม่พัง: แชทกับหลังบ้าน, `/portfolio`, Mini Map, TH/EN, hash URL + ปุ่ม Back, Esc, Skip
 
 ## Review Focus

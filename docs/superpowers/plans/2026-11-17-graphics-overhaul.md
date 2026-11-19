@@ -38,7 +38,6 @@
 
 **Workflow:**
 - Commit locally after each task. Never push without the user's word. Never commit `FE/tsconfig.tsbuildinfo`.
-- Commit messages end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - Code comments are in Thai, matching the codebase.
 - Tasks are ordered by visual impact. If time runs out, drop tasks from the end. Every finished task must stand on its own.
 
